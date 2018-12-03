@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -112,7 +113,7 @@ public class FreeMarkerConfigurationFactory {
 	 * @see #setTemplateLoaderPath
 	 */
 	public void setConfigLocation(Resource resource) {
-		this.configLocation = resource;
+		configLocation = resource;
 	}
 
 	/**
@@ -259,8 +260,8 @@ public class FreeMarkerConfigurationFactory {
 
 		// Load config file if specified.
 		if (this.configLocation != null) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Loading FreeMarker configuration from " + this.configLocation);
+			if (logger.isInfoEnabled()) {
+				logger.info("Loading FreeMarker configuration from " + this.configLocation);
 			}
 			PropertiesLoaderUtils.fillProperties(props, this.configLocation);
 		}
@@ -284,7 +285,7 @@ public class FreeMarkerConfigurationFactory {
 			config.setDefaultEncoding(this.defaultEncoding);
 		}
 
-		List<TemplateLoader> templateLoaders = new ArrayList<>(this.templateLoaders);
+		List<TemplateLoader> templateLoaders = new LinkedList<>(this.templateLoaders);
 
 		// Register template loaders that are supposed to kick in early.
 		if (this.preTemplateLoaders != null) {
@@ -389,14 +390,15 @@ public class FreeMarkerConfigurationFactory {
 	 */
 	@Nullable
 	protected TemplateLoader getAggregateTemplateLoader(List<TemplateLoader> templateLoaders) {
-		switch (templateLoaders.size()) {
+		int loaderCount = templateLoaders.size();
+		switch (loaderCount) {
 			case 0:
-				logger.debug("No FreeMarker TemplateLoaders specified");
+				logger.info("No FreeMarker TemplateLoaders specified");
 				return null;
 			case 1:
 				return templateLoaders.get(0);
 			default:
-				TemplateLoader[] loaders = templateLoaders.toArray(new TemplateLoader[0]);
+				TemplateLoader[] loaders = templateLoaders.toArray(new TemplateLoader[loaderCount]);
 				return new MultiTemplateLoader(loaders);
 		}
 	}

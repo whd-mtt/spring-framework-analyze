@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,82 +17,46 @@
 package org.springframework.http.client.reactive;
 
 import java.net.URI;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
-import io.netty.buffer.ByteBufAllocator;
 import reactor.core.publisher.Mono;
-import reactor.netty.NettyInbound;
-import reactor.netty.NettyOutbound;
-import reactor.netty.http.client.HttpClient;
-import reactor.netty.http.client.HttpClientRequest;
-import reactor.netty.http.client.HttpClientResponse;
-import reactor.netty.resources.ConnectionProvider;
-import reactor.netty.resources.LoopResources;
+import reactor.ipc.netty.http.client.HttpClient;
+import reactor.ipc.netty.http.client.HttpClientOptions;
+import reactor.ipc.netty.http.client.HttpClientRequest;
+import reactor.ipc.netty.http.client.HttpClientResponse;
+import reactor.ipc.netty.options.ClientOptions;
 
 import org.springframework.http.HttpMethod;
-import org.springframework.util.Assert;
 
 /**
  * Reactor-Netty implementation of {@link ClientHttpConnector}.
  *
  * @author Brian Clozel
  * @since 5.0
- * @see reactor.netty.http.client.HttpClient
+ * @see reactor.ipc.netty.http.client.HttpClient
  */
 public class ReactorClientHttpConnector implements ClientHttpConnector {
-
-	private final static Function<HttpClient, HttpClient> defaultInitializer = client -> client.compress(true);
-
 
 	private final HttpClient httpClient;
 
 
 	/**
-	 * Default constructor. Initializes {@link HttpClient} via:
-	 * <pre class="code">
-	 * HttpClient.create().compress()
-	 * </pre>
+	 * Create a Reactor Netty {@link ClientHttpConnector}
+	 * with default {@link ClientOptions} and HTTP compression support enabled.
 	 */
 	public ReactorClientHttpConnector() {
-		this.httpClient = defaultInitializer.apply(HttpClient.create());
+		this.httpClient = HttpClient.builder()
+				.options(options -> options.compression(true))
+				.build();
 	}
 
 	/**
-	 * Constructor with externally managed Reactor Netty resources, including
-	 * {@link LoopResources} for event loop threads, and {@link ConnectionProvider}
-	 * for the connection pool.
-	 * <p>This constructor should be used only when you don't want the client
-	 * to participate in the Reactor Netty global resources. By default the
-	 * client participates in the Reactor Netty global resources held in
-	 * {@link reactor.netty.http.HttpResources}, which is recommended since
-	 * fixed, shared resources are favored for event loop concurrency. However,
-	 * consider declaring a {@link ReactorResourceFactory} bean with
-	 * {@code globaResources=true} in order to ensure the Reactor Netty global
-	 * resources are shut down when the Spring ApplicationContext is closed.
-	 * @param factory the resource factory to obtain the resources from
-	 * @param mapper a mapper for further initialization of the created client
-	 * @since 5.1
+	 * Create a Reactor Netty {@link ClientHttpConnector} with the given
+	 * {@link HttpClientOptions.Builder}
 	 */
-	public ReactorClientHttpConnector(ReactorResourceFactory factory, Function<HttpClient, HttpClient> mapper) {
-		this.httpClient = defaultInitializer.andThen(mapper).apply(initHttpClient(factory));
-	}
-
-	private static HttpClient initHttpClient(ReactorResourceFactory resourceFactory) {
-		ConnectionProvider provider = resourceFactory.getConnectionProvider();
-		LoopResources resources = resourceFactory.getLoopResources();
-		Assert.notNull(provider, "No ConnectionProvider: is ReactorResourceFactory not initialized yet?");
-		Assert.notNull(resources, "No LoopResources: is ReactorResourceFactory not initialized yet?");
-		return HttpClient.create(provider).tcpConfiguration(tcpClient -> tcpClient.runOn(resources));
-	}
-
-	/**
-	 * Constructor with a pre-configured {@code HttpClient} instance.
-	 * @param httpClient the client to use
-	 * @since 5.1
-	 */
-	public ReactorClientHttpConnector(HttpClient httpClient) {
-		Assert.notNull(httpClient, "HttpClient is required");
-		this.httpClient = httpClient;
+	public ReactorClientHttpConnector(Consumer<? super HttpClientOptions.Builder> clientOptions) {
+		this.httpClient = HttpClient.create(clientOptions);
 	}
 
 
@@ -105,23 +69,22 @@ public class ReactorClientHttpConnector implements ClientHttpConnector {
 		}
 
 		return this.httpClient
-				.request(io.netty.handler.codec.http.HttpMethod.valueOf(method.name()))
-				.uri(uri.toString())
-				.send((request, outbound) -> requestCallback.apply(adaptRequest(method, uri, request, outbound)))
-				.responseConnection((res, con) -> Mono.just(adaptResponse(res, con.inbound(), con.outbound().alloc())))
-				.next();
+				.request(adaptHttpMethod(method),
+						uri.toString(),
+						request -> requestCallback.apply(adaptRequest(method, uri, request)))
+				.map(this::adaptResponse);
 	}
 
-	private ReactorClientHttpRequest adaptRequest(HttpMethod method, URI uri, HttpClientRequest request,
-			NettyOutbound nettyOutbound) {
-
-		return new ReactorClientHttpRequest(method, uri, request, nettyOutbound);
+	private io.netty.handler.codec.http.HttpMethod adaptHttpMethod(HttpMethod method) {
+		return io.netty.handler.codec.http.HttpMethod.valueOf(method.name());
 	}
 
-	private ClientHttpResponse adaptResponse(HttpClientResponse response, NettyInbound nettyInbound,
-			ByteBufAllocator allocator) {
+	private ReactorClientHttpRequest adaptRequest(HttpMethod method, URI uri, HttpClientRequest request) {
+		return new ReactorClientHttpRequest(method, uri, request);
+	}
 
-		return new ReactorClientHttpResponse(response, nettyInbound, allocator);
+	private ClientHttpResponse adaptResponse(HttpClientResponse response) {
+		return new ReactorClientHttpResponse(response);
 	}
 
 }

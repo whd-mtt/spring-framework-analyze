@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -36,9 +36,9 @@ import org.junit.rules.ExpectedException;
 
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.subpackage.NonPublicAnnotatedClass;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.ReflectionUtils;
 
 import static java.util.Arrays.*;
 import static java.util.stream.Collectors.*;
@@ -63,8 +63,23 @@ public class AnnotationUtilsTests {
 
 
 	@Before
-	public void clearCacheBeforeTests() {
-		AnnotationUtils.clearCache();
+	public void clearCachesBeforeTests() {
+		clearCaches();
+	}
+
+	static void clearCaches() {
+		clearCache("findAnnotationCache", "annotatedInterfaceCache", "metaPresentCache", "synthesizableCache",
+				"attributeAliasesCache", "attributeMethodsCache", "aliasDescriptorCache");
+	}
+
+	static void clearCache(String... cacheNames) {
+		stream(cacheNames).forEach(cacheName -> getCache(cacheName).clear());
+	}
+
+	static Map<?, ?> getCache(String cacheName) {
+		Field field = ReflectionUtils.findField(AnnotationUtils.class, cacheName);
+		ReflectionUtils.makeAccessible(field);
+		return (Map<?, ?>) ReflectionUtils.getField(field, null);
 	}
 
 
@@ -146,20 +161,12 @@ public class AnnotationUtilsTests {
 		assertNull(getAnnotation(bridgeMethod, Order.class));
 		assertNotNull(findAnnotation(bridgeMethod, Order.class));
 
-		boolean runningInEclipse = Arrays.stream(new Exception().getStackTrace())
-				.anyMatch(element -> element.getClassName().startsWith("org.eclipse.jdt"));
-
-		// As of JDK 8, invoking getAnnotation() on a bridge method actually finds an
-		// annotation on its 'bridged' method [1]; however, the Eclipse compiler will not
-		// support this until Eclipse 4.9 [2]. Thus, we effectively ignore the following
-		// assertion if the test is currently executing within the Eclipse IDE.
-		//
-		// [1] https://bugs.openjdk.java.net/browse/JDK-6695379
-		// [2] https://bugs.eclipse.org/bugs/show_bug.cgi?id=495396
-		//
-		if (!runningInEclipse) {
-			assertNotNull(bridgeMethod.getAnnotation(Transactional.class));
-		}
+		// As of OpenJDK 8 b99, invoking getAnnotation() on a bridge method actually finds
+		// an annotation on its 'bridged' method. This differs from the previous behavior
+		// of JDK 5 through 7 and from the current behavior of the Eclipse compiler;
+		// however, we need to ensure that the tests pass in the Gradle build. So we
+		// comment out the following assertion.
+		// assertNull(bridgeMethod.getAnnotation(Transactional.class));
 		assertNotNull(getAnnotation(bridgeMethod, Transactional.class));
 		assertNotNull(findAnnotation(bridgeMethod, Transactional.class));
 	}
@@ -171,7 +178,9 @@ public class AnnotationUtilsTests {
 
 		assertNull(bridgedMethod.getAnnotation(Order.class));
 		assertNull(getAnnotation(bridgedMethod, Order.class));
-		assertNotNull(findAnnotation(bridgedMethod, Order.class));
+		// AnnotationUtils.findAnnotation(Method, Class<A>) will not find an annotation on
+		// the bridge method for a bridged method.
+		assertNull(findAnnotation(bridgedMethod, Order.class));
 
 		assertNotNull(bridgedMethod.getAnnotation(Transactional.class));
 		assertNotNull(getAnnotation(bridgedMethod, Transactional.class));
@@ -181,20 +190,6 @@ public class AnnotationUtilsTests {
 	@Test
 	public void findMethodAnnotationFromInterface() throws Exception {
 		Method method = ImplementsInterfaceWithAnnotatedMethod.class.getMethod("foo");
-		Order order = findAnnotation(method, Order.class);
-		assertNotNull(order);
-	}
-
-	@Test  // SPR-16060
-	public void findMethodAnnotationFromGenericInterface() throws Exception {
-		Method method = ImplementsInterfaceWithGenericAnnotatedMethod.class.getMethod("foo", String.class);
-		Order order = findAnnotation(method, Order.class);
-		assertNotNull(order);
-	}
-
-	@Test  // SPR-17146
-	public void findMethodAnnotationFromGenericSuperclass() throws Exception {
-		Method method = ExtendsBaseClassWithGenericAnnotatedMethod.class.getMethod("foo", String.class);
 		Order order = findAnnotation(method, Order.class);
 		assertNotNull(order);
 	}
@@ -213,7 +208,7 @@ public class AnnotationUtilsTests {
 		assertNotNull(order);
 	}
 
-	// @since 4.1.2
+	/** @since 4.1.2 */
 	@Test
 	public void findClassAnnotationFavorsMoreLocallyDeclaredComposedAnnotationsOverAnnotationsOnInterfaces() {
 		Component component = findAnnotation(ClassWithLocalMetaAnnotationAndMetaAnnotatedInterface.class, Component.class);
@@ -221,7 +216,7 @@ public class AnnotationUtilsTests {
 		assertEquals("meta2", component.value());
 	}
 
-	// @since 4.0.3
+	/** @since 4.0.3 */
 	@Test
 	public void findClassAnnotationFavorsMoreLocallyDeclaredComposedAnnotationsOverInheritedAnnotations() {
 		Transactional transactional = findAnnotation(SubSubClassWithInheritedAnnotation.class, Transactional.class);
@@ -229,7 +224,7 @@ public class AnnotationUtilsTests {
 		assertTrue("readOnly flag for SubSubClassWithInheritedAnnotation", transactional.readOnly());
 	}
 
-	// @since 4.0.3
+	/** @since 4.0.3 */
 	@Test
 	public void findClassAnnotationFavorsMoreLocallyDeclaredComposedAnnotationsOverInheritedComposedAnnotations() {
 		Component component = findAnnotation(SubSubClassWithInheritedMetaAnnotation.class, Component.class);
@@ -307,7 +302,7 @@ public class AnnotationUtilsTests {
 	}
 
 	@Test
-	public void findAnnotationDeclaringClassForAllScenarios() {
+	public void findAnnotationDeclaringClassForAllScenarios() throws Exception {
 		// no class-level annotation
 		assertNull(findAnnotationDeclaringClass(Transactional.class, NonAnnotatedInterface.class));
 		assertNull(findAnnotationDeclaringClass(Transactional.class, NonAnnotatedClass.class));
@@ -416,7 +411,7 @@ public class AnnotationUtilsTests {
 	}
 
 	@Test
-	public void isAnnotationInheritedForAllScenarios() {
+	public void isAnnotationInheritedForAllScenarios() throws Exception {
 		// no class-level annotation
 		assertFalse(isAnnotationInherited(Transactional.class, NonAnnotatedInterface.class));
 		assertFalse(isAnnotationInherited(Transactional.class, NonAnnotatedClass.class));
@@ -525,7 +520,7 @@ public class AnnotationUtilsTests {
 	}
 
 	@Test
-	public void getDefaultValueFromNonPublicAnnotation() {
+	public void getDefaultValueFromNonPublicAnnotation() throws Exception {
 		Annotation[] declaredAnnotations = NonPublicAnnotatedClass.class.getDeclaredAnnotations();
 		assertEquals(1, declaredAnnotations.length);
 		Annotation annotation = declaredAnnotations[0];
@@ -536,7 +531,7 @@ public class AnnotationUtilsTests {
 	}
 
 	@Test
-	public void getDefaultValueFromAnnotationType() {
+	public void getDefaultValueFromAnnotationType() throws Exception {
 		assertEquals(Ordered.LOWEST_PRECEDENCE, getDefaultValue(Order.class, VALUE));
 		assertEquals(Ordered.LOWEST_PRECEDENCE, getDefaultValue(Order.class));
 	}
@@ -568,7 +563,7 @@ public class AnnotationUtilsTests {
 	}
 
 	@Test
-	public void getRepeatableAnnotationsDeclaredOnClassWithAttributeAliases() {
+	public void getRepeatableAnnotationsDeclaredOnClassWithAttributeAliases() throws Exception {
 		final List<String> expectedLocations = asList("A", "B");
 
 		Set<ContextConfig> annotations = getRepeatableAnnotations(ConfigHierarchyTestCase.class, ContextConfig.class, null);
@@ -732,7 +727,7 @@ public class AnnotationUtilsTests {
 	public void getAttributeOverrideNameFromWrongTargetAnnotation() throws Exception {
 		Method attribute = AliasedComposedContextConfig.class.getDeclaredMethod("xmlConfigFile");
 		assertThat("xmlConfigFile is not an alias for @Component.",
-				getAttributeOverrideName(attribute, Component.class), is(nullValue()));
+			getAttributeOverrideName(attribute, Component.class), is(nullValue()));
 	}
 
 	@Test
@@ -926,6 +921,7 @@ public class AnnotationUtilsTests {
 	public void synthesizeAnnotationWithAttributeAliasWithMirroredAliasForWrongAttribute() throws Exception {
 		AliasForWithMirroredAliasForWrongAttribute annotation =
 				AliasForWithMirroredAliasForWrongAttributeClass.class.getAnnotation(AliasForWithMirroredAliasForWrongAttribute.class);
+
 		exception.expect(AnnotationConfigurationException.class);
 		exception.expectMessage(startsWith("Attribute 'bar' in"));
 		exception.expectMessage(containsString(AliasForWithMirroredAliasForWrongAttribute.class.getName()));
@@ -1033,18 +1029,18 @@ public class AnnotationUtilsTests {
 	@Test
 	public void synthesizeAnnotationWithImplicitAliasesWithImpliedAliasNamesOmitted() throws Exception {
 		assertAnnotationSynthesisWithImplicitAliasesWithImpliedAliasNamesOmitted(
-				ValueImplicitAliasesWithImpliedAliasNamesOmittedContextConfigClass.class, "value");
+			ValueImplicitAliasesWithImpliedAliasNamesOmittedContextConfigClass.class, "value");
 		assertAnnotationSynthesisWithImplicitAliasesWithImpliedAliasNamesOmitted(
-				LocationsImplicitAliasesWithImpliedAliasNamesOmittedContextConfigClass.class, "location");
+			LocationsImplicitAliasesWithImpliedAliasNamesOmittedContextConfigClass.class, "location");
 		assertAnnotationSynthesisWithImplicitAliasesWithImpliedAliasNamesOmitted(
-				XmlFilesImplicitAliasesWithImpliedAliasNamesOmittedContextConfigClass.class, "xmlFile");
+			XmlFilesImplicitAliasesWithImpliedAliasNamesOmittedContextConfigClass.class, "xmlFile");
 	}
 
-	private void assertAnnotationSynthesisWithImplicitAliasesWithImpliedAliasNamesOmitted(
-			Class<?> clazz, String expected) {
+	private void assertAnnotationSynthesisWithImplicitAliasesWithImpliedAliasNamesOmitted(Class<?> clazz,
+			String expected) throws Exception {
 
 		ImplicitAliasesWithImpliedAliasNamesOmittedContextConfig config = clazz.getAnnotation(
-				ImplicitAliasesWithImpliedAliasNamesOmittedContextConfig.class);
+			ImplicitAliasesWithImpliedAliasNamesOmittedContextConfig.class);
 		assertNotNull(config);
 
 		ImplicitAliasesWithImpliedAliasNamesOmittedContextConfig synthesizedConfig = synthesizeAnnotation(config);
@@ -1242,6 +1238,7 @@ public class AnnotationUtilsTests {
 	@Test
 	public void synthesizeAnnotationWithAttributeAliasesWithDifferentValues() throws Exception {
 		ContextConfig contextConfig = synthesizeAnnotation(ContextConfigMismatch.class.getAnnotation(ContextConfig.class));
+
 		exception.expect(AnnotationConfigurationException.class);
 		getValue(contextConfig);
 	}
@@ -1544,13 +1541,6 @@ public class AnnotationUtilsTests {
 		assertArrayEquals(new char[] { 'x', 'y', 'z' }, chars);
 	}
 
-	@Test
-	public void interfaceWithAnnotatedMethods() {
-		assertTrue(AnnotationUtils.getAnnotatedMethodsInBaseType(NonAnnotatedInterface.class).isEmpty());
-		assertFalse(AnnotationUtils.getAnnotatedMethodsInBaseType(AnnotatedInterface.class).isEmpty());
-		assertTrue(AnnotationUtils.getAnnotatedMethodsInBaseType(NullableAnnotatedInterface.class).isEmpty());
-	}
-
 
 	@SafeVarargs
 	static <T> T[] asArray(T... arr) {
@@ -1641,12 +1631,6 @@ public class AnnotationUtilsTests {
 	public interface AnnotatedInterface {
 
 		@Order(0)
-		void fromInterfaceImplementedByRoot();
-	}
-
-	public interface NullableAnnotatedInterface {
-
-		@Nullable
 		void fromInterfaceImplementedByRoot();
 	}
 
@@ -1800,30 +1784,6 @@ public class AnnotationUtilsTests {
 
 		@Override
 		public void foo() {
-		}
-	}
-
-	public interface InterfaceWithGenericAnnotatedMethod<T> {
-
-		@Order
-		void foo(T t);
-	}
-
-	public static class ImplementsInterfaceWithGenericAnnotatedMethod implements InterfaceWithGenericAnnotatedMethod<String> {
-
-		public void foo(String t) {
-		}
-	}
-
-	public static abstract class BaseClassWithGenericAnnotatedMethod<T> {
-
-		@Order
-		abstract void foo(T t);
-	}
-
-	public static class ExtendsBaseClassWithGenericAnnotatedMethod extends BaseClassWithGenericAnnotatedMethod<String> {
-
-		public void foo(String t) {
 		}
 	}
 

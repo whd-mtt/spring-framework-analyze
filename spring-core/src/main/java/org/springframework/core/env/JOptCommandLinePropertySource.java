@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,6 @@ import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 
 import org.springframework.lang.Nullable;
-import org.springframework.util.CollectionUtils;
-import org.springframework.util.StringUtils;
 
 /**
  * {@link CommandLinePropertySource} implementation backed by a JOpt {@link OptionSet}.
@@ -88,13 +86,13 @@ public class JOptCommandLinePropertySource extends CommandLinePropertySource<Opt
 	public String[] getPropertyNames() {
 		List<String> names = new ArrayList<>();
 		for (OptionSpec<?> spec : this.source.specs()) {
-			String lastOption = CollectionUtils.lastElement(spec.options());
-			if (lastOption != null) {
+			List<String> aliases = new ArrayList<>(spec.options());
+			if (!aliases.isEmpty()) {
 				// Only the longest name is used for enumerating
-				names.add(lastOption);
+				names.add(aliases.get(aliases.size() - 1));
 			}
 		}
-		return StringUtils.toStringArray(names);
+		return names.toArray(new String[names.size()]);
 	}
 
 	@Override

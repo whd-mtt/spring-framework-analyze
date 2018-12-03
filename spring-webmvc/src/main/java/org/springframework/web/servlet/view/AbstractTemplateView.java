@@ -17,7 +17,6 @@
 package org.springframework.web.servlet.view;
 
 import java.util.Enumeration;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -116,7 +115,6 @@ public abstract class AbstractTemplateView extends AbstractUrlBasedView {
 			Map<String, Object> model, HttpServletRequest request, HttpServletResponse response) throws Exception {
 
 		if (this.exposeRequestAttributes) {
-			Map<String, Object> exposed = null;
 			for (Enumeration<String> en = request.getAttributeNames(); en.hasMoreElements();) {
 				String attribute = en.nextElement();
 				if (model.containsKey(attribute) && !this.allowRequestOverride) {
@@ -125,20 +123,16 @@ public abstract class AbstractTemplateView extends AbstractUrlBasedView {
 				}
 				Object attributeValue = request.getAttribute(attribute);
 				if (logger.isDebugEnabled()) {
-					exposed = exposed != null ? exposed : new LinkedHashMap<>();
-					exposed.put(attribute, attributeValue);
+					logger.debug("Exposing request attribute '" + attribute +
+							"' with value [" + attributeValue + "] to model");
 				}
 				model.put(attribute, attributeValue);
-			}
-			if (logger.isTraceEnabled() && exposed != null) {
-				logger.trace("Exposed request attributes to model: " + exposed);
 			}
 		}
 
 		if (this.exposeSessionAttributes) {
 			HttpSession session = request.getSession(false);
 			if (session != null) {
-				Map<String, Object> exposed = null;
 				for (Enumeration<String> en = session.getAttributeNames(); en.hasMoreElements();) {
 					String attribute = en.nextElement();
 					if (model.containsKey(attribute) && !this.allowSessionOverride) {
@@ -147,13 +141,10 @@ public abstract class AbstractTemplateView extends AbstractUrlBasedView {
 					}
 					Object attributeValue = session.getAttribute(attribute);
 					if (logger.isDebugEnabled()) {
-						exposed = exposed != null ? exposed : new LinkedHashMap<>();
-						exposed.put(attribute, attributeValue);
+						logger.debug("Exposing session attribute '" + attribute +
+								"' with value [" + attributeValue + "] to model");
 					}
 					model.put(attribute, attributeValue);
-				}
-				if (logger.isTraceEnabled() && exposed != null) {
-					logger.trace("Exposed session attributes to model: " + exposed);
 				}
 			}
 		}
@@ -170,10 +161,6 @@ public abstract class AbstractTemplateView extends AbstractUrlBasedView {
 		}
 
 		applyContentType(response);
-
-		if (logger.isDebugEnabled()) {
-			logger.debug("Rendering [" + getUrl() + "]");
-		}
 
 		renderMergedTemplateModel(model, request, response);
 	}

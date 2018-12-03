@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,8 +67,8 @@ public class ResponseStatusExceptionResolver extends AbstractHandlerExceptionRes
 
 	@Override
 	@Nullable
-	protected ModelAndView doResolveException(
-			HttpServletRequest request, HttpServletResponse response, @Nullable Object handler, Exception ex) {
+	protected ModelAndView doResolveException(HttpServletRequest request, HttpServletResponse response,
+			@Nullable Object handler, Exception ex) {
 
 		try {
 			if (ex instanceof ResponseStatusException) {
@@ -81,13 +81,12 @@ public class ResponseStatusExceptionResolver extends AbstractHandlerExceptionRes
 			}
 
 			if (ex.getCause() instanceof Exception) {
-				return doResolveException(request, response, handler, (Exception) ex.getCause());
+				ex = (Exception) ex.getCause();
+				return doResolveException(request, response, handler, ex);
 			}
 		}
 		catch (Exception resolveEx) {
-			if (logger.isWarnEnabled()) {
-				logger.warn("Failure while trying to resolve exception [" + ex.getClass().getName() + "]", resolveEx);
-			}
+			logger.warn("Handling of @ResponseStatus resulted in Exception", resolveEx);
 		}
 		return null;
 	}

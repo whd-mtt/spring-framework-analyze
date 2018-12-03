@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 import org.springframework.http.codec.ClientCodecConfigurer;
 import org.springframework.http.codec.HttpMessageReader;
 import org.springframework.http.codec.HttpMessageWriter;
+import org.springframework.util.Assert;
 
 /**
  * Default implementation of {@link ExchangeStrategies.Builder}.
@@ -31,16 +32,7 @@ import org.springframework.http.codec.HttpMessageWriter;
  * @author Arjen Poutsma
  * @since 5.0
  */
-final class DefaultExchangeStrategiesBuilder implements ExchangeStrategies.Builder {
-
-	final static ExchangeStrategies DEFAULT_EXCHANGE_STRATEGIES;
-
-	static {
-		DefaultExchangeStrategiesBuilder builder = new DefaultExchangeStrategiesBuilder();
-		builder.defaultConfiguration();
-		DEFAULT_EXCHANGE_STRATEGIES = builder.build();
-	}
-
+class DefaultExchangeStrategiesBuilder implements ExchangeStrategies.Builder {
 
 	private final ClientCodecConfigurer codecConfigurer = ClientCodecConfigurer.create();
 
@@ -49,49 +41,49 @@ final class DefaultExchangeStrategiesBuilder implements ExchangeStrategies.Build
 		this.codecConfigurer.registerDefaults(false);
 	}
 
-
 	public void defaultConfiguration() {
 		this.codecConfigurer.registerDefaults(true);
 	}
 
 	@Override
 	public ExchangeStrategies.Builder codecs(Consumer<ClientCodecConfigurer> consumer) {
+		Assert.notNull(consumer, "'consumer' must not be null");
 		consumer.accept(this.codecConfigurer);
 		return this;
 	}
 
 	@Override
 	public ExchangeStrategies build() {
-		return new DefaultExchangeStrategies(
-				this.codecConfigurer.getReaders(), this.codecConfigurer.getWriters());
+		return new DefaultExchangeStrategies(this.codecConfigurer.getReaders(),
+				this.codecConfigurer.getWriters());
 	}
 
 
 	private static class DefaultExchangeStrategies implements ExchangeStrategies {
 
-		private final List<HttpMessageReader<?>> readers;
+		private final List<HttpMessageReader<?>> messageReaders;
 
-		private final List<HttpMessageWriter<?>> writers;
+		private final List<HttpMessageWriter<?>> messageWriters;
 
+		public DefaultExchangeStrategies(
+				List<HttpMessageReader<?>> messageReaders, List<HttpMessageWriter<?>> messageWriters) {
 
-		public DefaultExchangeStrategies(List<HttpMessageReader<?>> readers, List<HttpMessageWriter<?>> writers) {
-			this.readers = unmodifiableCopy(readers);
-			this.writers = unmodifiableCopy(writers);
+			this.messageReaders = unmodifiableCopy(messageReaders);
+			this.messageWriters = unmodifiableCopy(messageWriters);
 		}
 
 		private static <T> List<T> unmodifiableCopy(List<? extends T> list) {
 			return Collections.unmodifiableList(new ArrayList<>(list));
 		}
 
-
 		@Override
 		public List<HttpMessageReader<?>> messageReaders() {
-			return this.readers;
+			return this.messageReaders;
 		}
 
 		@Override
 		public List<HttpMessageWriter<?>> messageWriters() {
-			return this.writers;
+			return this.messageWriters;
 		}
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,15 +33,17 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * An implementation of the AspectJ {@link ProceedingJoinPoint} interface
- * wrapping an AOP Alliance {@link org.aopalliance.intercept.MethodInvocation}.
+ * Implementation of AspectJ ProceedingJoinPoint interface
+ * wrapping an AOP Alliance MethodInvocation.
  *
- * <p><b>Note</b>: The {@code getThis()} method returns the current Spring AOP proxy.
+ * <p><b>Note</b>: the {@code getThis()} method returns the current Spring AOP proxy.
  * The {@code getTarget()} method returns the current Spring AOP target (which may be
- * {@code null} if there is no target instance) as a plain POJO without any advice.
- * <b>If you want to call the object and have the advice take effect, use {@code getThis()}.</b>
- * A common example is casting the object to an introduced interface in the implementation of
- * an introduction. There is no such distinction between target and proxy in AspectJ itself.
+ * {@code null} if there is no target), and is a plain POJO without any advice.
+ * <b>If you want to call the object and have the advice take effect, use
+ * {@code getThis()}.</b> A common example is casting the object to an
+ * introduced interface in the implementation of an introduction.
+ *
+ * <p>Of course there is no such distinction between target and proxy in AspectJ.
  *
  * @author Rod Johnson
  * @author Juergen Hoeller
@@ -56,13 +58,13 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 	private final ProxyMethodInvocation methodInvocation;
 
 	@Nullable
-	private Object[] args;
+	private Object[] defensiveCopyOfArgs;
 
-	/** Lazily initialized signature object. */
+	/** Lazily initialized signature object */
 	@Nullable
 	private Signature signature;
 
-	/** Lazily initialized source location object. */
+	/** Lazily initialized source location object */
 	@Nullable
 	private SourceLocation sourceLocation;
 
@@ -76,7 +78,6 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 		Assert.notNull(methodInvocation, "MethodInvocation must not be null");
 		this.methodInvocation = methodInvocation;
 	}
-
 
 	@Override
 	public void set$AroundClosure(AroundClosure aroundClosure) {
@@ -119,10 +120,12 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 
 	@Override
 	public Object[] getArgs() {
-		if (this.args == null) {
-			this.args = this.methodInvocation.getArguments().clone();
+		if (this.defensiveCopyOfArgs == null) {
+			Object[] argsSource = this.methodInvocation.getArguments();
+			this.defensiveCopyOfArgs = new Object[argsSource.length];
+			System.arraycopy(argsSource, 0, this.defensiveCopyOfArgs, 0, argsSource.length);
 		}
-		return this.args;
+		return this.defensiveCopyOfArgs;
 	}
 
 	@Override
@@ -130,7 +133,7 @@ public class MethodInvocationProceedingJoinPoint implements ProceedingJoinPoint,
 		if (this.signature == null) {
 			this.signature = new MethodSignatureImpl();
 		}
-		return this.signature;
+		return signature;
 	}
 
 	@Override

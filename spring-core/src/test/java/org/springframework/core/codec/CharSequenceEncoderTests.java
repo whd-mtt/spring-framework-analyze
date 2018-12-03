@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,43 +16,34 @@
 
 package org.springframework.core.codec;
 
-import java.util.function.Consumer;
-import java.util.stream.Stream;
+import java.util.Collections;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 import org.springframework.core.ResolvableType;
+import org.springframework.core.io.buffer.AbstractDataBufferAllocatingTestCase;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.util.MimeTypeUtils;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Sebastien Deleuze
  */
-public class CharSequenceEncoderTests
-		extends AbstractEncoderTestCase<CharSequence, CharSequenceEncoder> {
+@RunWith(Parameterized.class)
+public class CharSequenceEncoderTests extends AbstractDataBufferAllocatingTestCase {
 
-	private final String foo = "foo";
+	private CharSequenceEncoder encoder;
 
-	private final String bar = "bar";
-
-	public CharSequenceEncoderTests() {
-		super(CharSequenceEncoder.textPlainOnly(), CharSequence.class);
-	}
-
-	@Override
-	protected Flux<CharSequence> input() {
-		return Flux.just(this.foo, this.bar);
-	}
-
-	@Override
-	protected Stream<Consumer<DataBuffer>> outputConsumers() {
-		return Stream.<Consumer<DataBuffer>>builder()
-				.add(resultConsumer(this.foo))
-				.add(resultConsumer(this.bar))
-				.build();
+	@Before
+	public void createEncoder() {
+		this.encoder = CharSequenceEncoder.textPlainOnly();
 	}
 
 	@Test
@@ -71,4 +62,27 @@ public class CharSequenceEncoderTests
 		// SPR-15464
 		assertFalse(this.encoder.canEncode(ResolvableType.NONE, null));
 	}
+
+	@Test
+	public void writeString() {
+		Flux<String> stringFlux = Flux.just("foo");
+		Flux<DataBuffer> output = Flux.from(
+				this.encoder.encode(stringFlux, this.bufferFactory, null, null, Collections.emptyMap()));
+		StepVerifier.create(output)
+				.consumeNextWith(stringConsumer("foo"))
+				.expectComplete()
+				.verify();
+	}
+
+	@Test
+	public void writeStringBuilder() {
+		Flux<StringBuilder> stringBuilderFlux = Flux.just(new StringBuilder("foo"));
+		Flux<DataBuffer> output = Flux.from(
+				this.encoder.encode(stringBuilderFlux, this.bufferFactory, null, null, Collections.emptyMap()));
+		StepVerifier.create(output)
+				.consumeNextWith(stringConsumer("foo"))
+				.expectComplete()
+				.verify();
+	}
+
 }

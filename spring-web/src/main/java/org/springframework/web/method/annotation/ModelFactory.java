@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,8 +103,8 @@ public final class ModelFactory {
 	 * @param handlerMethod the method for which the model is initialized
 	 * @throws Exception may arise from {@code @ModelAttribute} methods
 	 */
-	public void initModel(NativeWebRequest request, ModelAndViewContainer container, HandlerMethod handlerMethod)
-			throws Exception {
+	public void initModel(NativeWebRequest request, ModelAndViewContainer container,
+			HandlerMethod handlerMethod) throws Exception {
 
 		Map<String, ?> sessionAttributes = this.sessionAttributesHandler.retrieveAttributes(request);
 		container.mergeAttributes(sessionAttributes);
@@ -155,11 +155,18 @@ public final class ModelFactory {
 	private ModelMethod getNextModelMethod(ModelAndViewContainer container) {
 		for (ModelMethod modelMethod : this.modelMethods) {
 			if (modelMethod.checkDependencies(container)) {
+				if (logger.isTraceEnabled()) {
+					logger.trace("Selected @ModelAttribute method " + modelMethod);
+				}
 				this.modelMethods.remove(modelMethod);
 				return modelMethod;
 			}
 		}
 		ModelMethod modelMethod = this.modelMethods.get(0);
+		if (logger.isTraceEnabled()) {
+			logger.trace("Selected @ModelAttribute method (not present: " +
+					modelMethod.getUnresolvedDependencies(container)+ ") " + modelMethod);
+		}
 		this.modelMethods.remove(modelMethod);
 		return modelMethod;
 	}
@@ -250,8 +257,7 @@ public final class ModelFactory {
 	}
 
 	/**
-	 * Derive the model attribute name for the given return value. Results will be
-	 * based on:
+	 * Derive the model attribute name for the given return value based on:
 	 * <ol>
 	 * <li>the method {@code ModelAttribute} annotation value
 	 * <li>the declared return type if it is more specific than {@code Object}

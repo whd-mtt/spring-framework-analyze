@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,6 @@ import org.springframework.lang.Nullable;
  *
  * @author Rossen Stoyanchev
  * @since 3.1
- * @param <T> the type of objects that this RequestCondition can be combined
- * with and compared to
  */
 public abstract class AbstractRequestCondition<T extends AbstractRequestCondition<T>> implements RequestCondition<T> {
 
@@ -57,14 +55,15 @@ public abstract class AbstractRequestCondition<T extends AbstractRequestConditio
 
 
 	@Override
-	public boolean equals(@Nullable Object other) {
-		if (this == other) {
+	public boolean equals(@Nullable Object obj) {
+		if (this == obj) {
 			return true;
 		}
-		if (other == null || getClass() != other.getClass()) {
-			return false;
+		if (obj != null && getClass() == obj.getClass()) {
+			AbstractRequestCondition<?> other = (AbstractRequestCondition<?>) obj;
+			return getContent().equals(other.getContent());
 		}
-		return getContent().equals(((AbstractRequestCondition<?>) other).getContent());
+		return false;
 	}
 
 	@Override

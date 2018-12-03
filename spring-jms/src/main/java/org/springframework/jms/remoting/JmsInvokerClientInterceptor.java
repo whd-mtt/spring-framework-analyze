@@ -136,7 +136,7 @@ public class JmsInvokerClientInterceptor implements MethodInterceptor, Initializ
 	/**
 	 * Set the {@link RemoteInvocationFactory} to use for this accessor.
 	 * <p>Default is a {@link DefaultRemoteInvocationFactory}.
-	 * <p>A custom invocation factory can add further context information
+	 * <p>AppConfig custom invocation factory can add further context information
 	 * to the invocation, for example user credentials.
 	 */
 	public void setRemoteInvocationFactory(@Nullable RemoteInvocationFactory remoteInvocationFactory) {

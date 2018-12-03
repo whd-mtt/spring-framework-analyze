@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package org.springframework.aop;
 
 import java.lang.reflect.Method;
+
+import org.springframework.lang.Nullable;
 
 /**
  * Part of a {@link Pointcut}: Checks whether the target method is eligible for advice.
@@ -48,16 +50,16 @@ import java.lang.reflect.Method;
 public interface MethodMatcher {
 
 	/**
-	 * Perform static checking whether the given method matches.
-	 * <p>If this returns {@code false} or if the {@link #isRuntime()}
-	 * method returns {@code false}, no runtime check (i.e. no
-	 * {@link #matches(java.lang.reflect.Method, Class, Object[])} call)
-	 * will be made.
+	 * Perform static checking whether the given method matches. If this
+	 * returns {@code false} or if the {@link #isRuntime()} method
+	 * returns {@code false}, no runtime check (i.e. no.
+	 * {@link #matches(java.lang.reflect.Method, Class, Object[])} call) will be made.
 	 * @param method the candidate method
-	 * @param targetClass the target class
+	 * @param targetClass the target class (may be {@code null}, in which case
+	 * the candidate class must be taken to be the method's declaring class)
 	 * @return whether or not this method matches statically
 	 */
-	boolean matches(Method method, Class<?> targetClass);
+	boolean matches(Method method, @Nullable Class<?> targetClass);
 
 	/**
 	 * Is this MethodMatcher dynamic, that is, must a final call be made on the
@@ -80,12 +82,13 @@ public interface MethodMatcher {
 	 * immediately before potential running of the advice, after any
 	 * advice earlier in the advice chain has run.
 	 * @param method the candidate method
-	 * @param targetClass the target class
+	 * @param targetClass the target class (may be {@code null}, in which case
+	 * the candidate class must be taken to be the method's declaring class)
 	 * @param args arguments to the method
 	 * @return whether there's a runtime match
 	 * @see MethodMatcher#matches(Method, Class)
 	 */
-	boolean matches(Method method, Class<?> targetClass, Object... args);
+	boolean matches(Method method, @Nullable Class<?> targetClass, Object... args);
 
 
 	/**

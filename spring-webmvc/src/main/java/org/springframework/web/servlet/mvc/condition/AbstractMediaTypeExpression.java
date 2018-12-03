@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,15 +74,15 @@ abstract class AbstractMediaTypeExpression implements MediaTypeExpression, Compa
 	}
 
 	@Override
-	public boolean equals(@Nullable Object other) {
-		if (this == other) {
+	public boolean equals(@Nullable Object obj) {
+		if (this == obj) {
 			return true;
 		}
-		if (other == null || getClass() != other.getClass()) {
-			return false;
+		if (obj != null && getClass() == obj.getClass()) {
+			AbstractMediaTypeExpression other = (AbstractMediaTypeExpression) obj;
+			return (this.mediaType.equals(other.mediaType) && this.isNegated == other.isNegated);
 		}
-		AbstractMediaTypeExpression otherExpr = (AbstractMediaTypeExpression) other;
-		return (this.mediaType.equals(otherExpr.mediaType) && this.isNegated == otherExpr.isNegated);
+		return false;
 	}
 
 	@Override

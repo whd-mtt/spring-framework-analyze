@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,8 +118,10 @@ public class SpelExpression implements Expression {
 	public Object getValue() throws EvaluationException {
 		if (this.compiledAst != null) {
 			try {
-				EvaluationContext context = getEvaluationContext();
-				return this.compiledAst.getValue(context.getRootObject().getValue(), context);
+				TypedValue contextRoot =
+						(this.evaluationContext != null ? this.evaluationContext.getRootObject() : null);
+				return this.compiledAst.getValue(
+						(contextRoot != null ? contextRoot.getValue() : null), this.evaluationContext);
 			}
 			catch (Throwable ex) {
 				// If running in mixed mode, revert to interpreted
@@ -146,8 +148,10 @@ public class SpelExpression implements Expression {
 	public <T> T getValue(@Nullable Class<T> expectedResultType) throws EvaluationException {
 		if (this.compiledAst != null) {
 			try {
-				EvaluationContext context = getEvaluationContext();
-				Object result = this.compiledAst.getValue(context.getRootObject().getValue(), context);
+				TypedValue contextRoot =
+						(this.evaluationContext != null ? this.evaluationContext.getRootObject() : null);
+				Object result = this.compiledAst.getValue(
+						(contextRoot != null ? contextRoot.getValue() : null), this.evaluationContext);
 				if (expectedResultType == null) {
 					return (T) result;
 				}
@@ -181,7 +185,7 @@ public class SpelExpression implements Expression {
 	public Object getValue(Object rootObject) throws EvaluationException {
 		if (this.compiledAst != null) {
 			try {
-				return this.compiledAst.getValue(rootObject, getEvaluationContext());
+				return this.compiledAst.getValue(rootObject, evaluationContext);
 			}
 			catch (Throwable ex) {
 				// If running in mixed mode, revert to interpreted
@@ -209,7 +213,7 @@ public class SpelExpression implements Expression {
 	public <T> T getValue(Object rootObject, @Nullable Class<T> expectedResultType) throws EvaluationException {
 		if (this.compiledAst != null) {
 			try {
-				Object result = this.compiledAst.getValue(rootObject, getEvaluationContext());
+				Object result = this.compiledAst.getValue(rootObject, null);
 				if (expectedResultType == null) {
 					return (T)result;
 				}
@@ -246,7 +250,8 @@ public class SpelExpression implements Expression {
 
 		if (this.compiledAst != null) {
 			try {
-				return this.compiledAst.getValue(context.getRootObject().getValue(), context);
+				TypedValue contextRoot = context.getRootObject();
+				return this.compiledAst.getValue(contextRoot.getValue(), context);
 			}
 			catch (Throwable ex) {
 				// If running in mixed mode, revert to interpreted
@@ -275,7 +280,8 @@ public class SpelExpression implements Expression {
 
 		if (this.compiledAst != null) {
 			try {
-				Object result = this.compiledAst.getValue(context.getRootObject().getValue(), context);
+				TypedValue contextRoot = context.getRootObject();
+				Object result = this.compiledAst.getValue(contextRoot.getValue(), context);
 				if (expectedResultType != null) {
 					return ExpressionUtils.convertTypedValue(context, new TypedValue(result), expectedResultType);
 				}
@@ -309,7 +315,7 @@ public class SpelExpression implements Expression {
 
 		if (this.compiledAst != null) {
 			try {
-				return this.compiledAst.getValue(rootObject, context);
+				return this.compiledAst.getValue(rootObject,context);
 			}
 			catch (Throwable ex) {
 				// If running in mixed mode, revert to interpreted

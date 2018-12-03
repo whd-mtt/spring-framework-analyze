@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 package org.springframework.web.util;
 
 /**
- * Factory to create {@link UriBuilder} instances with shared configuration
- * such as a base URI, an encoding mode strategy, and others across all URI
- * builder instances created through a factory.
+ * Factory to create {@link UriBuilder} instances pre-configured in a specific
+ * way such as sharing a common base URI across all builders.
  *
  * @author Rossen Stoyanchev
  * @since 5.0
@@ -26,14 +25,15 @@ package org.springframework.web.util;
 public interface UriBuilderFactory extends UriTemplateHandler {
 
 	/**
-	 * Initialize a builder with the given URI template.
+	 * Create a builder from the given URI template string.
+	 * Implementations may further combine the URI template with a base URI.
 	 * @param uriTemplate the URI template to use
-	 * @return the URI builder instance
+	 * @return the builder instance
 	 */
 	UriBuilder uriString(String uriTemplate);
 
 	/**
-	 * Create a URI builder with default settings.
+	 * Create a builder with default settings.
 	 * @return the builder instance
 	 */
 	UriBuilder builder();

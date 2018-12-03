@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,71 +20,43 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import static java.util.Collections.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.springframework.http.MediaType.*;
+import static org.springframework.http.codec.json.Jackson2JsonEncoder.*;
+import static org.springframework.http.codec.json.JacksonViewBean.*;
+import org.springframework.util.MimeType;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import org.springframework.core.ResolvableType;
-import org.springframework.core.codec.AbstractEncoderTestCase;
+import org.springframework.core.io.buffer.AbstractDataBufferAllocatingTestCase;
 import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.Pojo;
 import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.util.MimeType;
 
-import static java.util.Collections.emptyMap;
-import static java.util.Collections.singletonMap;
-import static org.junit.Assert.*;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8;
-import static org.springframework.http.MediaType.APPLICATION_OCTET_STREAM;
-import static org.springframework.http.MediaType.APPLICATION_STREAM_JSON;
-import static org.springframework.http.MediaType.APPLICATION_XML;
-import static org.springframework.http.codec.json.Jackson2JsonEncoder.JSON_VIEW_HINT;
-import static org.springframework.http.codec.json.JacksonViewBean.MyJacksonView1;
-import static org.springframework.http.codec.json.JacksonViewBean.MyJacksonView3;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Sebastien Deleuze
  */
-public class Jackson2JsonEncoderTests extends AbstractEncoderTestCase<Object, Jackson2JsonEncoder> {
+public class Jackson2JsonEncoderTests extends AbstractDataBufferAllocatingTestCase {
 
+	private final Jackson2JsonEncoder encoder = new Jackson2JsonEncoder();
 
-	public Jackson2JsonEncoderTests() {
-		super(new Jackson2JsonEncoder(), ResolvableType.forClass(Pojo.class),
-				APPLICATION_STREAM_JSON, null);
-	}
-
-	@Override
-	protected Flux<Object> input() {
-		return Flux.just(new Pojo("foo", "bar"),
-				new Pojo("foofoo", "barbar"),
-				new Pojo("foofoofoo", "barbarbar"));
-	}
-
-	@Override
-	protected Stream<Consumer<DataBuffer>> outputConsumers() {
-		return Stream.<Consumer<DataBuffer>>builder()
-				.add(resultConsumer("{\"foo\":\"foo\",\"bar\":\"bar\"}\n"))
-				.add(resultConsumer("{\"foo\":\"foofoo\",\"bar\":\"barbar\"}\n"))
-				.add(resultConsumer("{\"foo\":\"foofoofoo\",\"bar\":\"barbarbar\"}\n"))
-				.build();
-	}
 
 	@Test
 	public void canEncode() {
 		ResolvableType pojoType = ResolvableType.forClass(Pojo.class);
 		assertTrue(this.encoder.canEncode(pojoType, APPLICATION_JSON));
-		assertTrue(this.encoder.canEncode(pojoType, APPLICATION_JSON_UTF8));
-		assertTrue(this.encoder.canEncode(pojoType, APPLICATION_STREAM_JSON));
 		assertTrue(this.encoder.canEncode(pojoType, null));
 
 		// SPR-15464
@@ -120,7 +92,7 @@ public class Jackson2JsonEncoderTests extends AbstractEncoderTestCase<Object, Ja
 	}
 
 	@Test
-	public void encodeNonStream() {
+	public void encode() throws Exception {
 		Flux<Pojo> source = Flux.just(
 				new Pojo("foo", "bar"),
 				new Pojo("foofoo", "barbar"),
@@ -130,29 +102,43 @@ public class Jackson2JsonEncoderTests extends AbstractEncoderTestCase<Object, Ja
 		Flux<DataBuffer> output = this.encoder.encode(source, this.bufferFactory, type, null, emptyMap());
 
 		StepVerifier.create(output)
-				.consumeNextWith(resultConsumer("[" +
+				.consumeNextWith(stringConsumer("[" +
 						"{\"foo\":\"foo\",\"bar\":\"bar\"}," +
 						"{\"foo\":\"foofoo\",\"bar\":\"barbar\"}," +
-						"{\"foo\":\"foofoofoo\",\"bar\":\"barbarbar\"}]")
-						.andThen(DataBufferUtils::release))
+						"{\"foo\":\"foofoofoo\",\"bar\":\"barbarbar\"}]"))
 				.verifyComplete();
 	}
 
 	@Test
-	public void encodeWithType() {
+	public void encodeWithType() throws Exception {
 		Flux<ParentClass> source = Flux.just(new Foo(), new Bar());
 		ResolvableType type = ResolvableType.forClass(ParentClass.class);
 		Flux<DataBuffer> output = this.encoder.encode(source, this.bufferFactory, type, null, emptyMap());
 
 		StepVerifier.create(output)
-				.consumeNextWith(resultConsumer("[{\"type\":\"foo\"},{\"type\":\"bar\"}]")
-						.andThen(DataBufferUtils::release))
+				.consumeNextWith(stringConsumer("[{\"type\":\"foo\"},{\"type\":\"bar\"}]"))
 				.verifyComplete();
 	}
 
+	@Test
+	public void encodeAsStream() throws Exception {
+		Flux<Pojo> source = Flux.just(
+				new Pojo("foo", "bar"),
+				new Pojo("foofoo", "barbar"),
+				new Pojo("foofoofoo", "barbarbar")
+		);
+		ResolvableType type = ResolvableType.forClass(Pojo.class);
+		Flux<DataBuffer> output = this.encoder.encode(source, this.bufferFactory, type, APPLICATION_STREAM_JSON, emptyMap());
+
+		StepVerifier.create(output)
+				.consumeNextWith(stringConsumer("{\"foo\":\"foo\",\"bar\":\"bar\"}\n"))
+				.consumeNextWith(stringConsumer("{\"foo\":\"foofoo\",\"bar\":\"barbar\"}\n"))
+				.consumeNextWith(stringConsumer("{\"foo\":\"foofoofoo\",\"bar\":\"barbarbar\"}\n"))
+				.verifyComplete();
+	}
 
 	@Test  // SPR-15727
-	public void encodeAsStreamWithCustomStreamingType() {
+	public void encodeAsStreamWithCustomStreamingType() throws Exception {
 		MediaType fooMediaType = new MediaType("application", "foo");
 		MediaType barMediaType = new MediaType("application", "bar");
 		this.encoder.setStreamingMediaTypes(Arrays.asList(fooMediaType, barMediaType));
@@ -165,17 +151,14 @@ public class Jackson2JsonEncoderTests extends AbstractEncoderTestCase<Object, Ja
 		Flux<DataBuffer> output = this.encoder.encode(source, this.bufferFactory, type, barMediaType, emptyMap());
 
 		StepVerifier.create(output)
-				.consumeNextWith(resultConsumer("{\"foo\":\"foo\",\"bar\":\"bar\"}\n")
-						.andThen(DataBufferUtils::release))
-				.consumeNextWith(resultConsumer("{\"foo\":\"foofoo\",\"bar\":\"barbar\"}\n")
-						.andThen(DataBufferUtils::release))
-				.consumeNextWith(resultConsumer("{\"foo\":\"foofoofoo\",\"bar\":\"barbarbar\"}\n")
-						.andThen(DataBufferUtils::release))
+				.consumeNextWith(stringConsumer("{\"foo\":\"foo\",\"bar\":\"bar\"}\n"))
+				.consumeNextWith(stringConsumer("{\"foo\":\"foofoo\",\"bar\":\"barbar\"}\n"))
+				.consumeNextWith(stringConsumer("{\"foo\":\"foofoofoo\",\"bar\":\"barbarbar\"}\n"))
 				.verifyComplete();
 	}
 
 	@Test
-	public void fieldLevelJsonView() {
+	public void fieldLevelJsonView() throws Exception {
 		JacksonViewBean bean = new JacksonViewBean();
 		bean.setWithView1("with");
 		bean.setWithView2("with");
@@ -186,13 +169,12 @@ public class Jackson2JsonEncoderTests extends AbstractEncoderTestCase<Object, Ja
 		Flux<DataBuffer> output = this.encoder.encode(Mono.just(bean), this.bufferFactory, type, null, hints);
 
 		StepVerifier.create(output)
-				.consumeNextWith(resultConsumer("{\"withView1\":\"with\"}")
-						.andThen(DataBufferUtils::release))
+				.consumeNextWith(stringConsumer("{\"withView1\":\"with\"}"))
 				.verifyComplete();
 	}
 
 	@Test
-	public void classLevelJsonView() {
+	public void classLevelJsonView() throws Exception {
 		JacksonViewBean bean = new JacksonViewBean();
 		bean.setWithView1("with");
 		bean.setWithView2("with");
@@ -203,12 +185,12 @@ public class Jackson2JsonEncoderTests extends AbstractEncoderTestCase<Object, Ja
 		Flux<DataBuffer> output = this.encoder.encode(Mono.just(bean), this.bufferFactory, type, null, hints);
 
 		StepVerifier.create(output)
-				.consumeNextWith(resultConsumer("{\"withoutView\":\"without\"}")
-						.andThen(DataBufferUtils::release))
+				.consumeNextWith(stringConsumer("{\"withoutView\":\"without\"}"))
 				.verifyComplete();
 	}
 
-	@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+
+	@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 	private static class ParentClass {
 	}
 

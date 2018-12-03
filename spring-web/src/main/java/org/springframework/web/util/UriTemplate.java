@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,20 +102,20 @@ public class UriTemplate implements Serializable {
 		return encodedComponents.toUri();
 	}
 
-	/**
-	 * Given an array of variables, expand this template into a full URI. The array represent variable values.
-	 * The order of variables is significant.
-	 * <p>Example:
-	 * <pre class="code">
-	 * UriTemplate template = new UriTemplate("http://example.com/hotels/{hotel}/bookings/{booking}");
-	 * System.out.println(template.expand("Rest & Relax", 42));
-	 * </pre>
-	 * will print: <blockquote>{@code http://example.com/hotels/Rest%20%26%20Relax/bookings/42}</blockquote>
-	 * @param uriVariableValues the array of URI variables
-	 * @return the expanded URI
-	 * @throws IllegalArgumentException if {@code uriVariables} is {@code null}
-	 * or if it does not contain sufficient variables
-	 */
+    /**
+     * Given an array of variables, expand this template into a full URI. The array represent variable values.
+     * The order of variables is significant.
+     * <p>Example:
+     * <pre class="code">
+     * UriTemplate template = new UriTemplate("http://example.com/hotels/{hotel}/bookings/{booking}");
+     * System.out.println(template.expand("Rest & Relax", 42));
+     * </pre>
+     * will print: <blockquote>{@code http://example.com/hotels/Rest%20%26%20Relax/bookings/42}</blockquote>
+     * @param uriVariableValues the array of URI variables
+     * @return the expanded URI
+     * @throws IllegalArgumentException if {@code uriVariables} is {@code null}
+     * or if it does not contain sufficient variables
+     */
 	public URI expand(Object... uriVariableValues) {
 		UriComponents expandedComponents = this.uriComponents.expand(uriVariableValues);
 		UriComponents encodedComponents = expandedComponents.encode();
@@ -170,7 +170,7 @@ public class UriTemplate implements Serializable {
 	/**
 	 * Helper to extract variable names and regex for matching to actual URLs.
 	 */
-	private static final class TemplateInfo {
+	private static class TemplateInfo {
 
 		private final List<String> variableNames;
 
@@ -212,7 +212,7 @@ public class UriTemplate implements Serializable {
 						String variable = builder.toString();
 						int idx = variable.indexOf(':');
 						if (idx == -1) {
-							pattern.append("([^/]*)");
+							pattern.append("(.*)");
 							variableNames.add(variable);
 						}
 						else {

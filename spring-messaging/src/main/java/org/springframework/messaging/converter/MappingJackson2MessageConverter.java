@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import org.springframework.core.GenericTypeResolver;
 import org.springframework.core.MethodParameter;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
@@ -54,7 +53,7 @@ import org.springframework.util.MimeType;
  * <li>{@link DeserializationFeature#FAIL_ON_UNKNOWN_PROPERTIES} is disabled</li>
  * </ul>
  *
- * <p>Compatible with Jackson 2.9 and higher, as of Spring 5.1.
+ * <p>Compatible with Jackson 2.6 and higher, as of Spring 4.3.
  *
  * @author Rossen Stoyanchev
  * @author Juergen Hoeller
@@ -181,8 +180,8 @@ public class MappingJackson2MessageConverter extends AbstractMessageConverter {
 			return;
 		}
 
-		// Do not log warning for serializer not found (note: different message wording on Jackson 2.9)
-		boolean debugLevel = (cause instanceof JsonMappingException && cause.getMessage().startsWith("Cannot find"));
+		boolean debugLevel = (cause instanceof JsonMappingException &&
+				cause.getMessage().startsWith("Can not find"));
 
 		if (debugLevel ? logger.isDebugEnabled() : logger.isWarnEnabled()) {
 			String msg = "Failed to evaluate Jackson " + (type instanceof JavaType ? "de" : "") +
@@ -208,7 +207,7 @@ public class MappingJackson2MessageConverter extends AbstractMessageConverter {
 	@Override
 	@Nullable
 	protected Object convertFromInternal(Message<?> message, Class<?> targetClass, @Nullable Object conversionHint) {
-		JavaType javaType = getJavaType(targetClass, conversionHint);
+		JavaType javaType = this.objectMapper.constructType(targetClass);
 		Object payload = message.getPayload();
 		Class<?> view = getSerializationView(conversionHint);
 		// Note: in the view case, calling withType instead of forType for compatibility with Jackson <2.5
@@ -233,21 +232,6 @@ public class MappingJackson2MessageConverter extends AbstractMessageConverter {
 		catch (IOException ex) {
 			throw new MessageConversionException(message, "Could not read JSON: " + ex.getMessage(), ex);
 		}
-	}
-
-	private JavaType getJavaType(Class<?> targetClass, @Nullable Object conversionHint) {
-		if (conversionHint instanceof MethodParameter) {
-			MethodParameter param = (MethodParameter) conversionHint;
-			param = param.nestedIfOptional();
-			if (Message.class.isAssignableFrom(param.getParameterType())) {
-				param = param.nested();
-			}
-			Type genericParameterType = param.getNestedGenericParameterType();
-			Class<?> contextClass = param.getContainingClass();
-			Type type = GenericTypeResolver.resolveType(genericParameterType, contextClass);
-			return this.objectMapper.getTypeFactory().constructType(type);
-		}
-		return this.objectMapper.constructType(targetClass);
 	}
 
 	@Override

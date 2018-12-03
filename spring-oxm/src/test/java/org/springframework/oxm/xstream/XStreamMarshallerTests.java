@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,26 @@
 
 package org.springframework.oxm.xstream;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import com.thoughtworks.xstream.converters.Converter;
+import com.thoughtworks.xstream.converters.extended.EncodedByteArrayConverter;
+import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
+import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
+import com.thoughtworks.xstream.io.json.JsonHierarchicalStreamDriver;
+import com.thoughtworks.xstream.io.json.JsonWriter;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.mockito.InOrder;
+import org.springframework.util.xml.StaxUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.Text;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
+import org.xmlunit.builder.Input;
+import org.xmlunit.xpath.JAXPXPathEngine;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.stream.XMLEventWriter;
@@ -37,30 +47,26 @@ import javax.xml.transform.dom.DOMResult;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+import java.io.ByteArrayOutputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import com.thoughtworks.xstream.converters.extended.EncodedByteArrayConverter;
-import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
-import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
-import com.thoughtworks.xstream.io.json.JsonHierarchicalStreamDriver;
-import com.thoughtworks.xstream.io.json.JsonWriter;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.mockito.InOrder;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.Text;
-import org.xml.sax.Attributes;
-import org.xml.sax.ContentHandler;
-import org.xmlunit.builder.Input;
-import org.xmlunit.xpath.JAXPXPathEngine;
-
-import org.springframework.util.xml.StaxUtils;
-
-import static org.junit.Assert.*;
-import static org.mockito.BDDMockito.*;
-import static org.xmlunit.matchers.CompareMatcher.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.BDDMockito.eq;
+import static org.mockito.BDDMockito.inOrder;
+import static org.mockito.BDDMockito.isA;
+import static org.mockito.BDDMockito.mock;
+import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
 
 /**
  * @author Arjen Poutsma
@@ -74,9 +80,8 @@ public class XStreamMarshallerTests {
 
 	private Flight flight;
 
-
 	@Before
-	public void createMarshaller() {
+	public void createMarshaller() throws Exception {
 		marshaller = new XStreamMarshaller();
 		Map<String, String> aliases = new HashMap<>();
 		aliases.put("flight", Flight.class.getName());
@@ -84,7 +89,6 @@ public class XStreamMarshallerTests {
 		flight = new Flight();
 		flight.setFlightNumber(42L);
 	}
-
 
 	@Test
 	public void marshalDOMResult() throws Exception {
@@ -186,7 +190,7 @@ public class XStreamMarshallerTests {
 
 	@Test
 	public void converters() throws Exception {
-		marshaller.setConverters(new EncodedByteArrayConverter());
+		marshaller.setConverters(new Converter[]{new EncodedByteArrayConverter()});
 		byte[] buf = new byte[]{0x1, 0x2};
 		Writer writer = new StringWriter();
 		marshaller.marshal(buf, new StreamResult(writer));
@@ -198,7 +202,7 @@ public class XStreamMarshallerTests {
 
 	@Test
 	public void useAttributesFor() throws Exception {
-		marshaller.setUseAttributeForTypes(Long.TYPE);
+		marshaller.setUseAttributeForTypes(new Class[]{Long.TYPE});
 		Writer writer = new StringWriter();
 		marshaller.marshal(flight, new StreamResult(writer));
 		String expected = "<flight flightNumber=\"42\" />";
@@ -225,7 +229,8 @@ public class XStreamMarshallerTests {
 
 	@Test
 	public void useAttributesForClassStringListMap() throws Exception {
-		marshaller.setUseAttributeFor(Collections.singletonMap(Flight.class, Collections.singletonList("flightNumber")));
+		marshaller
+				.setUseAttributeFor(Collections.singletonMap(Flight.class, Collections.singletonList("flightNumber")));
 		Writer writer = new StringWriter();
 		marshaller.marshal(flight, new StreamResult(writer));
 		String expected = "<flight flightNumber=\"42\" />";
@@ -343,7 +348,6 @@ public class XStreamMarshallerTests {
 		String expected = "<flight><number>42</number></flight>";
 		assertThat("Marshaller writes invalid StreamResult", writer.toString(), isSimilarTo(expected));
 	}
-
 
 	private static void assertXpathExists(String xPathExpression, String inXMLString){
 		Source source = Input.fromString(inXMLString).build();

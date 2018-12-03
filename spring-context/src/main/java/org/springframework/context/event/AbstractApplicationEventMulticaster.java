@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,9 @@
 
 package org.springframework.context.event;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -214,7 +213,7 @@ public abstract class AbstractApplicationEventMulticaster
 	private Collection<ApplicationListener<?>> retrieveApplicationListeners(
 			ResolvableType eventType, @Nullable Class<?> sourceType, @Nullable ListenerRetriever retriever) {
 
-		List<ApplicationListener<?>> allListeners = new ArrayList<>();
+		LinkedList<ApplicationListener<?>> allListeners = new LinkedList<>();
 		Set<ApplicationListener<?>> listeners;
 		Set<String> listenerBeans;
 		synchronized (this.retrievalMutex) {
@@ -239,12 +238,7 @@ public abstract class AbstractApplicationEventMulticaster
 								beanFactory.getBean(listenerBeanName, ApplicationListener.class);
 						if (!allListeners.contains(listener) && supportsEvent(listener, eventType, sourceType)) {
 							if (retriever != null) {
-								if (beanFactory.isSingleton(listenerBeanName)) {
-									retriever.applicationListeners.add(listener);
-								}
-								else {
-									retriever.applicationListenerBeans.add(listenerBeanName);
-								}
+								retriever.applicationListenerBeans.add(listenerBeanName);
 							}
 							allListeners.add(listener);
 						}
@@ -257,10 +251,6 @@ public abstract class AbstractApplicationEventMulticaster
 			}
 		}
 		AnnotationAwareOrderComparator.sort(allListeners);
-		if (retriever != null && retriever.applicationListenerBeans.isEmpty()) {
-			retriever.applicationListeners.clear();
-			retriever.applicationListeners.addAll(allListeners);
-		}
 		return allListeners;
 	}
 
@@ -365,20 +355,23 @@ public abstract class AbstractApplicationEventMulticaster
 	 */
 	private class ListenerRetriever {
 
-		public final Set<ApplicationListener<?>> applicationListeners = new LinkedHashSet<>();
+		public final Set<ApplicationListener<?>> applicationListeners;
 
-		public final Set<String> applicationListenerBeans = new LinkedHashSet<>();
+		public final Set<String> applicationListenerBeans;
 
 		private final boolean preFiltered;
 
 		public ListenerRetriever(boolean preFiltered) {
+			this.applicationListeners = new LinkedHashSet<>();
+			this.applicationListenerBeans = new LinkedHashSet<>();
 			this.preFiltered = preFiltered;
 		}
 
 		public Collection<ApplicationListener<?>> getApplicationListeners() {
-			List<ApplicationListener<?>> allListeners = new ArrayList<>(
-					this.applicationListeners.size() + this.applicationListenerBeans.size());
-			allListeners.addAll(this.applicationListeners);
+			LinkedList<ApplicationListener<?>> allListeners = new LinkedList<>();
+			for (ApplicationListener<?> listener : this.applicationListeners) {
+				allListeners.add(listener);
+			}
 			if (!this.applicationListenerBeans.isEmpty()) {
 				BeanFactory beanFactory = getBeanFactory();
 				for (String listenerBeanName : this.applicationListenerBeans) {
@@ -394,9 +387,7 @@ public abstract class AbstractApplicationEventMulticaster
 					}
 				}
 			}
-			if (!this.preFiltered || !this.applicationListenerBeans.isEmpty()) {
-				AnnotationAwareOrderComparator.sort(allListeners);
-			}
+			AnnotationAwareOrderComparator.sort(allListeners);
 			return allListeners;
 		}
 	}

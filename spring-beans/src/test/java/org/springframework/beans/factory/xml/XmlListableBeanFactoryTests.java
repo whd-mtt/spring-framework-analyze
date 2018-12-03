@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,33 +42,30 @@ import static org.junit.Assert.*;
  * @author Juergen Hoeller
  * @since 09.11.2003
  */
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class XmlListableBeanFactoryTests extends AbstractListableBeanFactoryTests {
 
 	private DefaultListableBeanFactory parent;
 
 	private DefaultListableBeanFactory factory;
 
-
 	@Before
-	public void setup() {
+	public void setUp() {
 		parent = new DefaultListableBeanFactory();
-
-		Map map = new HashMap();
-		map.put("name", "Albert");
+		Map m = new HashMap();
+		m.put("name", "Albert");
 		RootBeanDefinition bd1 = new RootBeanDefinition(TestBean.class);
-		bd1.setPropertyValues(new MutablePropertyValues(map));
+		bd1.setPropertyValues(new MutablePropertyValues(m));
 		parent.registerBeanDefinition("father", bd1);
-
-		map = new HashMap();
-		map.put("name", "Roderick");
+		m = new HashMap();
+		m.put("name", "Roderick");
 		RootBeanDefinition bd2 = new RootBeanDefinition(TestBean.class);
-		bd2.setPropertyValues(new MutablePropertyValues(map));
+		bd2.setPropertyValues(new MutablePropertyValues(m));
 		parent.registerBeanDefinition("rod", bd2);
 
 		this.factory = new DefaultListableBeanFactory(parent);
-		new XmlBeanDefinitionReader(this.factory).loadBeanDefinitions(new ClassPathResource("test.xml", getClass()));
-
+		new XmlBeanDefinitionReader(this.factory).loadBeanDefinitions(
+				new ClassPathResource("test.xml", getClass()));
 		this.factory.addBeanPostProcessor(new BeanPostProcessor() {
 			@Override
 			public Object postProcessBeforeInitialization(Object bean, String name) throws BeansException {
@@ -85,17 +82,15 @@ public class XmlListableBeanFactoryTests extends AbstractListableBeanFactoryTest
 				return bean;
 			}
 		});
-
 		this.factory.addBeanPostProcessor(new LifecycleBean.PostProcessor());
 		this.factory.addBeanPostProcessor(new ProtectedLifecycleBean.PostProcessor());
-		// this.factory.preInstantiateSingletons();
+		//this.factory.preInstantiateSingletons();
 	}
 
 	@Override
 	protected BeanFactory getBeanFactory() {
 		return factory;
 	}
-
 
 	@Test
 	@Override
@@ -109,19 +104,19 @@ public class XmlListableBeanFactoryTests extends AbstractListableBeanFactoryTest
 	}
 
 	@Test
-	public void lifecycleMethods() {
+	public void lifecycleMethods() throws Exception {
 		LifecycleBean bean = (LifecycleBean) getBeanFactory().getBean("lifecycle");
 		bean.businessMethod();
 	}
 
 	@Test
-	public void protectedLifecycleMethods() {
+	public void protectedLifecycleMethods() throws Exception {
 		ProtectedLifecycleBean bean = (ProtectedLifecycleBean) getBeanFactory().getBean("protectedLifecycle");
 		bean.businessMethod();
 	}
 
 	@Test
-	public void descriptionButNoProperties() {
+	public void descriptionButNoProperties() throws Exception {
 		TestBean validEmpty = (TestBean) getBeanFactory().getBean("validEmptyWithDescription");
 		assertEquals(0, validEmpty.getAge());
 	}
@@ -130,7 +125,7 @@ public class XmlListableBeanFactoryTests extends AbstractListableBeanFactoryTest
 	 * Test that properties with name as well as id creating an alias up front.
 	 */
 	@Test
-	public void autoAliasing() {
+	public void autoAliasing() throws Exception {
 		List beanNames = Arrays.asList(getListableBeanFactory().getBeanDefinitionNames());
 
 		TestBean tb1 = (TestBean) getBeanFactory().getBean("aliased");
@@ -229,7 +224,7 @@ public class XmlListableBeanFactoryTests extends AbstractListableBeanFactoryTest
 	}
 
 	@Test
-	public void beanPostProcessor() {
+	public void beanPostProcessor() throws Exception {
 		TestBean kerry = (TestBean) getBeanFactory().getBean("kerry");
 		TestBean kathy = (TestBean) getBeanFactory().getBean("kathy");
 		DummyFactory factory = (DummyFactory) getBeanFactory().getBean("&singletonFactory");

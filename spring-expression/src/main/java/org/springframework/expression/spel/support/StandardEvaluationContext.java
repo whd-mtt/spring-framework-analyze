@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package org.springframework.expression.spel.support;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.expression.BeanResolver;
@@ -38,30 +38,18 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * A powerful and highly configurable {@link EvaluationContext} implementation.
- * This context uses standard implementations of all applicable strategies,
- * based on reflection to resolve properties, methods and fields.
+ * Provides a default EvaluationContext implementation.
  *
- * <p>For a simpler builder-style context variant for data-binding purposes,
- * consider using {@link SimpleEvaluationContext} instead which allows for
- * opting into several SpEL features as needed by specific evaluation cases.
+ * <p>To resolve properties/methods/fields this context uses a reflection mechanism.
  *
  * @author Andy Clement
  * @author Juergen Hoeller
  * @author Sam Brannen
  * @since 3.0
- * @see SimpleEvaluationContext
- * @see ReflectivePropertyAccessor
- * @see ReflectiveConstructorResolver
- * @see ReflectiveMethodResolver
- * @see StandardTypeLocator
- * @see StandardTypeConverter
- * @see StandardTypeComparator
- * @see StandardOperatorOverloader
  */
 public class StandardEvaluationContext implements EvaluationContext {
 
-	private TypedValue rootObject;
+	private TypedValue rootObject = TypedValue.NULL;
 
 	@Nullable
 	private volatile List<PropertyAccessor> propertyAccessors;
@@ -88,23 +76,15 @@ public class StandardEvaluationContext implements EvaluationContext {
 
 	private OperatorOverloader operatorOverloader = new StandardOperatorOverloader();
 
-	private final Map<String, Object> variables = new ConcurrentHashMap<>();
+	private final Map<String, Object> variables = new HashMap<>();
 
 
-	/**
-	 * Create a {@code StandardEvaluationContext} with a null root object.
-	 */
 	public StandardEvaluationContext() {
-		this.rootObject = TypedValue.NULL;
+		setRootObject(null);
 	}
 
-	/**
-	 * Create a {@code StandardEvaluationContext} with the given root object.
-	 * @param rootObject the root object to use
-	 * @see #setRootObject
-	 */
 	public StandardEvaluationContext(Object rootObject) {
-		this.rootObject = new TypedValue(rootObject);
+		setRootObject(rootObject);
 	}
 
 
@@ -203,7 +183,7 @@ public class StandardEvaluationContext implements EvaluationContext {
 	@Override
 	public TypeConverter getTypeConverter() {
 		if (this.typeConverter == null) {
-			this.typeConverter = new StandardTypeConverter();
+			 this.typeConverter = new StandardTypeConverter();
 		}
 		return this.typeConverter;
 	}
@@ -230,16 +210,11 @@ public class StandardEvaluationContext implements EvaluationContext {
 
 	@Override
 	public void setVariable(String name, @Nullable Object value) {
-		if (value != null) {
-			this.variables.put(name, value);
-		}
-		else {
-			this.variables.remove(name);
-		}
+		this.variables.put(name, value);
 	}
 
-	public void setVariables(Map<String, Object> variables) {
-		variables.forEach(this::setVariable);
+	public void setVariables(Map<String,Object> variables) {
+		this.variables.putAll(variables);
 	}
 
 	public void registerFunction(String name, Method method) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,6 @@ public class CaffeineCache extends AbstractValueAdaptingCache {
 	}
 
 	@Override
-	@Nullable
 	protected Object lookup(Object key) {
 		return this.cache.getIfPresent(key);
 	}
@@ -159,10 +158,10 @@ public class CaffeineCache extends AbstractValueAdaptingCache {
 		@Override
 		public Object apply(Object o) {
 			try {
-				return toStoreValue(this.valueLoader.call());
+				return toStoreValue(valueLoader.call());
 			}
 			catch (Exception ex) {
-				throw new ValueRetrievalException(o, this.valueLoader, ex);
+				throw new ValueRetrievalException(o, valueLoader, ex);
 			}
 		}
 	}

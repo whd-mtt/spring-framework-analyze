@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -309,13 +309,15 @@ public class WebDataBinder extends DataBinder {
 	 * (in case of a multipart request). To be called by subclasses.
 	 * <p>Multipart files will only be added to the property values if they
 	 * are not empty or if we're configured to bind empty multipart files too.
-	 * @param multipartFiles a Map of field name String to MultipartFile object
+	 * @param multipartFiles Map of field name String to MultipartFile object
 	 * @param mpvs the property values to be bound (can be modified)
 	 * @see org.springframework.web.multipart.MultipartFile
 	 * @see #setBindEmptyMultipartFiles
 	 */
 	protected void bindMultipart(Map<String, List<MultipartFile>> multipartFiles, MutablePropertyValues mpvs) {
-		multipartFiles.forEach((key, values) -> {
+		for (Map.Entry<String, List<MultipartFile>> entry : multipartFiles.entrySet()) {
+			String key = entry.getKey();
+			List<MultipartFile> values = entry.getValue();
 			if (values.size() == 1) {
 				MultipartFile value = values.get(0);
 				if (isBindEmptyMultipartFiles() || !value.isEmpty()) {
@@ -325,7 +327,7 @@ public class WebDataBinder extends DataBinder {
 			else {
 				mpvs.add(key, values);
 			}
-		});
+		}
 	}
 
 }

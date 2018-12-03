@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.springframework.web.servlet.tags.form;
 
 import javax.servlet.jsp.JspException;
 
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -191,21 +190,21 @@ public class LabelTag extends AbstractHtmlElementTag {
 	 * The {@link TagWriter} instance being used.
 	 * <p>Stored so we can close the tag on {@link #doEndTag()}.
 	 */
-	@Nullable
 	private TagWriter tagWriter;
 
 	/**
 	 * The value of the '{@code for}' attribute.
 	 */
-	@Nullable
 	private String forId;
 
 
 	/**
 	 * Set the value of the '{@code for}' attribute.
 	 * <p>Defaults to the value of {@link #getPath}; may be a runtime expression.
+	 * @throws IllegalArgumentException if the supplied value is {@code null}
 	 */
 	public void setFor(String forId) {
+		Assert.notNull(forId, "'forId' must not be null");
 		this.forId = forId;
 	}
 
@@ -213,8 +212,7 @@ public class LabelTag extends AbstractHtmlElementTag {
 	 * Get the value of the '{@code id}' attribute.
 	 * <p>May be a runtime expression.
 	 */
-	@Nullable
-	protected String getFor() {
+	public String getFor() {
 		return this.forId;
 	}
 
@@ -235,13 +233,12 @@ public class LabelTag extends AbstractHtmlElementTag {
 	}
 
 	/**
-	 * Overrides {@code #getName()} to always return {@code null},
+	 * Overrides {@link #getName()} to always return {@code null},
 	 * because the '{@code name}' attribute is not supported by the
 	 * '{@code label}' tag.
 	 * @return the value for the HTML '{@code name}' attribute
 	 */
 	@Override
-	@Nullable
 	protected String getName() throws JspException {
 		// This also suppresses the 'id' attribute (which is okay for a <label/>)
 		return null;
@@ -276,7 +273,6 @@ public class LabelTag extends AbstractHtmlElementTag {
 	 */
 	@Override
 	public int doEndTag() throws JspException {
-		Assert.state(this.tagWriter != null, "No TagWriter set");
 		this.tagWriter.endTag();
 		return EVAL_PAGE;
 	}

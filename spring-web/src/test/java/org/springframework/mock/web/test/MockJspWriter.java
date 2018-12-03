@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ import java.io.Writer;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.JspWriter;
 
-import org.springframework.lang.Nullable;
-
 /**
  * Mock implementation of the {@link javax.servlet.jsp.JspWriter} class.
  * Only necessary for testing applications when testing custom JSP tags.
@@ -35,7 +33,6 @@ public class MockJspWriter extends JspWriter {
 
 	private final HttpServletResponse response;
 
-	@Nullable
 	private PrintWriter targetWriter;
 
 
@@ -61,7 +58,7 @@ public class MockJspWriter extends JspWriter {
 	 * @param response the servlet response to wrap
 	 * @param targetWriter the target Writer to wrap
 	 */
-	public MockJspWriter(@Nullable HttpServletResponse response, @Nullable Writer targetWriter) {
+	public MockJspWriter(HttpServletResponse response, Writer targetWriter) {
 		super(DEFAULT_BUFFER, true);
 		this.response = (response != null ? response : new MockHttpServletResponse());
 		if (targetWriter instanceof PrintWriter) {
@@ -116,7 +113,7 @@ public class MockJspWriter extends JspWriter {
 	}
 
 	@Override
-	public void write(char[] value, int offset, int length) throws IOException {
+	public void write(char value[], int offset, int length) throws IOException {
 		getTargetWriter().write(value, offset, length);
 	}
 

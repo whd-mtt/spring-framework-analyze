@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,15 +53,15 @@ public class IntroductionInfoSupport implements IntroductionInfo, Serializable {
 	 * due to the delegate implementing it. Call this method to exclude
 	 * internal interfaces from being visible at the proxy level.
 	 * <p>Does nothing if the interface is not implemented by the delegate.
-	 * @param ifc the interface to suppress
+	 * @param intf the interface to suppress
 	 */
-	public void suppressInterface(Class<?> ifc) {
-		this.publishedInterfaces.remove(ifc);
+	public void suppressInterface(Class<?> intf) {
+		this.publishedInterfaces.remove(intf);
 	}
 
 	@Override
 	public Class<?>[] getInterfaces() {
-		return ClassUtils.toClassArray(this.publishedInterfaces);
+		return this.publishedInterfaces.toArray(new Class<?>[this.publishedInterfaces.size()]);
 	}
 
 	/**

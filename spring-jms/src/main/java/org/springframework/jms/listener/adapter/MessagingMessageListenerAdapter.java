@@ -31,7 +31,7 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 
 /**
- * A {@link javax.jms.MessageListener} adapter that invokes a configurable
+ * AppConfig {@link javax.jms.MessageListener} adapter that invokes a configurable
  * {@link InvocableHandlerMethod}.
  *
  * <p>Wraps the incoming {@link javax.jms.Message} to Spring's {@link Message}

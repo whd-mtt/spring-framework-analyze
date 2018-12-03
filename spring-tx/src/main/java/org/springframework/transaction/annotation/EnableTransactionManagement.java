@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,22 +58,23 @@ import org.springframework.core.Ordered;
  * configuration:
  *
  * <pre class="code">
- * &lt;beans&gt;
+ * {@code
+ * <beans>
  *
- *     &lt;tx:annotation-driven/&gt;
+ *     <tx:annotation-driven/>
  *
- *     &lt;bean id="fooRepository" class="com.foo.JdbcFooRepository"&gt;
- *         &lt;constructor-arg ref="dataSource"/&gt;
- *     &lt;/bean&gt;
+ *     <bean id="fooRepository" class="com.foo.JdbcFooRepository">
+ *         <constructor-arg ref="dataSource"/>
+ *     </bean>
  *
- *     &lt;bean id="dataSource" class="com.vendor.VendorDataSource"/&gt;
+ *     <bean id="dataSource" class="com.vendor.VendorDataSource"/>
  *
- *     &lt;bean id="transactionManager" class="org.sfwk...DataSourceTransactionManager"&gt;
- *         &lt;constructor-arg ref="dataSource"/&gt;
- *     &lt;/bean&gt;
+ *     <bean id="transactionManager" class="org.sfwk...DataSourceTransactionManager">
+ *         <constructor-arg ref="dataSource"/>
+ *     </bean>
  *
- * &lt;/beans&gt;
- * </pre>
+ * </beans>
+ * }</pre>
  *
  * In both of the scenarios above, {@code @EnableTransactionManagement} and {@code
  * <tx:annotation-driven/>} are responsible for registering the necessary Spring

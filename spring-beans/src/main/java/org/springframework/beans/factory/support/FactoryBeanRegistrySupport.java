@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,16 @@
 
 package org.springframework.beans.factory.support;
 
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.BeanCurrentlyInCreationException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.FactoryBeanNotInitializedException;
 import org.springframework.lang.Nullable;
+
+import java.security.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Support base class for singleton registries which need to handle
@@ -43,7 +39,7 @@ import org.springframework.lang.Nullable;
  */
 public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanRegistry {
 
-	/** Cache of singleton objects created by FactoryBeans: FactoryBean name to object. */
+	/** Cache of singleton objects created by FactoryBeans: FactoryBean name --> object */
 	private final Map<String, Object> factoryBeanObjectCache = new ConcurrentHashMap<>(16);
 
 
@@ -57,8 +53,8 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	protected Class<?> getTypeForFactoryBean(final FactoryBean<?> factoryBean) {
 		try {
 			if (System.getSecurityManager() != null) {
-				return AccessController.doPrivileged((PrivilegedAction<Class<?>>)
-						factoryBean::getObjectType, getAccessControlContext());
+				return AccessController.doPrivileged((PrivilegedAction<Class<?>>) () ->
+						factoryBean.getObjectType(), getAccessControlContext());
 			}
 			else {
 				return factoryBean.getObjectType();
@@ -66,7 +62,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 		}
 		catch (Throwable ex) {
 			// Thrown from the FactoryBean's getObjectType implementation.
-			logger.info("FactoryBean threw exception from getObjectType, despite the contract saying " +
+			logger.warn("FactoryBean threw exception from getObjectType, despite the contract saying " +
 					"that it should return null if the type of its object cannot be determined yet", ex);
 			return null;
 		}
@@ -93,11 +89,17 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 * @throws BeanCreationException if FactoryBean object creation failed
 	 * @see org.springframework.beans.factory.FactoryBean#getObject()
 	 */
+	//Bean工厂生产Bean实例对象
 	protected Object getObjectFromFactoryBean(FactoryBean<?> factory, String beanName, boolean shouldPostProcess) {
+		//Bean工厂是单态模式，并且Bean工厂缓存中存在指定名称的Bean实例对象
 		if (factory.isSingleton() && containsSingleton(beanName)) {
+			//多线程同步，以防止数据不一致
 			synchronized (getSingletonMutex()) {
+				//直接从Bean工厂缓存中获取指定名称的Bean实例对象
 				Object object = this.factoryBeanObjectCache.get(beanName);
+				//Bean工厂缓存中没有指定名称的实例对象，则生产该实例对象
 				if (object == null) {
+					//调用Bean工厂的getObject方法生产指定Bean的实例对象
 					object = doGetObjectFromFactoryBean(factory, beanName);
 					// Only post-process and store if not put there already during getObject() call above
 					// (e.g. because of circular reference processing triggered by custom getBean calls)
@@ -107,11 +109,6 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 					}
 					else {
 						if (shouldPostProcess) {
-							if (isSingletonCurrentlyInCreation(beanName)) {
-								// Temporarily return non-post-processed object, not storing it yet..
-								return object;
-							}
-							beforeSingletonCreation(beanName);
 							try {
 								object = postProcessObjectFromFactoryBean(object, beanName);
 							}
@@ -119,18 +116,15 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 								throw new BeanCreationException(beanName,
 										"Post-processing of FactoryBean's singleton object failed", ex);
 							}
-							finally {
-								afterSingletonCreation(beanName);
-							}
 						}
-						if (containsSingleton(beanName)) {
-							this.factoryBeanObjectCache.put(beanName, object);
-						}
+						//将生产的实例对象添加到Bean工厂缓存中
+						this.factoryBeanObjectCache.put(beanName, object);
 					}
 				}
 				return object;
 			}
 		}
+		//调用Bean工厂的getObject方法生产指定Bean的实例对象
 		else {
 			Object object = doGetObjectFromFactoryBean(factory, beanName);
 			if (shouldPostProcess) {
@@ -153,6 +147,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 * @throws BeanCreationException if FactoryBean object creation failed
 	 * @see org.springframework.beans.factory.FactoryBean#getObject()
 	 */
+	//调用Bean工厂的getObject方法生产指定Bean的实例对象
 	private Object doGetObjectFromFactoryBean(final FactoryBean<?> factory, final String beanName)
 			throws BeanCreationException {
 
@@ -161,13 +156,17 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 			if (System.getSecurityManager() != null) {
 				AccessControlContext acc = getAccessControlContext();
 				try {
-					object = AccessController.doPrivileged((PrivilegedExceptionAction<Object>) factory::getObject, acc);
+					//实现PrivilegedExceptionAction接口的匿名内置类
+					//根据JVM检查权限，然后决定BeanFactory创建实例对象
+					object = AccessController.doPrivileged((PrivilegedExceptionAction<Object>) () ->
+							factory.getObject(), acc);
 				}
 				catch (PrivilegedActionException pae) {
 					throw pae.getException();
 				}
 			}
 			else {
+				//调用BeanFactory接口实现类的创建对象方法
 				object = factory.getObject();
 			}
 		}
@@ -180,6 +179,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 
 		// Do not accept a null value for a FactoryBean that's not fully
 		// initialized yet: Many FactoryBeans just return null then.
+		//创建出来的实例对象为null，或者因为单态对象正在创建而返回null
 		if (object == null) {
 			if (isSingletonCurrentlyInCreation(beanName)) {
 				throw new BeanCurrentlyInCreationException(
@@ -224,21 +224,17 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 */
 	@Override
 	protected void removeSingleton(String beanName) {
-		synchronized (getSingletonMutex()) {
-			super.removeSingleton(beanName);
-			this.factoryBeanObjectCache.remove(beanName);
-		}
+		super.removeSingleton(beanName);
+		this.factoryBeanObjectCache.remove(beanName);
 	}
 
 	/**
 	 * Overridden to clear the FactoryBean object cache as well.
 	 */
 	@Override
-	protected void clearSingletonCache() {
-		synchronized (getSingletonMutex()) {
-			super.clearSingletonCache();
-			this.factoryBeanObjectCache.clear();
-		}
+	public void destroySingletons() {
+		super.destroySingletons();
+		this.factoryBeanObjectCache.clear();
 	}
 
 	/**

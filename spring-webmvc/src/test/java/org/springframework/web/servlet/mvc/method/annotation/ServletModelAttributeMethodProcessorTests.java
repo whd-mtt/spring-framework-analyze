@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,6 @@ public class ServletModelAttributeMethodProcessorTests {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void createAttributeUriTemplateVarWithOptional() throws Exception {
 		Map<String, String> uriTemplateVars = new HashMap<>();
 		uriTemplateVars.put("testBean3", "Patty");
@@ -142,7 +141,6 @@ public class ServletModelAttributeMethodProcessorTests {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void createAttributeRequestParameterWithOptional() throws Exception {
 		request.addParameter("testBean3", "Patty");
 
@@ -153,7 +151,6 @@ public class ServletModelAttributeMethodProcessorTests {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void attributesAsNullValues() throws Exception {
 		request.addParameter("name", "Patty");
 
@@ -173,7 +170,6 @@ public class ServletModelAttributeMethodProcessorTests {
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
 	public void attributesAsOptionalEmpty() throws Exception {
 		request.addParameter("name", "Patty");
 

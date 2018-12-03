@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,43 +18,33 @@ package org.springframework.core.codec;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
+import java.util.Collections;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
 
 import org.springframework.core.ResolvableType;
+import org.springframework.core.io.buffer.AbstractDataBufferAllocatingTestCase;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.util.MimeTypeUtils;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Sebastien Deleuze
  */
-public class ByteBufferEncoderTests extends AbstractEncoderTestCase<ByteBuffer, ByteBufferEncoder> {
+public class ByteBufferEncoderTests extends AbstractDataBufferAllocatingTestCase {
 
-	private final byte[] fooBytes = "foo".getBytes(StandardCharsets.UTF_8);
+	private ByteBufferEncoder encoder;
 
-	private final byte[] barBytes = "bar".getBytes(StandardCharsets.UTF_8);
-
-	public ByteBufferEncoderTests() {
-		super(new ByteBufferEncoder(), ByteBuffer.class);
-	}
-
-	@Override
-	protected Flux<ByteBuffer> input() {
-		return Flux.just(this.fooBytes, this.barBytes)
-				.map(ByteBuffer::wrap);
-	}
-
-	@Override
-	protected Stream<Consumer<DataBuffer>> outputConsumers() {
-		return Stream.<Consumer<DataBuffer>>builder()
-				.add(resultConsumer(this.fooBytes))
-				.add(resultConsumer(this.barBytes))
-				.build();
+	@Before
+	public void createEncoder() {
+		this.encoder = new ByteBufferEncoder();
 	}
 
 	@Test
@@ -70,5 +60,29 @@ public class ByteBufferEncoderTests extends AbstractEncoderTestCase<ByteBuffer, 
 		assertFalse(this.encoder.canEncode(ResolvableType.NONE, null));
 	}
 
+	@Test
+	public void encode() {
+		byte[] fooBytes = "foo".getBytes(StandardCharsets.UTF_8);
+		byte[] barBytes = "bar".getBytes(StandardCharsets.UTF_8);
+		Flux<ByteBuffer> source =
+				Flux.just(ByteBuffer.wrap(fooBytes), ByteBuffer.wrap(barBytes));
+
+		Flux<DataBuffer> output = this.encoder.encode(source, this.bufferFactory,
+				ResolvableType.forClassWithGenerics(Publisher.class, ByteBuffer.class),
+				null, Collections.emptyMap());
+		StepVerifier.create(output)
+				.consumeNextWith(b -> {
+					byte[] buf = new byte[3];
+					b.read(buf);
+					assertArrayEquals(fooBytes, buf);
+				})
+				.consumeNextWith(b -> {
+					byte[] buf = new byte[3];
+					b.read(buf);
+					assertArrayEquals(barBytes, buf);
+				})
+				.expectComplete()
+				.verify();
+	}
 
 }

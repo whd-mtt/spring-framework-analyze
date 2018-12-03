@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.springframework.test.web.reactive.server;
 
 import java.net.URI;
-import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -50,6 +49,9 @@ import org.springframework.util.Assert;
  * @see HttpHandlerConnector
  */
 class WiretapConnector implements ClientHttpConnector {
+
+	private static final DataBufferFactory bufferFactory = new DefaultDataBufferFactory();
+
 
 	private final ClientHttpConnector delegate;
 
@@ -97,9 +99,6 @@ class WiretapConnector implements ClientHttpConnector {
 	}
 
 
-	/**
-	 * Holder for {@link WiretapClientHttpRequest} and {@link WiretapClientHttpResponse}.
-	 */
 	class Info {
 
 		private final WiretapClientHttpRequest request;
@@ -113,106 +112,9 @@ class WiretapConnector implements ClientHttpConnector {
 		}
 
 
-		public ExchangeResult createExchangeResult(Duration timeout, @Nullable String uriTemplate) {
-			return new ExchangeResult(this.request, this.response, this.request.getRecorder().getContent(),
-					this.response.getRecorder().getContent(), timeout, uriTemplate);
-		}
-	}
-
-
-	/**
-	 * Tap into a Publisher of data buffers to save the content.
-	 */
-	final static class WiretapRecorder {
-
-		private static final DataBufferFactory bufferFactory = new DefaultDataBufferFactory();
-
-
-		@Nullable
-		private final Flux<? extends DataBuffer> publisher;
-
-		@Nullable
-		private final Flux<? extends Publisher<? extends DataBuffer>> publisherNested;
-
-		private final DataBuffer buffer = bufferFactory.allocateBuffer();
-
-		private final MonoProcessor<byte[]> content = MonoProcessor.create();
-
-		private boolean hasContentConsumer;
-
-
-		public WiretapRecorder(@Nullable Publisher<? extends DataBuffer> publisher,
-				@Nullable Publisher<? extends Publisher<? extends DataBuffer>> publisherNested) {
-
-			if (publisher != null && publisherNested != null) {
-				throw new IllegalArgumentException("At most one publisher expected");
-			}
-
-			this.publisher = publisher != null ?
-					Flux.from(publisher)
-							.doOnSubscribe(s -> this.hasContentConsumer = true)
-							.doOnNext(this.buffer::write)
-							.doOnError(this::handleOnError)
-							.doOnCancel(this::handleOnComplete)
-							.doOnComplete(this::handleOnComplete) : null;
-
-			this.publisherNested = publisherNested != null ?
-					Flux.from(publisherNested)
-							.doOnSubscribe(s -> this.hasContentConsumer = true)
-							.map(p -> Flux.from(p).doOnNext(this.buffer::write).doOnError(this::handleOnError))
-							.doOnError(this::handleOnError)
-							.doOnCancel(this::handleOnComplete)
-							.doOnComplete(this::handleOnComplete) : null;
-
-			if (publisher == null && publisherNested == null) {
-				this.content.onComplete();
-			}
-		}
-
-
-		public Publisher<? extends DataBuffer> getPublisherToUse() {
-			Assert.notNull(this.publisher, "Publisher not in use.");
-			return this.publisher;
-		}
-
-		public Publisher<? extends Publisher<? extends DataBuffer>> getNestedPublisherToUse() {
-			Assert.notNull(this.publisherNested, "Nested publisher not in use.");
-			return this.publisherNested;
-		}
-
-		public Mono<byte[]> getContent() {
-			return Mono.defer(() -> {
-				if (this.content.isTerminated()) {
-					return this.content;
-				}
-				if (!this.hasContentConsumer) {
-					// Couple of possible cases:
-					//  1. Mock server never consumed request body (e.g. error before read)
-					//  2. FluxExchangeResult: getResponseBodyContent called before getResponseBody
-					//noinspection ConstantConditions
-					(this.publisher != null ? this.publisher : this.publisherNested)
-							.onErrorMap(ex -> new IllegalStateException(
-									"Content has not been consumed, and " +
-											"an error was raised while attempting to produce it.", ex))
-							.subscribe();
-				}
-				return this.content;
-			});
-		}
-
-
-		private void handleOnError(Throwable ex) {
-			if (!this.content.isTerminated()) {
-				this.content.onError(ex);
-			}
-		}
-
-		private void handleOnComplete() {
-			if (!this.content.isTerminated()) {
-				byte[] bytes = new byte[this.buffer.readableByteCount()];
-				this.buffer.read(bytes);
-				this.content.onNext(bytes);
-			}
+		public ExchangeResult createExchangeResult(@Nullable  String uriTemplate) {
+			return new ExchangeResult(this.request, this.response,
+					this.request.getContent(), this.response.getContent(), uriTemplate);
 		}
 	}
 
@@ -222,35 +124,67 @@ class WiretapConnector implements ClientHttpConnector {
 	 */
 	private static class WiretapClientHttpRequest extends ClientHttpRequestDecorator {
 
-		@Nullable
-		private WiretapRecorder recorder;
+		private final DataBuffer buffer;
+
+		private final MonoProcessor<byte[]> body = MonoProcessor.create();
 
 
 		public WiretapClientHttpRequest(ClientHttpRequest delegate) {
 			super(delegate);
+			this.buffer = bufferFactory.allocateBuffer();
 		}
 
-		public WiretapRecorder getRecorder() {
-			Assert.notNull(this.recorder, "No WiretapRecorder: was the client request written?");
-			return this.recorder;
+
+		/**
+		 * Return a "promise" with the request body content written to the server.
+		 */
+		public MonoProcessor<byte[]> getContent() {
+			return this.body;
 		}
+
 
 		@Override
 		public Mono<Void> writeWith(Publisher<? extends DataBuffer> publisher) {
-			this.recorder = new WiretapRecorder(publisher, null);
-			return super.writeWith(this.recorder.getPublisherToUse());
+			return super.writeWith(
+					Flux.from(publisher)
+							.doOnNext(this::handleOnNext)
+							.doOnError(this::handleError)
+							.doOnCancel(this::handleOnComplete)
+							.doOnComplete(this::handleOnComplete));
 		}
 
 		@Override
 		public Mono<Void> writeAndFlushWith(Publisher<? extends Publisher<? extends DataBuffer>> publisher) {
-			this.recorder = new WiretapRecorder(null, publisher);
-			return super.writeAndFlushWith(this.recorder.getNestedPublisherToUse());
+			return super.writeAndFlushWith(
+					Flux.from(publisher)
+							.map(p -> Flux.from(p).doOnNext(this::handleOnNext).doOnError(this::handleError))
+							.doOnError(this::handleError)
+							.doOnCancel(this::handleOnComplete)
+							.doOnComplete(this::handleOnComplete));
 		}
 
 		@Override
 		public Mono<Void> setComplete() {
-			this.recorder = new WiretapRecorder(null, null);
+			handleOnComplete();
 			return super.setComplete();
+		}
+
+		private void handleOnNext(DataBuffer buffer) {
+			this.buffer.write(buffer);
+		}
+
+		private void handleError(Throwable ex) {
+			if (!this.body.isTerminated()) {
+				this.body.onError(ex);
+			}
+		}
+
+		private void handleOnComplete() {
+			if (!this.body.isTerminated()) {
+				byte[] bytes = new byte[this.buffer.readableByteCount()];
+				this.buffer.read(bytes);
+				this.body.onNext(bytes);
+			}
 		}
 	}
 
@@ -260,23 +194,39 @@ class WiretapConnector implements ClientHttpConnector {
 	 */
 	private static class WiretapClientHttpResponse extends ClientHttpResponseDecorator {
 
-		private final WiretapRecorder recorder;
+		private final DataBuffer buffer;
+
+		private final MonoProcessor<byte[]> body = MonoProcessor.create();
 
 
 		public WiretapClientHttpResponse(ClientHttpResponse delegate) {
 			super(delegate);
-			this.recorder = new WiretapRecorder(super.getBody(), null);
+			this.buffer = bufferFactory.allocateBuffer();
 		}
 
 
-		public WiretapRecorder getRecorder() {
-			return this.recorder;
+		/**
+		 * Return a "promise" with the response body content read from the server.
+		 */
+		public MonoProcessor<byte[]> getContent() {
+			return this.body;
 		}
 
 		@Override
-		@SuppressWarnings("ConstantConditions")
 		public Flux<DataBuffer> getBody() {
-			return Flux.from(this.recorder.getPublisherToUse());
+			return super.getBody()
+					.doOnNext(buffer::write)
+					.doOnError(body::onError)
+					.doOnCancel(this::handleOnComplete)
+					.doOnComplete(this::handleOnComplete);
+		}
+
+		private void handleOnComplete() {
+			if (!this.body.isTerminated()) {
+				byte[] bytes = new byte[this.buffer.readableByteCount()];
+				this.buffer.read(bytes);
+				this.body.onNext(bytes);
+			}
 		}
 	}
 

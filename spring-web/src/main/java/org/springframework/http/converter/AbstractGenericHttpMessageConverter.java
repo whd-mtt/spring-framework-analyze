@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.springframework.lang.Nullable;
  * @author Sebastien Deleuze
  * @author Juergen Hoeller
  * @since 4.2
- * @param <T> the converted object type
  */
 public abstract class AbstractGenericHttpMessageConverter<T> extends AbstractHttpMessageConverter<T>
 		implements GenericHttpMessageConverter<T> {
@@ -88,16 +87,21 @@ public abstract class AbstractGenericHttpMessageConverter<T> extends AbstractHtt
 
 		if (outputMessage instanceof StreamingHttpOutputMessage) {
 			StreamingHttpOutputMessage streamingOutputMessage = (StreamingHttpOutputMessage) outputMessage;
-			streamingOutputMessage.setBody(outputStream -> writeInternal(t, type, new HttpOutputMessage() {
+			streamingOutputMessage.setBody(new StreamingHttpOutputMessage.Body() {
 				@Override
-				public OutputStream getBody() {
-					return outputStream;
+				public void writeTo(final OutputStream outputStream) throws IOException {
+					writeInternal(t, type, new HttpOutputMessage() {
+						@Override
+						public OutputStream getBody() throws IOException {
+							return outputStream;
+						}
+						@Override
+						public HttpHeaders getHeaders() {
+							return headers;
+						}
+					});
 				}
-				@Override
-				public HttpHeaders getHeaders() {
-					return headers;
-				}
-			}));
+			});
 		}
 		else {
 			writeInternal(t, type, outputMessage);

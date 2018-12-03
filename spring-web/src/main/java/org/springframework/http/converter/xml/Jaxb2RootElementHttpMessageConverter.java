@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.springframework.http.converter.xml;
 
+import java.io.IOException;
 import java.io.StringReader;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -40,6 +41,8 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConversionException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 
@@ -121,7 +124,7 @@ public class Jaxb2RootElementHttpMessageConverter extends AbstractJaxb2HttpMessa
 	}
 
 	@Override
-	protected Object readFromSource(Class<?> clazz, HttpHeaders headers, Source source) throws Exception {
+	protected Object readFromSource(Class<?> clazz, HttpHeaders headers, Source source) throws IOException {
 		try {
 			source = processSource(source);
 			Unmarshaller unmarshaller = createUnmarshaller(clazz);
@@ -135,16 +138,17 @@ public class Jaxb2RootElementHttpMessageConverter extends AbstractJaxb2HttpMessa
 		}
 		catch (NullPointerException ex) {
 			if (!isSupportDtd()) {
-				throw new IllegalStateException("NPE while unmarshalling. " +
+				throw new HttpMessageNotReadableException("NPE while unmarshalling. " +
 						"This can happen due to the presence of DTD declarations which are disabled.", ex);
 			}
 			throw ex;
 		}
 		catch (UnmarshalException ex) {
-			throw ex;
+			throw new HttpMessageNotReadableException("Could not unmarshal to [" + clazz + "]: " + ex.getMessage(), ex);
+
 		}
 		catch (JAXBException ex) {
-			throw new HttpMessageConversionException("Invalid JAXB setup: " + ex.getMessage(), ex);
+			throw new HttpMessageConversionException("Could not instantiate JAXBContext: " + ex.getMessage(), ex);
 		}
 	}
 
@@ -174,7 +178,7 @@ public class Jaxb2RootElementHttpMessageConverter extends AbstractJaxb2HttpMessa
 	}
 
 	@Override
-	protected void writeToResult(Object o, HttpHeaders headers, Result result) throws Exception {
+	protected void writeToResult(Object o, HttpHeaders headers, Result result) throws IOException {
 		try {
 			Class<?> clazz = ClassUtils.getUserClass(o);
 			Marshaller marshaller = createMarshaller(clazz);
@@ -182,10 +186,10 @@ public class Jaxb2RootElementHttpMessageConverter extends AbstractJaxb2HttpMessa
 			marshaller.marshal(o, result);
 		}
 		catch (MarshalException ex) {
-			throw ex;
+			throw new HttpMessageNotWritableException("Could not marshal [" + o + "]: " + ex.getMessage(), ex);
 		}
 		catch (JAXBException ex) {
-			throw new HttpMessageConversionException("Invalid JAXB setup: " + ex.getMessage(), ex);
+			throw new HttpMessageConversionException("Could not instantiate JAXBContext: " + ex.getMessage(), ex);
 		}
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,15 +39,14 @@ import org.springframework.util.ObjectUtils;
  * format expression.
  *
  * @author Andy Clement
- * @author Juergen Hoeller
  * @since 3.0
  */
 public abstract class SpelNodeImpl implements SpelNode, Opcodes {
 
-	private static final SpelNodeImpl[] NO_CHILDREN = new SpelNodeImpl[0];
+	private static SpelNodeImpl[] NO_CHILDREN = new SpelNodeImpl[0];
 
 
-	protected int pos;  // start = top 16bits, end = bottom 16bits
+	protected int pos; // start = top 16bits, end = bottom 16bits
 
 	protected SpelNodeImpl[] children = SpelNodeImpl.NO_CHILDREN;
 
@@ -82,7 +81,7 @@ public abstract class SpelNodeImpl implements SpelNode, Opcodes {
 
 
 	/**
-     * Return {@code true} if the next child is one of the specified classes.
+     * @return true if the next child is one of the specified classes
      */
 	protected boolean nextChildIs(Class<?>... clazzes) {
 		if (this.parent != null) {
@@ -124,7 +123,8 @@ public abstract class SpelNodeImpl implements SpelNode, Opcodes {
 
 	@Override
 	public void setValue(ExpressionState expressionState, @Nullable Object newValue) throws EvaluationException {
-		throw new SpelEvaluationException(getStartPosition(), SpelMessage.SETVALUE_NOT_SUPPORTED, getClass());
+		throw new SpelEvaluationException(getStartPosition(),
+				SpelMessage.SETVALUE_NOT_SUPPORTED, getClass());
 	}
 
 	@Override
@@ -194,7 +194,7 @@ public abstract class SpelNodeImpl implements SpelNode, Opcodes {
 
 	public abstract TypedValue getValueInternal(ExpressionState expressionState) throws EvaluationException;
 
-
+	
 	/**
 	 * Generate code that handles building the argument values for the specified method.
 	 * This method will take account of whether the invoked method is a varargs method
@@ -222,12 +222,12 @@ public abstract class SpelNodeImpl implements SpelNode, Opcodes {
 			// have been passed to satisfy the varargs and so something needs to be built.
 			int p = 0; // Current supplied argument being processed
 			int childCount = arguments.length;
-
+						
 			// Fulfill all the parameter requirements except the last one
 			for (p = 0; p < paramDescriptors.length - 1; p++) {
 				generateCodeForArgument(mv, cf, arguments[p], paramDescriptors[p]);
 			}
-
+			
 			SpelNodeImpl lastChild = (childCount == 0 ? null : arguments[childCount - 1]);
 			String arrayType = paramDescriptors[paramDescriptors.length - 1];
 			// Determine if the final passed argument is already suitably packaged in array
@@ -281,5 +281,4 @@ public abstract class SpelNodeImpl implements SpelNode, Opcodes {
 		}
 		cf.exitCompilationScope();
 	}
-
 }

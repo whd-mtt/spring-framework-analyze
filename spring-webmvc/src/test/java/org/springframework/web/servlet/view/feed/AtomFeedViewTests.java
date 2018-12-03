@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.springframework.web.servlet.view.feed;
 import com.rometools.rome.feed.atom.Content;
 import com.rometools.rome.feed.atom.Entry;
 import com.rometools.rome.feed.atom.Feed;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.test.MockHttpServletRequest;
 import org.springframework.mock.web.test.MockHttpServletResponse;
@@ -27,6 +28,7 @@ import org.xmlunit.matchers.CompareMatcher;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +41,12 @@ import static org.junit.Assert.assertThat;
  */
 public class AtomFeedViewTests {
 
-	private final AbstractAtomFeedView view = new MyAtomFeedView();
+	private AbstractAtomFeedView view;
+
+	@Before
+	public void createView() throws Exception {
+		view = new MyAtomFeedView();
+	}
 
 	@Test
 	public void render() throws Exception {
@@ -58,21 +65,24 @@ public class AtomFeedViewTests {
 		assertThat(response.getContentAsString(), isSimilarTo(expected));
 	}
 
-	private static CompareMatcher isSimilarTo(String content) {
-		return CompareMatcher.isSimilarTo(content).ignoreWhitespace();
+	private static CompareMatcher isSimilarTo(final String content) {
+		return CompareMatcher.isSimilarTo(content)
+				.ignoreWhitespace();
 	}
 
 	private static class MyAtomFeedView extends AbstractAtomFeedView {
 
 		@Override
-		protected void buildFeedMetadata(Map<String, Object>model, Feed feed, HttpServletRequest request) {
+		protected void buildFeedMetadata(Map model, Feed feed, HttpServletRequest request) {
 			feed.setTitle("Test Feed");
 		}
 
 		@Override
-		protected List<Entry> buildFeedEntries(Map<String, Object> model, HttpServletRequest request, HttpServletResponse response) {
+		protected List<Entry> buildFeedEntries(Map model, HttpServletRequest request, HttpServletResponse response)
+				throws Exception {
 			List<Entry> entries = new ArrayList<>();
-			for (String name : model.keySet()) {
+			for (Iterator iterator = model.keySet().iterator(); iterator.hasNext();) {
+				String name = (String) iterator.next();
 				Entry entry = new Entry();
 				entry.setTitle(name);
 				Content content = new Content();

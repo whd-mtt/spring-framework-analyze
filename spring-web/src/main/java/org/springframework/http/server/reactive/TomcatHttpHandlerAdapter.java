@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,40 +17,30 @@
 package org.springframework.http.server.reactive;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.catalina.connector.CoyoteInputStream;
 import org.apache.catalina.connector.CoyoteOutputStream;
-import org.apache.catalina.connector.RequestFacade;
-import org.apache.catalina.connector.ResponseFacade;
-import org.apache.coyote.Request;
-import org.apache.coyote.Response;
 
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.util.Assert;
-import org.springframework.util.ReflectionUtils;
 
 /**
  * {@link ServletHttpHandlerAdapter} extension that uses Tomcat APIs for reading
  * from the request and writing to the response with {@link ByteBuffer}.
  *
  * @author Violeta Georgieva
- * @author Brian Clozel
  * @since 5.0
- * @see org.springframework.web.server.adapter.AbstractReactiveWebInitializer
  */
+@WebServlet(asyncSupported = true)
 public class TomcatHttpHandlerAdapter extends ServletHttpHandlerAdapter {
 
 
@@ -60,73 +50,48 @@ public class TomcatHttpHandlerAdapter extends ServletHttpHandlerAdapter {
 
 
 	@Override
-	protected ServletServerHttpRequest createRequest(HttpServletRequest request, AsyncContext asyncContext)
-			throws IOException, URISyntaxException {
+	protected ServerHttpRequest createRequest(HttpServletRequest request, AsyncContext asyncContext)
+			throws IOException {
 
-		Assert.notNull(getServletPath(), "Servlet path is not initialized");
-		return new TomcatServerHttpRequest(
-				request, asyncContext, getServletPath(), getDataBufferFactory(), getBufferSize());
+		Assert.notNull(getServletPath(), "servletPath is not initialized.");
+		return new TomcatServerHttpRequest(request, asyncContext, getServletPath(),
+				getDataBufferFactory(), getBufferSize());
 	}
 
 	@Override
-	protected ServletServerHttpResponse createResponse(HttpServletResponse response,
-			AsyncContext asyncContext, ServletServerHttpRequest request) throws IOException {
+	protected ServerHttpResponse createResponse(HttpServletResponse response, AsyncContext cxt)
+			throws IOException {
 
-		return new TomcatServerHttpResponse(
-				response, asyncContext, getDataBufferFactory(), getBufferSize(), request);
+		return new TomcatServerHttpResponse(response, cxt, getDataBufferFactory(), getBufferSize());
 	}
 
 
-	private static final class TomcatServerHttpRequest extends ServletServerHttpRequest {
+	private final class TomcatServerHttpRequest extends ServletServerHttpRequest {
 
-		private static final Field COYOTE_REQUEST_FIELD;
+		public TomcatServerHttpRequest(HttpServletRequest request, AsyncContext context,
+				String servletPath, DataBufferFactory factory, int bufferSize) throws IOException {
 
-		private final int bufferSize;
-
-		private final DataBufferFactory factory;
-
-		static {
-			Field field = ReflectionUtils.findField(RequestFacade.class, "request");
-			Assert.state(field != null, "Incompatible Tomcat implementation");
-			ReflectionUtils.makeAccessible(field);
-			COYOTE_REQUEST_FIELD = field;
-		}
-
-		TomcatServerHttpRequest(HttpServletRequest request, AsyncContext context,
-				String servletPath, DataBufferFactory factory, int bufferSize)
-				throws IOException, URISyntaxException {
-
-			super(createTomcatHttpHeaders(request), request, context, servletPath, factory, bufferSize);
-			this.factory = factory;
-			this.bufferSize = bufferSize;
-		}
-
-		private static HttpHeaders createTomcatHttpHeaders(HttpServletRequest request) {
-			org.apache.catalina.connector.Request connectorRequest = (org.apache.catalina.connector.Request)
-					ReflectionUtils.getField(COYOTE_REQUEST_FIELD, request);
-			Assert.state(connectorRequest != null, "No Tomcat connector request");
-			Request tomcatRequest = connectorRequest.getCoyoteRequest();
-			TomcatHeadersAdapter headers = new TomcatHeadersAdapter(tomcatRequest.getMimeHeaders());
-			return new HttpHeaders(headers);
+			super(request, context, servletPath, factory, bufferSize);
 		}
 
 		@Override
 		protected DataBuffer readFromInputStream() throws IOException {
 			boolean release = true;
-			int capacity = this.bufferSize;
-			DataBuffer dataBuffer = this.factory.allocateBuffer(capacity);
+			int capacity = getBufferSize();
+			DataBuffer dataBuffer = getDataBufferFactory().allocateBuffer(capacity);
 			try {
 				ByteBuffer byteBuffer = dataBuffer.asByteBuffer(0, capacity);
+
 				ServletRequest request = getNativeRequest();
 				int read = ((CoyoteInputStream) request.getInputStream()).read(byteBuffer);
-				logBytesRead(read);
+				if (logger.isTraceEnabled()) {
+					logger.trace("read:" + read);
+				}
+
 				if (read > 0) {
 					dataBuffer.writePosition(read);
 					release = false;
 					return dataBuffer;
-				}
-				else if (read == -1) {
-					return EOF_BUFFER;
 				}
 				else {
 					return null;
@@ -143,45 +108,10 @@ public class TomcatHttpHandlerAdapter extends ServletHttpHandlerAdapter {
 
 	private static final class TomcatServerHttpResponse extends ServletServerHttpResponse {
 
-		private static final Field COYOTE_RESPONSE_FIELD;
+		public TomcatServerHttpResponse(HttpServletResponse response, AsyncContext context,
+				DataBufferFactory factory, int bufferSize) throws IOException {
 
-		static {
-			Field field = ReflectionUtils.findField(ResponseFacade.class, "response");
-			Assert.state(field != null, "Incompatible Tomcat implementation");
-			ReflectionUtils.makeAccessible(field);
-			COYOTE_RESPONSE_FIELD = field;
-		}
-
-		TomcatServerHttpResponse(HttpServletResponse response, AsyncContext context,
-				DataBufferFactory factory, int bufferSize, ServletServerHttpRequest request) throws IOException {
-
-			super(createTomcatHttpHeaders(response), response, context, factory, bufferSize, request);
-		}
-
-		private static HttpHeaders createTomcatHttpHeaders(HttpServletResponse response) {
-			org.apache.catalina.connector.Response connectorResponse = (org.apache.catalina.connector.Response)
-					ReflectionUtils.getField(COYOTE_RESPONSE_FIELD, response);
-			Assert.state(connectorResponse != null, "No Tomcat connector response");
-			Response tomcatResponse = connectorResponse.getCoyoteResponse();
-			TomcatHeadersAdapter headers = new TomcatHeadersAdapter(tomcatResponse.getMimeHeaders());
-			return new HttpHeaders(headers);
-		}
-
-		@Override
-		protected void applyHeaders() {
-			HttpServletResponse response = getNativeResponse();
-			MediaType contentType = getHeaders().getContentType();
-			if (response.getContentType() == null && contentType != null) {
-				response.setContentType(contentType.toString());
-			}
-			Charset charset = (contentType != null ? contentType.getCharset() : null);
-			if (response.getCharacterEncoding() == null && charset != null) {
-				response.setCharacterEncoding(charset.name());
-			}
-			long contentLength = getHeaders().getContentLength();
-			if (contentLength != -1) {
-				response.setContentLengthLong(contentLength);
-			}
+			super(response, context, factory, bufferSize);
 		}
 
 		@Override

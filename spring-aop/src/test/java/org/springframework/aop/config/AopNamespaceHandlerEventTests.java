@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,20 +51,20 @@ public class AopNamespaceHandlerEventTests {
 
 	private CollectingReaderEventListener eventListener = new CollectingReaderEventListener();
 
+	private XmlBeanDefinitionReader reader;
+
 	private DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
 
-	private XmlBeanDefinitionReader reader;
 
 
 	@Before
-	public void setup() {
+	public void setUp() throws Exception {
 		this.reader = new XmlBeanDefinitionReader(this.beanFactory);
 		this.reader.setEventListener(this.eventListener);
 	}
 
-
 	@Test
-	public void testPointcutEvents() {
+	public void testPointcutEvents() throws Exception {
 		this.reader.loadBeanDefinitions(POINTCUT_EVENTS_CONTEXT);
 		ComponentDefinition[] componentDefinitions = this.eventListener.getComponentDefinitions();
 		assertEquals("Incorrect number of events fired", 1, componentDefinitions.length);
@@ -76,7 +76,8 @@ public class AopNamespaceHandlerEventTests {
 		ComponentDefinition[] nestedComponentDefs = compositeDef.getNestedComponents();
 		assertEquals("Incorrect number of inner components", 2, nestedComponentDefs.length);
 		PointcutComponentDefinition pcd = null;
-		for (ComponentDefinition componentDefinition : nestedComponentDefs) {
+		for (int i = 0; i < nestedComponentDefs.length; i++) {
+			ComponentDefinition componentDefinition = nestedComponentDefs[i];
 			if (componentDefinition instanceof PointcutComponentDefinition) {
 				pcd = (PointcutComponentDefinition) componentDefinition;
 				break;
@@ -87,7 +88,7 @@ public class AopNamespaceHandlerEventTests {
 	}
 
 	@Test
-	public void testAdvisorEventsWithPointcutRef() {
+	public void testAdvisorEventsWithPointcutRef() throws Exception {
 		this.reader.loadBeanDefinitions(POINTCUT_REF_CONTEXT);
 		ComponentDefinition[] componentDefinitions = this.eventListener.getComponentDefinitions();
 		assertEquals("Incorrect number of events fired", 2, componentDefinitions.length);
@@ -116,7 +117,7 @@ public class AopNamespaceHandlerEventTests {
 	}
 
 	@Test
-	public void testAdvisorEventsWithDirectPointcut() {
+	public void testAdvisorEventsWithDirectPointcut() throws Exception {
 		this.reader.loadBeanDefinitions(DIRECT_POINTCUT_EVENTS_CONTEXT);
 		ComponentDefinition[] componentDefinitions = this.eventListener.getComponentDefinitions();
 		assertEquals("Incorrect number of events fired", 2, componentDefinitions.length);
@@ -145,7 +146,7 @@ public class AopNamespaceHandlerEventTests {
 	}
 
 	@Test
-	public void testAspectEvent() {
+	public void testAspectEvent() throws Exception {
 		this.reader.loadBeanDefinitions(CONTEXT);
 		ComponentDefinition[] componentDefinitions = this.eventListener.getComponentDefinitions();
 		assertEquals("Incorrect number of events fired", 5, componentDefinitions.length);
@@ -157,7 +158,8 @@ public class AopNamespaceHandlerEventTests {
 		ComponentDefinition[] nestedComponentDefs = compositeDef.getNestedComponents();
 		assertEquals("Incorrect number of inner components", 2, nestedComponentDefs.length);
 		AspectComponentDefinition acd = null;
-		for (ComponentDefinition componentDefinition : nestedComponentDefs) {
+		for (int i = 0; i < nestedComponentDefs.length; i++) {
+			ComponentDefinition componentDefinition = nestedComponentDefs[i];
 			if (componentDefinition instanceof AspectComponentDefinition) {
 				acd = (AspectComponentDefinition) componentDefinition;
 				break;
@@ -173,7 +175,8 @@ public class AopNamespaceHandlerEventTests {
 		Set<String> expectedReferences = new HashSet<>();
 		expectedReferences.add("pc");
 		expectedReferences.add("countingAdvice");
-		for (BeanReference beanReference : beanReferences) {
+		for (int i = 0; i < beanReferences.length; i++) {
+			BeanReference beanReference = beanReferences[i];
 			expectedReferences.remove(beanReference.getBeanName());
 		}
 		assertEquals("Incorrect references found", 0, expectedReferences.size());

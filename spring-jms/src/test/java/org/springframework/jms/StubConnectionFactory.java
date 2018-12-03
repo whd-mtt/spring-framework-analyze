@@ -22,7 +22,7 @@ import javax.jms.JMSContext;
 import javax.jms.JMSException;
 
 /**
- * A stub implementation of the JMS ConnectionFactory for testing.
+ * AppConfig stub implementation of the JMS ConnectionFactory for testing.
  *
  * @author Mark Fisher
  */

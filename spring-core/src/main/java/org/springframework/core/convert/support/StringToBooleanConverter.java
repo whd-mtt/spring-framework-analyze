@@ -49,7 +49,7 @@ final class StringToBooleanConverter implements Converter<String, Boolean> {
 	@Override
 	public Boolean convert(String source) {
 		String value = source.trim();
-		if (value.isEmpty()) {
+		if ("".equals(value)) {
 			return null;
 		}
 		value = value.toLowerCase();

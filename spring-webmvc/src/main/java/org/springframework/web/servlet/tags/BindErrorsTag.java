@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,27 +33,27 @@ import org.springframework.validation.Errors;
  * <caption>Attribute Summary</caption>
  * <thead>
  * <tr>
- * <th>Attribute</th>
- * <th>Required?</th>
- * <th>Runtime Expression?</th>
- * <th>Description</th>
+ * <th class="colFirst">Attribute</th>
+ * <th class="colOne">Required?</th>
+ * <th class="colOne">Runtime Expression?</th>
+ * <th class="colLast">Description</th>
  * </tr>
  * </thead>
  * <tbody>
- * <tr>
- * <td>htmlEscape</td>
- * <td>false</td>
- * <td>true</td>
+ * <tr class="altColor">
+ * <td>htmlEscape</p></td>
+ * <td>false</p></td>
+ * <td>true</p></td>
  * <td>Set HTML escaping for this tag, as boolean value.
- * Overrides the default HTML escaping setting for the current page.</td>
+ * Overrides the default HTML escaping setting for the current page.</p></td>
  * </tr>
- * <tr>
- * <td>name</td>
- * <td>true</td>
- * <td>true</td>
+ * <tr class="rowColor">
+ * <td>name</p></td>
+ * <td>true</p></td>
+ * <td>true</p></td>
  * <td>The name of the bean in the request that needs to be inspected for errors.
  * If errors are available for this bean, they will be bound under the
- * 'errors' key.</td>
+ * 'errors' key.</p></td>
  * </tr>
  * </tbody>
  * </table>
@@ -66,9 +66,6 @@ import org.springframework.validation.Errors;
 @SuppressWarnings("serial")
 public class BindErrorsTag extends HtmlEscapingAwareTag {
 
-	/**
-	 * Page context attribute containing {@link Errors}.
-	 */
 	public static final String ERRORS_VARIABLE_NAME = "errors";
 
 

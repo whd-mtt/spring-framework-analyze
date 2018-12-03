@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import org.springframework.util.StringUtils;
  * @see PropertiesBeanDefinitionReader
  * @see org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReader
  */
-public abstract class BeanDefinitionReaderUtils {
+public class BeanDefinitionReaderUtils {
 
 	/**
 	 * Separator for generated bean names. If a class name or parent name is not
@@ -124,61 +124,39 @@ public abstract class BeanDefinitionReaderUtils {
 			id = generatedBeanName + GENERATED_BEAN_NAME_SEPARATOR + ObjectUtils.getIdentityHexString(definition);
 		}
 		else {
-			// Top-level bean: use plain class name with unique suffix if necessary.
-			return uniqueBeanName(generatedBeanName, registry);
+			// Top-level bean: use plain class name.
+			// Increase counter until the id is unique.
+			int counter = -1;
+			while (counter == -1 || registry.containsBeanDefinition(id)) {
+				counter++;
+				id = generatedBeanName + GENERATED_BEAN_NAME_SEPARATOR + counter;
+			}
 		}
 		return id;
 	}
 
 	/**
-	 * Turn the given bean name into a unique bean name for the given bean factory,
-	 * appending a unique counter as suffix if necessary.
-	 * @param beanName the original bean name
-	 * @param registry the bean factory that the definition is going to be
-	 * registered with (to check for existing bean names)
-	 * @return the unique bean name to use
-	 * @since 5.1
-	 */
-	public static String uniqueBeanName(String beanName, BeanDefinitionRegistry registry) {
-		String id = beanName;
-		int counter = -1;
-
-		// Increase counter until the id is unique.
-		while (counter == -1 || registry.containsBeanDefinition(id)) {
-			counter++;
-			id = beanName + GENERATED_BEAN_NAME_SEPARATOR + counter;
-		}
-		return id;
-	}
-
-	/**
-	 * 将解析的BeanDefinition注册到容器中
 	 * Register the given bean definition with the given bean factory.
 	 * @param definitionHolder the bean definition including name and aliases
 	 * @param registry the bean factory to register with
 	 * @throws BeanDefinitionStoreException if registration failed
 	 */
+	//将解析的BeanDefinitionHold注册到容器中
 	public static void registerBeanDefinition(
 			BeanDefinitionHolder definitionHolder, BeanDefinitionRegistry registry)
 			throws BeanDefinitionStoreException {
 
 		// Register bean definition under primary name.
-		/**
-		 * 获取BeanDefinition的beanName名称
-		 */
+		//获取解析的BeanDefinition的名称
 		String beanName = definitionHolder.getBeanName();
-		/***
-		 * 根据beanName和BeanDefinition向IOC容器中注册BeanDefinition
-		 */
+		//向IOC容器注册BeanDefinition
 		registry.registerBeanDefinition(beanName, definitionHolder.getBeanDefinition());
 
 		// Register aliases for bean name, if any.
+		//如果解析的BeanDefinition有别名，向容器为其注册别名
 		String[] aliases = definitionHolder.getAliases();
 		if (aliases != null) {
 			for (String alias : aliases) {
-				/**
-				 * 根据beanName和alias注册进入IOC容器
-				 */
 				registry.registerAlias(beanName, alias);
 			}
 		}

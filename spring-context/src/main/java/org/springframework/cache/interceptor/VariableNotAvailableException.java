@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,15 +30,13 @@ class VariableNotAvailableException extends EvaluationException {
 
 	private final String name;
 
-
 	public VariableNotAvailableException(String name) {
-		super("Variable not available");
+		super("Variable '" + name + "' is not available");
 		this.name = name;
 	}
 
 
-	public final String getName() {
+	public String getName() {
 		return this.name;
 	}
-
 }

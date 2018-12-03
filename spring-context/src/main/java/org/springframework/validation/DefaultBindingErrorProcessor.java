@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,9 +59,9 @@ public class DefaultBindingErrorProcessor implements BindingErrorProcessor {
 		String fixedField = bindingResult.getNestedPath() + missingField;
 		String[] codes = bindingResult.resolveMessageCodes(MISSING_FIELD_ERROR_CODE, missingField);
 		Object[] arguments = getArgumentsForBindError(bindingResult.getObjectName(), fixedField);
-		FieldError error = new FieldError(bindingResult.getObjectName(), fixedField, "", true,
-				codes, arguments, "Field '" + fixedField + "' is required");
-		bindingResult.addError(error);
+		bindingResult.addError(new FieldError(
+				bindingResult.getObjectName(), fixedField, "", true,
+				codes, arguments, "Field '" + fixedField + "' is required"));
 	}
 
 	@Override
@@ -72,13 +72,12 @@ public class DefaultBindingErrorProcessor implements BindingErrorProcessor {
 		String[] codes = bindingResult.resolveMessageCodes(ex.getErrorCode(), field);
 		Object[] arguments = getArgumentsForBindError(bindingResult.getObjectName(), field);
 		Object rejectedValue = ex.getValue();
-		if (ObjectUtils.isArray(rejectedValue)) {
+		if (rejectedValue != null && rejectedValue.getClass().isArray()) {
 			rejectedValue = StringUtils.arrayToCommaDelimitedString(ObjectUtils.toObjectArray(rejectedValue));
 		}
-		FieldError error = new FieldError(bindingResult.getObjectName(), field, rejectedValue, true,
-				codes, arguments, ex.getLocalizedMessage());
-		error.wrap(ex);
-		bindingResult.addError(error);
+		bindingResult.addError(new FieldError(
+				bindingResult.getObjectName(), field, rejectedValue, true,
+				codes, arguments, ex.getLocalizedMessage()));
 	}
 
 	/**

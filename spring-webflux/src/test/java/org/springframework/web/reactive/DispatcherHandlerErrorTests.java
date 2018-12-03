@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.springframework.web.reactive;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -53,8 +52,10 @@ import org.springframework.web.server.handler.ExceptionHandlingWebHandler;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.startsWith;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
-import static org.springframework.http.MediaType.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 /**
  * Test the effect of exceptions at different stages of request processing by
@@ -71,7 +72,7 @@ public class DispatcherHandlerErrorTests {
 
 
 	@Before
-	public void setup() {
+	public void setup() throws Exception {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(TestConfig.class);
 		ctx.refresh();
@@ -80,25 +81,20 @@ public class DispatcherHandlerErrorTests {
 
 
 	@Test
-	public void noHandler() {
+	public void noHandler() throws Exception {
 		MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/does-not-exist"));
-		Mono<Void> mono = this.dispatcherHandler.handle(exchange);
+		Mono<Void> publisher = this.dispatcherHandler.handle(exchange);
 
-		StepVerifier.create(mono)
-				.consumeErrorWith(ex -> {
-					assertThat(ex, instanceOf(ResponseStatusException.class));
-					assertThat(ex.getMessage(), is("404 NOT_FOUND \"No matching handler\""));
+		StepVerifier.create(publisher)
+				.consumeErrorWith(error -> {
+					assertThat(error, instanceOf(ResponseStatusException.class));
+					assertThat(error.getMessage(), is("Response status 404 with reason \"No matching handler\""));
 				})
 				.verify();
-
-		// SPR-17475
-		AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
-		StepVerifier.create(mono).consumeErrorWith(exceptionRef::set).verify();
-		StepVerifier.create(mono).consumeErrorWith(ex -> assertNotSame(exceptionRef.get(), ex)).verify();
 	}
 
 	@Test
-	public void controllerReturnsMonoError() {
+	public void controllerReturnsMonoError() throws Exception {
 		MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/error-signal"));
 		Mono<Void> publisher = this.dispatcherHandler.handle(exchange);
 
@@ -108,7 +104,7 @@ public class DispatcherHandlerErrorTests {
 	}
 
 	@Test
-	public void controllerThrowsException() {
+	public void controllerThrowsException() throws Exception {
 		MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/raise-exception"));
 		Mono<Void> publisher = this.dispatcherHandler.handle(exchange);
 
@@ -118,7 +114,7 @@ public class DispatcherHandlerErrorTests {
 	}
 
 	@Test
-	public void unknownReturnType() {
+	public void unknownReturnType() throws Exception {
 		MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/unknown-return-type"));
 		Mono<Void> publisher = this.dispatcherHandler.handle(exchange);
 
@@ -131,7 +127,7 @@ public class DispatcherHandlerErrorTests {
 	}
 
 	@Test
-	public void responseBodyMessageConversionError() {
+	public void responseBodyMessageConversionError() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(
 				MockServerHttpRequest.post("/request-body").accept(APPLICATION_JSON).body("body"));
 
@@ -143,10 +139,10 @@ public class DispatcherHandlerErrorTests {
 	}
 
 	@Test
-	public void requestBodyError() {
+	public void requestBodyError() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(
 				MockServerHttpRequest.post("/request-body").body(Mono.error(EXCEPTION)));
-
+		
 		Mono<Void> publisher = this.dispatcherHandler.handle(exchange);
 
 		StepVerifier.create(publisher)
@@ -155,7 +151,7 @@ public class DispatcherHandlerErrorTests {
 	}
 
 	@Test
-	public void webExceptionHandler() {
+	public void webExceptionHandler() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/unknown-argument-type"));
 
 		List<WebExceptionHandler> handlers = Collections.singletonList(new ServerError500ExceptionHandler());
@@ -205,12 +201,12 @@ public class DispatcherHandlerErrorTests {
 		}
 
 		@RequestMapping("/raise-exception")
-		public void raiseException() {
+		public void raiseException() throws Exception {
 			throw EXCEPTION;
 		}
 
 		@RequestMapping("/unknown-return-type")
-		public Foo unknownReturnType() {
+		public Foo unknownReturnType() throws Exception {
 			return new Foo();
 		}
 

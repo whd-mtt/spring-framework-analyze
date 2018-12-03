@@ -82,10 +82,6 @@ public class SseEmitter extends ResponseBodyEmitter {
 	 * SseEmitter emitter = new SseEmitter();
 	 * emitter.send(event().data(myObject));
 	 * </pre>
-	 *
-	 * <p>Please, see {@link ResponseBodyEmitter#send(Object) parent Javadoc}
-	 * for important notes on exception handling.
-	 *
 	 * @param object the object to write
 	 * @throws IOException raised when an I/O error occurs
 	 * @throws java.lang.IllegalStateException wraps any other errors
@@ -103,10 +99,6 @@ public class SseEmitter extends ResponseBodyEmitter {
 	 * SseEmitter emitter = new SseEmitter();
 	 * emitter.send(event().data(myObject, MediaType.APPLICATION_JSON));
 	 * </pre>
-	 *
-	 * <p>Please, see {@link ResponseBodyEmitter#send(Object) parent Javadoc}
-	 * for important notes on exception handling.
-	 *
 	 * @param object the object to write
 	 * @param mediaType a MediaType hint for selecting an HttpMessageConverter
 	 * @throws IOException raised when an I/O error occurs
@@ -162,7 +154,7 @@ public class SseEmitter extends ResponseBodyEmitter {
 		SseEventBuilder name(String eventName);
 
 		/**
-		 * Add an SSE "retry" line.
+		 * Add an SSE "event" line.
 		 */
 		SseEventBuilder reconnectTime(long reconnectTimeMillis);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,15 +91,14 @@ final class SimpleClientHttpResponse extends AbstractClientHttpResponse {
 
 	@Override
 	public void close() {
-		try {
-			if (this.responseStream == null) {
-				getBody();
+		if (this.responseStream != null) {
+			try {
+				StreamUtils.drain(this.responseStream);
+				this.responseStream.close();
 			}
-			StreamUtils.drain(this.responseStream);
-			this.responseStream.close();
-		}
-		catch (Exception ex) {
-			// ignore
+			catch (IOException ex) {
+				// ignore
+			}
 		}
 	}
 

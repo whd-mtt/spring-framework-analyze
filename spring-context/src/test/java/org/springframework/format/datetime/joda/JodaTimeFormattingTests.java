@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,12 +62,12 @@ public class JodaTimeFormattingTests {
 
 
 	@Before
-	public void setup() {
+	public void setUp() {
 		JodaTimeFormatterRegistrar registrar = new JodaTimeFormatterRegistrar();
-		setup(registrar);
+		setUp(registrar);
 	}
 
-	private void setup(JodaTimeFormatterRegistrar registrar) {
+	private void setUp(JodaTimeFormatterRegistrar registrar) {
 		conversionService = new FormattingConversionService();
 		DefaultConversionService.addDefaultConverters(conversionService);
 		registrar.registerFormatters(conversionService);
@@ -84,7 +84,7 @@ public class JodaTimeFormattingTests {
 	}
 
 	@After
-	public void cleanup() {
+	public void tearDown() {
 		LocaleContextHolder.setLocale(null);
 		JodaTimeContextHolder.setJodaTimeContext(null);
 	}
@@ -108,10 +108,10 @@ public class JodaTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindLocalDateWithSpecificStyle() {
+	public void testBindLocalDateWithSpecificStyle() throws Exception {
 		JodaTimeFormatterRegistrar registrar = new JodaTimeFormatterRegistrar();
 		registrar.setDateStyle("L");
-		setup(registrar);
+		setUp(registrar);
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("localDate", "October 31, 2009");
 		binder.bind(propertyValues);
@@ -120,10 +120,10 @@ public class JodaTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindLocalDateWithSpecificFormatter() {
+	public void testBindLocalDateWithSpecificFormatter() throws Exception {
 		JodaTimeFormatterRegistrar registrar = new JodaTimeFormatterRegistrar();
 		registrar.setDateFormatter(org.joda.time.format.DateTimeFormat.forPattern("yyyyMMdd"));
-		setup(registrar);
+		setUp(registrar);
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("localDate", "20091031");
 		binder.bind(propertyValues);
@@ -196,10 +196,10 @@ public class JodaTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindLocalTimeWithSpecificStyle() {
+	public void testBindLocalTimeWithSpecificStyle() throws Exception {
 		JodaTimeFormatterRegistrar registrar = new JodaTimeFormatterRegistrar();
 		registrar.setTimeStyle("M");
-		setup(registrar);
+		setUp(registrar);
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("localTime", "12:00:00 PM");
 		binder.bind(propertyValues);
@@ -208,10 +208,10 @@ public class JodaTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindLocalTimeWithSpecificFormatter() {
+	public void testBindLocalTimeWithSpecificFormatter() throws Exception {
 		JodaTimeFormatterRegistrar registrar = new JodaTimeFormatterRegistrar();
 		registrar.setTimeFormatter(org.joda.time.format.DateTimeFormat.forPattern("HHmmss"));
-		setup(registrar);
+		setUp(registrar);
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("localTime", "130000");
 		binder.bind(propertyValues);
@@ -261,10 +261,10 @@ public class JodaTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindDateTimeWithSpecificStyle() {
+	public void testBindDateTimeWithSpecificStyle() throws Exception {
 		JodaTimeFormatterRegistrar registrar = new JodaTimeFormatterRegistrar();
 		registrar.setDateTimeStyle("MM");
-		setup(registrar);
+		setUp(registrar);
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("localDateTime", new LocalDateTime(2009, 10, 31, 12, 0));
 		binder.bind(propertyValues);
@@ -275,10 +275,10 @@ public class JodaTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindDateTimeISO() {
+	public void testBindDateTimeISO() throws Exception {
 		JodaTimeFormatterRegistrar registrar = new JodaTimeFormatterRegistrar();
 		registrar.setUseIsoFormat(true);
-		setup(registrar);
+		setUp(registrar);
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("dateTime", "2009-10-31T12:00:00.000Z");
 		binder.bind(propertyValues);
@@ -287,10 +287,10 @@ public class JodaTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindDateTimeWithSpecificFormatter() {
+	public void testBindDateTimeWithSpecificFormatter() throws Exception {
 		JodaTimeFormatterRegistrar registrar = new JodaTimeFormatterRegistrar();
 		registrar.setDateTimeFormatter(org.joda.time.format.DateTimeFormat.forPattern("yyyyMMddHHmmss"));
-		setup(registrar);
+		setUp(registrar);
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("dateTime", "20091031130000");
 		binder.bind(propertyValues);
@@ -435,31 +435,33 @@ public class JodaTimeFormattingTests {
 	}
 
 	@Test
-	public void dateToStringWithFormat() {
+	public void dateToStringWithFormat() throws Exception {
 		JodaTimeFormatterRegistrar registrar = new JodaTimeFormatterRegistrar();
 		registrar.setDateTimeFormatter(org.joda.time.format.DateTimeFormat.shortDateTime());
-		setup(registrar);
+		setUp(registrar);
 		Date date = new Date();
 		Object actual = this.conversionService.convert(date, TypeDescriptor.valueOf(Date.class), TypeDescriptor.valueOf(String.class));
 		String expected = JodaTimeContextHolder.getFormatter(org.joda.time.format.DateTimeFormat.shortDateTime(), Locale.US).print(new DateTime(date));
 		assertEquals(expected, actual);
 	}
 
-	@Test  // SPR-10105
+	@Test
 	@SuppressWarnings("deprecation")
-	public void stringToDateWithoutGlobalFormat() {
+	public void stringToDateWithoutGlobalFormat() throws Exception {
+		// SPR-10105
 		String string = "Sat, 12 Aug 1995 13:30:00 GM";
 		Date date = this.conversionService.convert(string, Date.class);
 		assertThat(date, equalTo(new Date(string)));
 	}
 
-	@Test  // SPR-10105
-	public void stringToDateWithGlobalFormat() {
+	@Test
+	public void stringToDateWithGlobalFormat() throws Exception {
+		// SPR-10105
 		JodaTimeFormatterRegistrar registrar = new JodaTimeFormatterRegistrar();
 		DateTimeFormatterFactory factory = new DateTimeFormatterFactory();
 		factory.setIso(ISO.DATE_TIME);
 		registrar.setDateTimeFormatter(factory.createDateTimeFormatter());
-		setup(registrar);
+		setUp(registrar);
 		// This is a format that cannot be parsed by new Date(String)
 		String string = "2009-10-31T07:00:00.000-05:00";
 		Date date = this.conversionService.convert(string, Date.class);

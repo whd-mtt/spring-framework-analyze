@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,10 @@ package org.springframework.web.reactive.accept;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.http.MediaType;
-import org.springframework.util.Assert;
 import org.springframework.web.server.ServerWebExchange;
 
 /**
@@ -33,7 +35,10 @@ import org.springframework.web.server.ServerWebExchange;
  */
 public class FixedContentTypeResolver implements RequestedContentTypeResolver {
 
-	private final List<MediaType> contentTypes;
+	private static final Log logger = LogFactory.getLog(FixedContentTypeResolver.class);
+
+
+	private final List<MediaType> mediaTypes;
 
 
 	/**
@@ -49,9 +54,8 @@ public class FixedContentTypeResolver implements RequestedContentTypeResolver {
 	 * <p>Consider appending {@link MediaType#ALL} at the end if destinations
 	 * are present which do not support any of the other default media types.
 	 */
-	public FixedContentTypeResolver(List<MediaType> contentTypes) {
-		Assert.notNull(contentTypes, "'contentTypes' must not be null");
-		this.contentTypes = Collections.unmodifiableList(contentTypes);
+	public FixedContentTypeResolver(List<MediaType> mediaTypes) {
+		this.mediaTypes = Collections.unmodifiableList(mediaTypes);
 	}
 
 
@@ -59,13 +63,16 @@ public class FixedContentTypeResolver implements RequestedContentTypeResolver {
 	 * Return the configured list of media types.
 	 */
 	public List<MediaType> getContentTypes() {
-		return this.contentTypes;
+		return this.mediaTypes;
 	}
 
 
 	@Override
 	public List<MediaType> resolveMediaTypes(ServerWebExchange exchange) {
-		return this.contentTypes;
+		if (logger.isDebugEnabled()) {
+			logger.debug("Requested media types: " + this.mediaTypes);
+		}
+		return this.mediaTypes;
 	}
 
 }

@@ -68,7 +68,7 @@ public class ExtendedServletRequestDataBinder extends ServletRequestDataBinder {
 				if (mpvs.contains(name)) {
 					if (logger.isWarnEnabled()) {
 						logger.warn("Skipping URI variable '" + name +
-								"' because request contains bind value with same name.");
+								"' since the request contains a bind value with the same name.");
 					}
 				}
 				else {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,7 +155,7 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
 	 * to concurrent processing of messages that have been received by the same
 	 * underlying Session.</b> As a consequence, it is not recommended to use
 	 * this setting with a {@link SessionAwareMessageListener}, at least not
-	 * if the latter performs actual work on the given Session. A standard
+	 * if the latter performs actual work on the given Session. AppConfig standard
 	 * {@link javax.jms.MessageListener} will work fine, in general.
 	 * @see #setConcurrentConsumers
 	 * @see org.springframework.core.task.SimpleAsyncTaskExecutor
@@ -236,8 +236,8 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
 		invokeExceptionListener(ex);
 
 		// Now try to recover the shared Connection and all consumers...
-		if (logger.isDebugEnabled()) {
-			logger.debug("Trying to recover from JMS Connection exception: " + ex);
+		if (logger.isInfoEnabled()) {
+			logger.info("Trying to recover from JMS Connection exception: " + ex);
 		}
 		try {
 			synchronized (this.consumersMonitor) {
@@ -246,7 +246,7 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
 			}
 			refreshSharedConnection();
 			initializeConsumers();
-			logger.debug("Successfully refreshed JMS Connection");
+			logger.info("Successfully refreshed JMS Connection");
 		}
 		catch (JMSException recoverEx) {
 			logger.debug("Failed to recover JMS Connection", recoverEx);
@@ -293,7 +293,7 @@ public class SimpleMessageListenerContainer extends AbstractMessageListenerConta
 		MessageConsumer consumer = createConsumer(session, destination);
 
 		if (this.taskExecutor != null) {
-			consumer.setMessageListener(message -> this.taskExecutor.execute(() -> processMessage(message, session)));
+			consumer.setMessageListener(message -> taskExecutor.execute(() -> processMessage(message, session)));
 		}
 		else {
 			consumer.setMessageListener(message -> processMessage(message, session));

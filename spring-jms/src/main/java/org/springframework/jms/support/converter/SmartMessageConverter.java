@@ -35,7 +35,7 @@ import org.springframework.lang.Nullable;
 public interface SmartMessageConverter extends MessageConverter {
 
 	/**
-	 * A variant of {@link #toMessage(Object, Session)} which takes an extra conversion
+	 * AppConfig variant of {@link #toMessage(Object, Session)} which takes an extra conversion
 	 * context as an argument, allowing to take e.g. annotations on a payload parameter
 	 * into account.
 	 * @param object the object to convert

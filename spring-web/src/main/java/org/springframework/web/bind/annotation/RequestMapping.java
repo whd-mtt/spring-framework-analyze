@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,33 +25,21 @@ import java.lang.annotation.Target;
 import org.springframework.core.annotation.AliasFor;
 
 /**
- * Annotation for mapping web requests onto methods in request-handling classes
- * with flexible method signatures.
+ * Annotation for mapping web requests onto specific handler classes and/or
+ * handler methods.
  *
- * <p>Both Spring MVC and Spring WebFlux support this annotation through a
- * {@code RequestMappingHandlerMapping} and {@code RequestMappingHandlerAdapter}
- * in their respective modules and package structure. For the exact list of
- * supported handler method arguments and return types in each, please use the
- * reference documentation links below:
- * <ul>
- * <li>Spring MVC
- * <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#mvc-ann-arguments">Method Arguments</a>
- * and
- * <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/web.html#mvc-ann-return-types">Return Values</a>
- * </li>
- * <li>Spring WebFlux
- * <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/web-reactive.html#webflux-ann-arguments">Method Arguments</a>
- * and
- * <a href="https://docs.spring.io/spring/docs/current/spring-framework-reference/web-reactive.html#webflux-ann-return-types">Return Values</a>
- * </li>
- * </ul>
+ * <p>Handler methods annotated with this annotation can have very flexible
+ * signatures. The exact details of the supported method arguments and return
+ * values depend on the specific
+ * {@link org.springframework.stereotype.Controller @Controller} model supported.
+ * Both Spring Web MVC and Spring WebFlux support this annotation with some
+ * differences. More details are available in the Spring Framework reference.
  *
- * <p><strong>Note:</strong> This annotation can be used both at the class and
- * at the method level. In most cases, at the method level applications will
- * prefer to use one of the HTTP method specific variants
- * {@link GetMapping @GetMapping}, {@link PostMapping @PostMapping},
- * {@link PutMapping @PutMapping}, {@link DeleteMapping @DeleteMapping}, or
- * {@link PatchMapping @PatchMapping}.</p>
+ * <p><b>NOTE:</b> {@code @RequestMapping} will only be processed if an
+ * an appropriate {@code HandlerMapping}-{@code HandlerAdapter} pair
+ * is configured. If you are defining custom {@code HandlerMappings} or
+ * {@code HandlerAdapters}, then you need to add {@code RequestMappingHandlerMapping}
+ * and {@code RequestMappingHandlerAdapter} to your configuration.</code>.
  *
  * <p><b>NOTE:</b> When using controller interfaces (e.g. for AOP proxying),
  * make sure to consistently put <i>all</i> your mapping annotations - such as
@@ -67,6 +55,13 @@ import org.springframework.core.annotation.AliasFor;
  * @see PutMapping
  * @see DeleteMapping
  * @see PatchMapping
+ * @see RequestParam
+ * @see RequestAttribute
+ * @see PathVariable
+ * @see ModelAttribute
+ * @see SessionAttribute
+ * @see SessionAttributes
+ * @see InitBinder
  * @see org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter
  * @see org.springframework.web.reactive.result.method.annotation.RequestMappingHandlerAdapter
  */
@@ -99,11 +94,11 @@ public @interface RequestMapping {
 	String[] value() default {};
 
 	/**
-	 * The path mapping URIs (e.g. "/myPath.do").
+	 * In a Servlet environment only: the path mapping URIs (e.g. "/myPath.do").
 	 * Ant-style path patterns are also supported (e.g. "/myPath/*.do").
-	 * At the method level, relative paths (e.g. "edit.do") are supported
-	 * within the primary mapping expressed at the type level.
-	 * Path mapping URIs may contain placeholders (e.g. "/${connect}").
+	 * At the method level, relative paths (e.g. "edit.do") are supported within
+	 * the primary mapping expressed at the type level. Path mapping URIs may
+	 * contain placeholders (e.g. "/${connect}")
 	 * <p><b>Supported at the type level as well as at the method level!</b>
 	 * When used at the type level, all method-level mappings inherit
 	 * this primary mapping, narrowing it for a specific handler method.
@@ -193,10 +188,10 @@ public @interface RequestMapping {
 	 * <pre class="code">
 	 * produces = "text/plain"
 	 * produces = {"text/plain", "application/*"}
-	 * produces = MediaType.APPLICATION_JSON_UTF8_VALUE
+	 * produces = "application/json; charset=UTF-8"
 	 * </pre>
 	 * <p>It affects the actual content type written, for example to produce a JSON response
-	 * with UTF-8 encoding, {@link org.springframework.http.MediaType#APPLICATION_JSON_UTF8_VALUE} should be used.
+	 * with UTF-8 encoding, {@code "application/json; charset=UTF-8"} should be used.
 	 * <p>Expressions can be negated by using the "!" operator, as in "!text/plain", which matches
 	 * all requests with a {@code Accept} other than "text/plain".
 	 * <p><b>Supported at the type level as well as at the method level!</b>

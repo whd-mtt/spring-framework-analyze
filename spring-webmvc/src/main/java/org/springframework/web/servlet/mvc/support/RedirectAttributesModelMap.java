@@ -111,7 +111,9 @@ public class RedirectAttributesModelMap extends ModelMap implements RedirectAttr
 	@Override
 	public RedirectAttributesModelMap addAllAttributes(@Nullable Map<String, ?> attributes) {
 		if (attributes != null) {
-			attributes.forEach(this::addAttribute);
+			for (String key : attributes.keySet()) {
+				addAttribute(key, attributes.get(key));
+			}
 		}
 		return this;
 	}
@@ -123,11 +125,11 @@ public class RedirectAttributesModelMap extends ModelMap implements RedirectAttr
 	@Override
 	public RedirectAttributesModelMap mergeAttributes(@Nullable Map<String, ?> attributes) {
 		if (attributes != null) {
-			attributes.forEach((key, attribute) -> {
+			for (String key : attributes.keySet()) {
 				if (!containsKey(key)) {
-					addAttribute(key, attribute);
+					addAttribute(key, attributes.get(key));
 				}
-			});
+			}
 		}
 		return this;
 	}
@@ -153,7 +155,9 @@ public class RedirectAttributesModelMap extends ModelMap implements RedirectAttr
 	@Override
 	public void putAll(@Nullable Map<? extends String, ? extends Object> map) {
 		if (map != null) {
-			map.forEach((key, value) -> put(key, formatValue(value)));
+			for (String key : map.keySet()) {
+				put(key, formatValue(map.get(key)));
+			}
 		}
 	}
 

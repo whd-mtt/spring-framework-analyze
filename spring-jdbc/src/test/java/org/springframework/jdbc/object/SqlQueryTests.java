@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.jdbc.Customer;
 import org.springframework.jdbc.core.SqlParameter;
 import org.springframework.lang.Nullable;
-import org.springframework.util.StringUtils;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
@@ -616,7 +615,7 @@ public class SqlQueryTests  {
 		ids.add(2);
 		List<Customer> cust = query.findCustomers(ids);
 
-		assertEquals("We got two customers back", 2, cust.size());
+		assertEquals("We got two customers back", cust.size(), 2);
 		assertEquals("First customer id was assigned correctly", cust.get(0).getId(), 1);
 		assertEquals("First customer forename was assigned correctly", cust.get(0).getForename(), "rod");
 		assertEquals("Second customer id was assigned correctly", cust.get(1).getId(), 2);
@@ -665,7 +664,7 @@ public class SqlQueryTests  {
 		CustomerQuery query = new CustomerQuery(dataSource);
 		List<Customer> cust = query.findCustomers(1);
 
-		assertEquals("We got two customers back", 2, cust.size());
+		assertEquals("We got two customers back", cust.size(), 2);
 		assertEquals("First customer id was assigned correctly", cust.get(0).getId(), 1);
 		assertEquals("First customer forename was assigned correctly", cust.get(0).getForename(), "rod");
 		assertEquals("Second customer id was assigned correctly", cust.get(1).getId(), 2);
@@ -765,7 +764,9 @@ public class SqlQueryTests  {
 		}
 
 		public String[] run() {
-			return StringUtils.toStringArray(execute());
+			List<String> list = execute();
+			String[] results = list.toArray(new String[list.size()]);
+			return results;
 		}
 	}
 

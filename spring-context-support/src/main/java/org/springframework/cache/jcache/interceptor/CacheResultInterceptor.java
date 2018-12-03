@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import org.springframework.cache.interceptor.CacheOperationInvocationContext;
 import org.springframework.cache.interceptor.CacheOperationInvoker;
 import org.springframework.cache.interceptor.CacheResolver;
 import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
 import org.springframework.util.ExceptionTypeFilter;
 import org.springframework.util.SerializationUtils;
 
@@ -43,9 +42,8 @@ class CacheResultInterceptor extends AbstractKeyCacheInterceptor<CacheResultOper
 
 
 	@Override
-	@Nullable
-	protected Object invoke(
-			CacheOperationInvocationContext<CacheResultOperation> context, CacheOperationInvoker invoker) {
+	protected Object invoke(CacheOperationInvocationContext<CacheResultOperation> context,
+			CacheOperationInvoker invoker) {
 
 		CacheResultOperation operation = context.getOperation();
 		Object cacheKey = generateKey(context);
@@ -76,19 +74,17 @@ class CacheResultInterceptor extends AbstractKeyCacheInterceptor<CacheResultOper
 	/**
 	 * Check for a cached exception. If the exception is found, throw it directly.
 	 */
-	protected void checkForCachedException(@Nullable Cache exceptionCache, Object cacheKey) {
+	protected void checkForCachedException(Cache exceptionCache, Object cacheKey) {
 		if (exceptionCache == null) {
 			return;
 		}
 		Cache.ValueWrapper result = doGet(exceptionCache, cacheKey);
 		if (result != null) {
-			Throwable ex = (Throwable) result.get();
-			Assert.state(ex != null, "No exception in cache");
-			throw rewriteCallStack(ex, getClass().getName(), "invoke");
+			throw rewriteCallStack((Throwable) result.get(), getClass().getName(), "invoke");
 		}
 	}
 
-	protected void cacheException(@Nullable Cache exceptionCache, ExceptionTypeFilter filter, Object cacheKey, Throwable ex) {
+	protected void cacheException(Cache exceptionCache, ExceptionTypeFilter filter, Object cacheKey, Throwable ex) {
 		if (exceptionCache == null) {
 			return;
 		}
@@ -147,7 +143,6 @@ class CacheResultInterceptor extends AbstractKeyCacheInterceptor<CacheResultOper
 	}
 
 	@SuppressWarnings("unchecked")
-	@Nullable
 	private static <T extends Throwable> T cloneException(T exception) {
 		try {
 			return (T) SerializationUtils.deserialize(SerializationUtils.serialize(exception));

@@ -139,11 +139,8 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 			throws BeansException {
 
 		super(parent);
-		//设置配置文件的信息
 		setConfigLocations(configLocations);
 		if (refresh) {
-			//初始化最核心的方法就是refresh方法
-			//把所有的bean重新构造一遍，保证IOC容器是个单例的
 			refresh();
 		}
 	}

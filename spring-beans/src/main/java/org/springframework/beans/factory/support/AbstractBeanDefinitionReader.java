@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.springframework.beans.factory.support;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -46,9 +45,9 @@ import org.springframework.util.Assert;
  * @since 11.12.2003
  * @see BeanDefinitionReaderUtils
  */
-public abstract class AbstractBeanDefinitionReader implements BeanDefinitionReader, EnvironmentCapable {
+public abstract class AbstractBeanDefinitionReader implements EnvironmentCapable, BeanDefinitionReader {
 
-	/** Logger available to subclasses. */
+	/** Logger available to subclasses */
 	protected final Log logger = LogFactory.getLog(getClass());
 
 	private final BeanDefinitionRegistry registry;
@@ -183,13 +182,13 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 	@Override
 	public int loadBeanDefinitions(Resource... resources) throws BeanDefinitionStoreException {
 		Assert.notNull(resources, "Resource array must not be null");
-		int count = 0;
+		int counter = 0;
 		for (Resource resource : resources) {
-			count += loadBeanDefinitions(resource);
+			counter += loadBeanDefinitions(resource);
 		}
-		return count;
+		return counter;
 	}
-
+	//重载方法，调用下面的loadBeanDefinitions(String, Set<Resource>);方法
 	@Override
 	public int loadBeanDefinitions(String location) throws BeanDefinitionStoreException {
 		return loadBeanDefinitions(location, null);
@@ -211,25 +210,30 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 	 * @see #loadBeanDefinitions(org.springframework.core.io.Resource[])
 	 */
 	public int loadBeanDefinitions(String location, @Nullable Set<Resource> actualResources) throws BeanDefinitionStoreException {
-		//获取IOC容器初始化过程中设置的资源加载器
+		//获取在IoC容器初始化过程中设置的资源加载器
 		ResourceLoader resourceLoader = getResourceLoader();
 		if (resourceLoader == null) {
 			throw new BeanDefinitionStoreException(
-					"Cannot load bean definitions from location [" + location + "]: no ResourceLoader available");
+					"Cannot import bean definitions from location [" + location + "]: no ResourceLoader available");
 		}
 
 		if (resourceLoader instanceof ResourcePatternResolver) {
 			// Resource pattern matching available.
 			try {
+				//将指定位置的Bean定义资源文件解析为Spring IOC容器封装的资源
+				//加载多个指定位置的Bean定义资源文件
 				Resource[] resources = ((ResourcePatternResolver) resourceLoader).getResources(location);
-				int count = loadBeanDefinitions(resources);
+				//委派调用其子类XmlBeanDefinitionReader的方法，实现加载功能
+				int loadCount = loadBeanDefinitions(resources);
 				if (actualResources != null) {
-					Collections.addAll(actualResources, resources);
+					for (Resource resource : resources) {
+						actualResources.add(resource);
+					}
 				}
-				if (logger.isTraceEnabled()) {
-					logger.trace("Loaded " + count + " bean definitions from location pattern [" + location + "]");
+				if (logger.isDebugEnabled()) {
+					logger.debug("Loaded " + loadCount + " bean definitions from location pattern [" + location + "]");
 				}
-				return count;
+				return loadCount;
 			}
 			catch (IOException ex) {
 				throw new BeanDefinitionStoreException(
@@ -238,27 +242,30 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 		}
 		else {
 			// Can only load single resources by absolute URL.
+			//将指定位置的Bean定义资源文件解析为Spring IOC容器封装的资源
+			//加载单个指定位置的Bean定义资源文件
 			Resource resource = resourceLoader.getResource(location);
-			int count = loadBeanDefinitions(resource);
+			//委派调用其子类XmlBeanDefinitionReader的方法，实现加载功能
+			int loadCount = loadBeanDefinitions(resource);
 			if (actualResources != null) {
 				actualResources.add(resource);
 			}
-			if (logger.isTraceEnabled()) {
-				logger.trace("Loaded " + count + " bean definitions from location [" + location + "]");
+			if (logger.isDebugEnabled()) {
+				logger.debug("Loaded " + loadCount + " bean definitions from location [" + location + "]");
 			}
-			return count;
+			return loadCount;
 		}
 	}
 
+	//重载方法，调用loadBeanDefinitions(String);
 	@Override
 	public int loadBeanDefinitions(String... locations) throws BeanDefinitionStoreException {
 		Assert.notNull(locations, "Location array must not be null");
-		int count = 0;
+		int counter = 0;
 		for (String location : locations) {
-			//循环遍历资源定位
-			count += loadBeanDefinitions(location);
+			counter += loadBeanDefinitions(location);
 		}
-		return count;
+		return counter;
 	}
 
 }

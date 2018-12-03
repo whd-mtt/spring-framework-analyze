@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,6 @@ import org.springframework.util.Assert;
  */
 public class DestinationVariableMethodArgumentResolver extends AbstractNamedValueMethodArgumentResolver {
 
-	/**
-	 * The name of the header used to for template variables.
-	 */
 	public static final String DESTINATION_TEMPLATE_VARIABLES_HEADER =
 			DestinationVariableMethodArgumentResolver.class.getSimpleName() + ".templateVariables";
 
@@ -78,7 +75,7 @@ public class DestinationVariableMethodArgumentResolver extends AbstractNamedValu
 	}
 
 
-	private static final class DestinationVariableNamedValueInfo extends NamedValueInfo {
+	private static class DestinationVariableNamedValueInfo extends NamedValueInfo {
 
 		private DestinationVariableNamedValueInfo(DestinationVariable annotation) {
 			super(annotation.value(), true, ValueConstants.DEFAULT_NONE);

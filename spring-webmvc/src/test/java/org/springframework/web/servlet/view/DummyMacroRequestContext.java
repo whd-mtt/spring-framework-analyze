@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2009 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@ public class DummyMacroRequestContext {
 
 	private HttpServletRequest request;
 
-	private Map<String, String> messageMap;
+	private Map messageMap;
 
-	private Map<String, String> themeMessageMap;
+	private Map themeMessageMap;
 
 	private String contextPath;
 
@@ -48,11 +48,11 @@ public class DummyMacroRequestContext {
 	}
 
 
-	public void setMessageMap(Map<String, String> messageMap) {
+	public void setMessageMap(Map messageMap) {
 		this.messageMap = messageMap;
 	}
 
-	public void setThemeMessageMap(Map<String, String> themeMessageMap) {
+	public void setThemeMessageMap(Map themeMessageMap) {
 		this.themeMessageMap = themeMessageMap;
 	}
 
@@ -61,60 +61,60 @@ public class DummyMacroRequestContext {
 	 * @see org.springframework.web.servlet.support.RequestContext#getMessage(String)
 	 */
 	public String getMessage(String code) {
-		return this.messageMap.get(code);
+		return (String) this.messageMap.get(code);
 	}
 
 	/**
 	 * @see org.springframework.web.servlet.support.RequestContext#getMessage(String, String)
 	 */
 	public String getMessage(String code, String defaultMsg) {
-		String msg = this.messageMap.get(code);
+		String msg = (String) this.messageMap.get(code);
 		return (msg != null ? msg : defaultMsg);
 	}
 
 	/**
 	 * @see org.springframework.web.servlet.support.RequestContext#getMessage(String, List)
 	 */
-	public String getMessage(String code, List<?> args) {
-		return this.messageMap.get(code) + args;
+	public String getMessage(String code, List args) {
+		return ((String) this.messageMap.get(code)) + args.toString();
 	}
 
 	/**
 	 * @see org.springframework.web.servlet.support.RequestContext#getMessage(String, List, String)
 	 */
-	public String getMessage(String code, List<?> args, String defaultMsg) {
-		String msg = this.messageMap.get(code);
-		return (msg != null ? msg + args : defaultMsg);
+	public String getMessage(String code, List args, String defaultMsg) {
+		String msg = (String) this.messageMap.get(code);
+		return (msg != null ? msg  + args.toString(): defaultMsg);
 	}
 
 	/**
 	 * @see org.springframework.web.servlet.support.RequestContext#getThemeMessage(String)
 	 */
 	public String getThemeMessage(String code) {
-		return this.themeMessageMap.get(code);
+		return (String) this.themeMessageMap.get(code);
 	}
 
 	/**
 	 * @see org.springframework.web.servlet.support.RequestContext#getThemeMessage(String, String)
 	 */
 	public String getThemeMessage(String code, String defaultMsg) {
-		String msg = this.themeMessageMap.get(code);
+		String msg = (String) this.themeMessageMap.get(code);
 		return (msg != null ? msg : defaultMsg);
 	}
 
 	/**
 	 * @see org.springframework.web.servlet.support.RequestContext#getThemeMessage(String, List)
 	 */
-	public String getThemeMessage(String code, List<?> args) {
-		return this.themeMessageMap.get(code) + args;
+	public String getThemeMessage(String code, List args) {
+		return ((String) this.themeMessageMap.get(code)) + args.toString();
 	}
 
 	/**
 	 * @see org.springframework.web.servlet.support.RequestContext#getThemeMessage(String, List, String)
 	 */
-	public String getThemeMessage(String code, List<?> args, String defaultMsg) {
-		String msg = this.themeMessageMap.get(code);
-		return (msg != null ? msg + args : defaultMsg);
+	public String getThemeMessage(String code, List args, String defaultMsg) {
+		String msg = (String) this.themeMessageMap.get(code);
+		return (msg != null ? msg  + args.toString(): defaultMsg);
 	}
 
 	public void setContextPath(String contextPath) {

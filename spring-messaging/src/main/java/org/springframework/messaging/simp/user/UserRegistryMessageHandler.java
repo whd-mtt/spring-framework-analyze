@@ -17,7 +17,6 @@
 package org.springframework.messaging.simp.user;
 
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.springframework.context.ApplicationListener;
 import org.springframework.lang.Nullable;
@@ -57,7 +56,7 @@ public class UserRegistryMessageHandler implements MessageHandler, ApplicationLi
 	@Nullable
 	private volatile ScheduledFuture<?> scheduledFuture;
 
-	private long registryExpirationPeriod = TimeUnit.SECONDS.toMillis(20);
+	private long registryExpirationPeriod = 20 * 1000;
 
 
 	/**

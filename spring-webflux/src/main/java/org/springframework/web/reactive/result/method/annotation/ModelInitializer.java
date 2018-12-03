@@ -92,13 +92,14 @@ class ModelInitializer {
 					bindingContext.getModel().mergeAttributes(attributes);
 					bindingContext.setSessionContext(sessionAttributesHandler, session);
 					return invokeModelAttributeMethods(bindingContext, modelMethods, exchange)
-							.doOnSuccess(aVoid ->
+							.doOnSuccess(aVoid -> {
 								findModelAttributes(handlerMethod, sessionAttributesHandler).forEach(name -> {
 									if (!bindingContext.getModel().containsAttribute(name)) {
 										Object value = session.getRequiredAttribute(name);
 										bindingContext.getModel().addAttribute(name, value);
 									}
-								}));
+								});
+							});
 				});
 	}
 
@@ -120,7 +121,7 @@ class ModelInitializer {
 		Object value = handlerResult.getReturnValue();
 		if (value != null) {
 			ResolvableType type = handlerResult.getReturnType();
-			ReactiveAdapter adapter = this.adapterRegistry.getAdapter(type.resolve(), value);
+			ReactiveAdapter adapter = this.adapterRegistry.getAdapter(type.getRawClass(), value);
 			if (isAsyncVoidType(type, adapter)) {
 				return Mono.from(adapter.toPublisher(value));
 			}
@@ -131,7 +132,7 @@ class ModelInitializer {
 	}
 
 	private boolean isAsyncVoidType(ResolvableType type, @Nullable  ReactiveAdapter adapter) {
-		return (adapter != null && (adapter.isNoValue() || type.resolveGeneric() == Void.class));
+		return adapter != null && (adapter.isNoValue() || type.resolveGeneric() == Void.class);
 	}
 
 	private String getAttributeName(MethodParameter param) {
@@ -139,7 +140,7 @@ class ModelInitializer {
 				.ofNullable(AnnotatedElementUtils.findMergedAnnotation(param.getAnnotatedElement(), ModelAttribute.class))
 				.filter(ann -> StringUtils.hasText(ann.value()))
 				.map(ModelAttribute::value)
-				.orElseGet(() -> Conventions.getVariableNameForParameter(param));
+				.orElse(Conventions.getVariableNameForParameter(param));
 	}
 
 	/** Find {@code @ModelAttribute} arguments also listed as {@code @SessionAttributes}. */

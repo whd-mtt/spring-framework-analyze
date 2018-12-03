@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,12 +53,6 @@ public class HiddenHttpMethodFilterTests {
 	}
 
 	@Test
-	public void filterWithParameterMethodNotAllowed() {
-		postForm("_method=TRACE").block(Duration.ZERO);
-		assertEquals(HttpMethod.POST, this.filterChain.getHttpMethod());
-	}
-
-	@Test
 	public void filterWithNoParameter() {
 		postForm("").block(Duration.ZERO);
 		assertEquals(HttpMethod.POST, this.filterChain.getHttpMethod());
@@ -82,7 +76,7 @@ public class HiddenHttpMethodFilterTests {
 		StepVerifier.create(postForm("_method=INVALID"))
 				.consumeErrorWith(error -> {
 					assertThat(error, Matchers.instanceOf(IllegalArgumentException.class));
-					assertEquals("HttpMethod 'INVALID' not supported", error.getMessage());
+					assertEquals(error.getMessage(), "HttpMethod 'INVALID' not supported");
 				})
 				.verify();
 	}

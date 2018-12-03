@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.springframework.web.socket.sockjs.transport.handler;
 
 import org.junit.Test;
 
+import org.springframework.http.MediaType;
 import org.springframework.web.socket.AbstractHttpRequestTests;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketHandler;
@@ -31,7 +32,7 @@ import static org.mockito.BDDMockito.*;
 
 /**
  * Test fixture for {@link AbstractHttpReceivingTransportHandler} and sub-classes
- * {@link XhrReceivingTransportHandler}.
+ * {@link XhrReceivingTransportHandler} and {@link JsonpReceivingTransportHandler}.
  *
  * @author Rossen Stoyanchev
  */
@@ -43,6 +44,35 @@ public class HttpReceivingTransportHandlerTests extends AbstractHttpRequestTests
 		handleRequest(new XhrReceivingTransportHandler());
 
 		assertEquals(204, this.servletResponse.getStatus());
+	}
+
+	@Test
+	public void readMessagesJsonp() throws Exception {
+		this.servletRequest.setContent("[\"x\"]".getBytes("UTF-8"));
+		handleRequest(new JsonpReceivingTransportHandler());
+
+		assertEquals(200, this.servletResponse.getStatus());
+		assertEquals("ok", this.servletResponse.getContentAsString());
+	}
+
+	@Test
+	public void readMessagesJsonpFormEncoded() throws Exception {
+		this.servletRequest.setContent("d=[\"x\"]".getBytes("UTF-8"));
+		this.servletRequest.setContentType(MediaType.APPLICATION_FORM_URLENCODED_VALUE);
+		handleRequest(new JsonpReceivingTransportHandler());
+
+		assertEquals(200, this.servletResponse.getStatus());
+		assertEquals("ok", this.servletResponse.getContentAsString());
+	}
+
+	@Test  // SPR-10621
+	public void readMessagesJsonpFormEncodedWithEncoding() throws Exception {
+		this.servletRequest.setContent("d=[\"x\"]".getBytes("UTF-8"));
+		this.servletRequest.setContentType("application/x-www-form-urlencoded;charset=UTF-8");
+		handleRequest(new JsonpReceivingTransportHandler());
+
+		assertEquals(200, this.servletResponse.getStatus());
+		assertEquals("ok", this.servletResponse.getContentAsString());
 	}
 
 	@Test

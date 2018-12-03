@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,13 +167,10 @@ public class AnnotationTransactionInterceptorTests {
 
 		proxy.doSomething();
 		assertGetTransactionAndCommitCount(4);
-
-		proxy.doSomethingDefault();
-		assertGetTransactionAndCommitCount(5);
 	}
 
 	@Test
-	public void crossClassInterfaceMethodLevelOnJdkProxy() {
+	public void crossClassInterfaceMethodLevelOnJdkProxy() throws Exception {
 		ProxyFactory proxyFactory = new ProxyFactory();
 		proxyFactory.setTarget(new SomeServiceImpl());
 		proxyFactory.addInterface(SomeService.class);
@@ -192,7 +189,7 @@ public class AnnotationTransactionInterceptorTests {
 	}
 
 	@Test
-	public void crossClassInterfaceOnJdkProxy() {
+	public void crossClassInterfaceOnJdkProxy() throws Exception {
 		ProxyFactory proxyFactory = new ProxyFactory();
 		proxyFactory.setTarget(new OtherServiceImpl());
 		proxyFactory.addInterface(OtherService.class);
@@ -202,64 +199,6 @@ public class AnnotationTransactionInterceptorTests {
 
 		otherService.foo();
 		assertGetTransactionAndCommitCount(1);
-	}
-
-	@Test
-	public void withInterfaceOnTargetJdkProxy() {
-		ProxyFactory targetFactory = new ProxyFactory();
-		targetFactory.setTarget(new TestWithInterfaceImpl());
-		targetFactory.addInterface(TestWithInterface.class);
-
-		ProxyFactory proxyFactory = new ProxyFactory();
-		proxyFactory.setTarget(targetFactory.getProxy());
-		proxyFactory.addInterface(TestWithInterface.class);
-		proxyFactory.addAdvice(this.ti);
-
-		TestWithInterface proxy = (TestWithInterface) proxyFactory.getProxy();
-
-		proxy.doSomething();
-		assertGetTransactionAndCommitCount(1);
-
-		proxy.doSomethingElse();
-		assertGetTransactionAndCommitCount(2);
-
-		proxy.doSomethingElse();
-		assertGetTransactionAndCommitCount(3);
-
-		proxy.doSomething();
-		assertGetTransactionAndCommitCount(4);
-
-		proxy.doSomethingDefault();
-		assertGetTransactionAndCommitCount(5);
-	}
-
-	@Test
-	public void withInterfaceOnTargetCglibProxy() {
-		ProxyFactory targetFactory = new ProxyFactory();
-		targetFactory.setTarget(new TestWithInterfaceImpl());
-		targetFactory.setProxyTargetClass(true);
-
-		ProxyFactory proxyFactory = new ProxyFactory();
-		proxyFactory.setTarget(targetFactory.getProxy());
-		proxyFactory.addInterface(TestWithInterface.class);
-		proxyFactory.addAdvice(this.ti);
-
-		TestWithInterface proxy = (TestWithInterface) proxyFactory.getProxy();
-
-		proxy.doSomething();
-		assertGetTransactionAndCommitCount(1);
-
-		proxy.doSomethingElse();
-		assertGetTransactionAndCommitCount(2);
-
-		proxy.doSomethingElse();
-		assertGetTransactionAndCommitCount(3);
-
-		proxy.doSomething();
-		assertGetTransactionAndCommitCount(4);
-
-		proxy.doSomethingDefault();
-		assertGetTransactionAndCommitCount(5);
 	}
 
 	private void assertGetTransactionAndCommitCount(int expectedCount) {
@@ -370,22 +309,13 @@ public class AnnotationTransactionInterceptorTests {
 	}
 
 
-	public interface BaseInterface {
-
-		void doSomething();
-	}
-
-
 	@Transactional
-	public interface TestWithInterface extends BaseInterface {
+	public static interface TestWithInterface {
+
+		public void doSomething();
 
 		@Transactional(readOnly = true)
-		void doSomethingElse();
-
-		default void doSomethingDefault() {
-			assertTrue(TransactionSynchronizationManager.isActualTransactionActive());
-			assertFalse(TransactionSynchronizationManager.isCurrentTransactionReadOnly());
-		}
+		public void doSomethingElse();
 	}
 
 
@@ -405,7 +335,7 @@ public class AnnotationTransactionInterceptorTests {
 	}
 
 
-	public interface SomeService {
+	public static interface SomeService {
 
 		void foo();
 

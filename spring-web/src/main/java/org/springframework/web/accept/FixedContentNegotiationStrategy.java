@@ -69,6 +69,9 @@ public class FixedContentNegotiationStrategy implements ContentNegotiationStrate
 
 	@Override
 	public List<MediaType> resolveMediaTypes(NativeWebRequest request) {
+		if (logger.isDebugEnabled()) {
+			logger.debug("Requested media types: " + this.contentTypes);
+		}
 		return this.contentTypes;
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import java.util.Map;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 /**
  * Support class for {@link AttributeAccessor AttributeAccessors}, providing
@@ -37,8 +36,8 @@ import org.springframework.util.StringUtils;
 @SuppressWarnings("serial")
 public abstract class AttributeAccessorSupport implements AttributeAccessor, Serializable {
 
-	/** Map with String keys and Object values. */
-	private final Map<String, Object> attributes = new LinkedHashMap<>();
+	/** Map with String keys and Object values */
+	private final Map<String, Object> attributes = new LinkedHashMap<>(0);
 
 
 	@Override
@@ -74,7 +73,7 @@ public abstract class AttributeAccessorSupport implements AttributeAccessor, Ser
 
 	@Override
 	public String[] attributeNames() {
-		return StringUtils.toStringArray(this.attributes.keySet());
+		return this.attributes.keySet().toArray(new String[this.attributes.size()]);
 	}
 
 
@@ -93,8 +92,14 @@ public abstract class AttributeAccessorSupport implements AttributeAccessor, Ser
 
 	@Override
 	public boolean equals(Object other) {
-		return (this == other || (other instanceof AttributeAccessorSupport &&
-				this.attributes.equals(((AttributeAccessorSupport) other).attributes)));
+		if (this == other) {
+			return true;
+		}
+		if (!(other instanceof AttributeAccessorSupport)) {
+			return false;
+		}
+		AttributeAccessorSupport that = (AttributeAccessorSupport) other;
+		return this.attributes.equals(that.attributes);
 	}
 
 	@Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,6 @@ import java.io.Writer;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.tagext.BodyContent;
-
-import org.springframework.lang.Nullable;
 
 /**
  * Mock implementation of the {@link javax.servlet.jsp.tagext.BodyContent} class.
@@ -62,12 +60,12 @@ public class MockBodyContent extends BodyContent {
 	 * @param response the servlet response to wrap
 	 * @param targetWriter the target Writer to wrap
 	 */
-	public MockBodyContent(String content, @Nullable HttpServletResponse response, @Nullable Writer targetWriter) {
+	public MockBodyContent(String content, HttpServletResponse response, Writer targetWriter) {
 		super(adaptJspWriter(targetWriter, response));
 		this.content = content;
 	}
 
-	private static JspWriter adaptJspWriter(@Nullable Writer targetWriter, @Nullable HttpServletResponse response) {
+	private static JspWriter adaptJspWriter(Writer targetWriter, HttpServletResponse response) {
 		if (targetWriter instanceof JspWriter) {
 			return (JspWriter) targetWriter;
 		}
@@ -123,7 +121,7 @@ public class MockBodyContent extends BodyContent {
 	}
 
 	@Override
-	public void write(char[] value, int offset, int length) throws IOException {
+	public void write(char value[], int offset, int length) throws IOException {
 		getEnclosingWriter().write(value, offset, length);
 	}
 

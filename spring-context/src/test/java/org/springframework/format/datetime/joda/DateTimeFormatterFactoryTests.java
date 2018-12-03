@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,32 +50,32 @@ public class DateTimeFormatterFactoryTests {
 
 
 	@Test
-	public void createDateTimeFormatter() {
+	public void createDateTimeFormatter() throws Exception {
 		assertThat(factory.createDateTimeFormatter(), is(equalTo(DateTimeFormat.mediumDateTime())));
 	}
 
 	@Test
-	public void createDateTimeFormatterWithPattern() {
+	public void createDateTimeFormatterWithPattern() throws Exception {
 		factory = new DateTimeFormatterFactory("yyyyMMddHHmmss");
 		DateTimeFormatter formatter = factory.createDateTimeFormatter();
 		assertThat(formatter.print(dateTime), is("20091021121000"));
 	}
 
 	@Test
-	public void createDateTimeFormatterWithNullFallback() {
+	public void createDateTimeFormatterWithNullFallback() throws Exception {
 		DateTimeFormatter formatter = factory.createDateTimeFormatter(null);
 		assertThat(formatter, is(nullValue()));
 	}
 
 	@Test
-	public void createDateTimeFormatterWithFallback() {
+	public void createDateTimeFormatterWithFallback() throws Exception {
 		DateTimeFormatter fallback = DateTimeFormat.forStyle("LL");
 		DateTimeFormatter formatter = factory.createDateTimeFormatter(fallback);
 		assertThat(formatter, is(sameInstance(fallback)));
 	}
 
 	@Test
-	public void createDateTimeFormatterInOrderOfPropertyPriority() {
+	public void createDateTimeFormatterInOrderOfPropertyPriority() throws Exception {
 		factory.setStyle("SS");
 		String value = applyLocale(factory.createDateTimeFormatter()).print(dateTime);
 		assertTrue(value.startsWith("10/21/09"));
@@ -89,7 +89,7 @@ public class DateTimeFormatterFactoryTests {
 	}
 
 	@Test
-	public void createDateTimeFormatterWithTimeZone() {
+	public void createDateTimeFormatterWithTimeZone() throws Exception {
 		factory.setPattern("yyyyMMddHHmmss Z");
 		factory.setTimeZone(TEST_TIMEZONE);
 		DateTimeZone dateTimeZone = DateTimeZone.forTimeZone(TEST_TIMEZONE);

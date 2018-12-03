@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,11 +45,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Phillip Webb
  * @since 2.0
  */
-public final class BridgeMethodResolver {
-
-	private BridgeMethodResolver() {
-	}
-
+public abstract class BridgeMethodResolver {
 
 	/**
 	 * Find the original method for the supplied {@link Method bridge Method}.
@@ -159,12 +155,12 @@ public final class BridgeMethodResolver {
 			Class<?> candidateParameter = candidateParameters[i];
 			if (candidateParameter.isArray()) {
 				// An array type: compare the component type.
-				if (!candidateParameter.getComponentType().equals(genericParameter.getComponentType().toClass())) {
+				if (!candidateParameter.getComponentType().equals(genericParameter.getComponentType().resolve(Object.class))) {
 					return false;
 				}
 			}
 			// A non-array type: compare the type itself.
-			if (!candidateParameter.equals(genericParameter.toClass())) {
+			if (!candidateParameter.equals(genericParameter.resolve(Object.class))) {
 				return false;
 			}
 		}
@@ -200,10 +196,7 @@ public final class BridgeMethodResolver {
 				return method;
 			}
 			else {
-				method = searchInterfaces(ifc.getInterfaces(), bridgeMethod);
-				if (method != null) {
-					return method;
-				}
+				return searchInterfaces(ifc.getInterfaces(), bridgeMethod);
 			}
 		}
 		return null;

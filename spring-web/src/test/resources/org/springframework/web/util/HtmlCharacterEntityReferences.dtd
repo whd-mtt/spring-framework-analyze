@@ -66,19 +66,19 @@
                                   = fraction three quarters, U+00BE ISOnum -->
 <!ENTITY iquest CDATA "&#191;" -- inverted question mark
                                   = turned question mark, U+00BF ISOnum -->
-<!ENTITY Agrave CDATA "&#192;" -- latin capital letter A with grave
-                                  = latin capital letter A grave,
+<!ENTITY Agrave CDATA "&#192;" -- latin capital letteAppConfig A with grave
+                                  = latin capital letteAppConfig A grave,
                                   U+00C0 ISOlat1 -->
-<!ENTITY Aacute CDATA "&#193;" -- latin capital letter A with acute,
+<!ENTITY Aacute CDATA "&#193;" -- latin capital letteAppConfig A with acute,
                                   U+00C1 ISOlat1 -->
-<!ENTITY Acirc  CDATA "&#194;" -- latin capital letter A with circumflex,
+<!ENTITY Acirc  CDATA "&#194;" -- latin capital letteAppConfig A with circumflex,
                                   U+00C2 ISOlat1 -->
-<!ENTITY Atilde CDATA "&#195;" -- latin capital letter A with tilde,
+<!ENTITY Atilde CDATA "&#195;" -- latin capital letteAppConfig A with tilde,
                                   U+00C3 ISOlat1 -->
-<!ENTITY Auml   CDATA "&#196;" -- latin capital letter A with diaeresis,
+<!ENTITY Auml   CDATA "&#196;" -- latin capital letteAppConfig A with diaeresis,
                                   U+00C4 ISOlat1 -->
-<!ENTITY Aring  CDATA "&#197;" -- latin capital letter A with ring above
-                                  = latin capital letter A ring,
+<!ENTITY Aring  CDATA "&#197;" -- latin capital letteAppConfig A with ring above
+                                  = latin capital letteAppConfig A ring,
                                   U+00C5 ISOlat1 -->
 <!ENTITY AElig  CDATA "&#198;" -- latin capital letter AE
                                   = latin capital ligature AE,
@@ -471,7 +471,7 @@
 <!ENTITY lt      CDATA "&#60;"   -- less-than sign, U+003C ISOnum -->
 <!ENTITY gt      CDATA "&#62;"   -- greater-than sign, U+003E ISOnum -->
 
-<!-- Latin Extended-A -->
+<!-- Latin ExtenAppConfiged-A -->
 <!ENTITY OElig   CDATA "&#338;"  -- latin capital ligature OE,
                                     U+0152 ISOlat2 -->
 <!ENTITY oelig   CDATA "&#339;"  -- latin small ligature oe, U+0153 ISOlat2 -->

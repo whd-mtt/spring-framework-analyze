@@ -17,7 +17,6 @@
 package org.springframework.web.reactive.config;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.cache.Cache;
@@ -40,7 +39,7 @@ public class ResourceHandlerRegistration {
 
 	private final String[] pathPatterns;
 
-	private final List<String> locationValues = new ArrayList<>();
+	private final List<Resource> locations = new ArrayList<>();
 
 	@Nullable
 	private CacheControl cacheControl;
@@ -78,7 +77,9 @@ public class ResourceHandlerRegistration {
 	 * chained method invocation
 	 */
 	public ResourceHandlerRegistration addResourceLocations(String... resourceLocations) {
-		this.locationValues.addAll(Arrays.asList(resourceLocations));
+		for (String location : resourceLocations) {
+			this.locations.add(this.resourceLoader.getResource(location));
+		}
 		return this;
 	}
 
@@ -144,12 +145,11 @@ public class ResourceHandlerRegistration {
 	 */
 	protected ResourceWebHandler getRequestHandler() {
 		ResourceWebHandler handler = new ResourceWebHandler();
-		handler.setLocationValues(this.locationValues);
-		handler.setResourceLoader(this.resourceLoader);
 		if (this.resourceChainRegistration != null) {
 			handler.setResourceResolvers(this.resourceChainRegistration.getResourceResolvers());
 			handler.setResourceTransformers(this.resourceChainRegistration.getResourceTransformers());
 		}
+		handler.setLocations(this.locations);
 		if (this.cacheControl != null) {
 			handler.setCacheControl(this.cacheControl);
 		}

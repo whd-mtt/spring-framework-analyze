@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.springframework.cache.jcache;
 
 import java.util.concurrent.Callable;
-import javax.cache.Cache;
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.MutableEntry;
@@ -28,7 +27,7 @@ import org.springframework.util.Assert;
 
 /**
  * {@link org.springframework.cache.Cache} implementation on top of a
- * {@link Cache javax.cache.Cache} instance.
+ * {@link javax.cache.Cache} instance.
  *
  * <p>Note: This class has been updated for JCache 1.0, as of Spring 4.0.
  *
@@ -38,23 +37,23 @@ import org.springframework.util.Assert;
  */
 public class JCacheCache extends AbstractValueAdaptingCache {
 
-	private final Cache<Object, Object> cache;
+	private final javax.cache.Cache<Object, Object> cache;
 
 
 	/**
-	 * Create a {@code JCacheCache} instance.
+	 * Create an {@link org.springframework.cache.jcache.JCacheCache} instance.
 	 * @param jcache backing JCache Cache instance
 	 */
-	public JCacheCache(Cache<Object, Object> jcache) {
+	public JCacheCache(javax.cache.Cache<Object, Object> jcache) {
 		this(jcache, true);
 	}
 
 	/**
-	 * Create a {@code JCacheCache} instance.
+	 * Create an {@link org.springframework.cache.jcache.JCacheCache} instance.
 	 * @param jcache backing JCache Cache instance
 	 * @param allowNullValues whether to accept and convert null values for this cache
 	 */
-	public JCacheCache(Cache<Object, Object> jcache, boolean allowNullValues) {
+	public JCacheCache(javax.cache.Cache<Object, Object> jcache, boolean allowNullValues) {
 		super(allowNullValues);
 		Assert.notNull(jcache, "Cache must not be null");
 		this.cache = jcache;
@@ -67,12 +66,11 @@ public class JCacheCache extends AbstractValueAdaptingCache {
 	}
 
 	@Override
-	public final Cache<Object, Object> getNativeCache() {
+	public final javax.cache.Cache<Object, Object> getNativeCache() {
 		return this.cache;
 	}
 
 	@Override
-	@Nullable
 	protected Object lookup(Object key) {
 		return this.cache.get(key);
 	}
@@ -128,7 +126,7 @@ public class JCacheCache extends AbstractValueAdaptingCache {
 				}
 				catch (Exception ex) {
 					throw new EntryProcessorException("Value loader '" + valueLoader + "' failed " +
-							"to compute value for key '" + entry.getKey() + "'", ex);
+							"to compute  value for key '" + entry.getKey() + "'", ex);
 				}
 				entry.setValue(toStoreValue(value));
 				return value;

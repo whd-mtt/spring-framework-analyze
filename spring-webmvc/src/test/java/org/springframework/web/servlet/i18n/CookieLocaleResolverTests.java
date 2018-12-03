@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class CookieLocaleResolverTests {
 		CookieLocaleResolver resolver = new CookieLocaleResolver();
 		resolver.setCookieName("LanguageKoekje");
 		Locale loc = resolver.resolveLocale(request);
-		assertEquals("nl", loc.getLanguage());
+		assertEquals(loc.getLanguage(), "nl");
 	}
 
 	@Test
@@ -83,7 +83,7 @@ public class CookieLocaleResolverTests {
 	@Test
 	public void testResolveLocaleContextWithInvalidLocale() {
 		MockHttpServletRequest request = new MockHttpServletRequest();
-		Cookie cookie = new Cookie("LanguageKoekje", "++ GMT+1");
+		Cookie cookie = new Cookie("LanguageKoekje", "n-x GMT+1");
 		request.setCookies(cookie);
 
 		CookieLocaleResolver resolver = new CookieLocaleResolver();
@@ -94,7 +94,7 @@ public class CookieLocaleResolverTests {
 		}
 		catch (IllegalStateException ex) {
 			assertTrue(ex.getMessage().contains("LanguageKoekje"));
-			assertTrue(ex.getMessage().contains("++ GMT+1"));
+			assertTrue(ex.getMessage().contains("n-x GMT+1"));
 		}
 	}
 
@@ -103,7 +103,7 @@ public class CookieLocaleResolverTests {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addPreferredLocale(Locale.GERMAN);
 		request.setAttribute(WebUtils.ERROR_EXCEPTION_ATTRIBUTE, new ServletException());
-		Cookie cookie = new Cookie("LanguageKoekje", "++ GMT+1");
+		Cookie cookie = new Cookie("LanguageKoekje", "n-x GMT+1");
 		request.setCookies(cookie);
 
 		CookieLocaleResolver resolver = new CookieLocaleResolver();
@@ -246,7 +246,7 @@ public class CookieLocaleResolverTests {
 		assertEquals(null, cookie.getDomain());
 		assertEquals(CookieLocaleResolver.DEFAULT_COOKIE_PATH, cookie.getPath());
 		assertFalse(cookie.getSecure());
-		assertEquals("de-AT", cookie.getValue());
+		assertEquals("de_AT", cookie.getValue());
 
 		request = new MockHttpServletRequest();
 		request.setCookies(cookie);
@@ -258,12 +258,12 @@ public class CookieLocaleResolverTests {
 	}
 
 	@Test
-	public void testSetAndResolveLocaleWithCountryAsLegacyJava() {
+	public void testSetAndResolveLocaleWithCountryAsLanguageTag() {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
 		CookieLocaleResolver resolver = new CookieLocaleResolver();
-		resolver.setLanguageTagCompliant(false);
+		resolver.setLanguageTagCompliant(true);
 		resolver.setLocale(request, response, new Locale("de", "AT"));
 
 		Cookie cookie = response.getCookie(CookieLocaleResolver.DEFAULT_COOKIE_NAME);
@@ -272,12 +272,13 @@ public class CookieLocaleResolverTests {
 		assertEquals(null, cookie.getDomain());
 		assertEquals(CookieLocaleResolver.DEFAULT_COOKIE_PATH, cookie.getPath());
 		assertFalse(cookie.getSecure());
-		assertEquals("de_AT", cookie.getValue());
+		assertEquals("de-AT", cookie.getValue());
 
 		request = new MockHttpServletRequest();
 		request.setCookies(cookie);
 
 		resolver = new CookieLocaleResolver();
+		resolver.setLanguageTagCompliant(true);
 		Locale loc = resolver.resolveLocale(request);
 		assertEquals("de", loc.getLanguage());
 		assertEquals("AT", loc.getCountry());
@@ -314,7 +315,7 @@ public class CookieLocaleResolverTests {
 	}
 
 	@Test
-	public void testResolveLocaleWithoutCookie() {
+	public void testResolveLocaleWithoutCookie() throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addPreferredLocale(Locale.TAIWAN);
 
@@ -325,7 +326,7 @@ public class CookieLocaleResolverTests {
 	}
 
 	@Test
-	public void testResolveLocaleContextWithoutCookie() {
+	public void testResolveLocaleContextWithoutCookie() throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addPreferredLocale(Locale.TAIWAN);
 
@@ -338,7 +339,7 @@ public class CookieLocaleResolverTests {
 	}
 
 	@Test
-	public void testResolveLocaleWithoutCookieAndDefaultLocale() {
+	public void testResolveLocaleWithoutCookieAndDefaultLocale() throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addPreferredLocale(Locale.TAIWAN);
 
@@ -350,7 +351,7 @@ public class CookieLocaleResolverTests {
 	}
 
 	@Test
-	public void testResolveLocaleContextWithoutCookieAndDefaultLocale() {
+	public void testResolveLocaleContextWithoutCookieAndDefaultLocale() throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addPreferredLocale(Locale.TAIWAN);
 
@@ -365,7 +366,7 @@ public class CookieLocaleResolverTests {
 	}
 
 	@Test
-	public void testResolveLocaleWithCookieWithoutLocale() {
+	public void testResolveLocaleWithCookieWithoutLocale() throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addPreferredLocale(Locale.TAIWAN);
 		Cookie cookie = new Cookie(CookieLocaleResolver.DEFAULT_COOKIE_NAME, "");
@@ -378,7 +379,7 @@ public class CookieLocaleResolverTests {
 	}
 
 	@Test
-	public void testResolveLocaleContextWithCookieWithoutLocale() {
+	public void testResolveLocaleContextWithCookieWithoutLocale() throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addPreferredLocale(Locale.TAIWAN);
 		Cookie cookie = new Cookie(CookieLocaleResolver.DEFAULT_COOKIE_NAME, "");
@@ -393,7 +394,7 @@ public class CookieLocaleResolverTests {
 	}
 
 	@Test
-	public void testSetLocaleToNull() {
+	public void testSetLocaleToNull() throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addPreferredLocale(Locale.TAIWAN);
 		Cookie cookie = new Cookie(CookieLocaleResolver.DEFAULT_COOKIE_NAME, Locale.UK.toString());
@@ -413,7 +414,7 @@ public class CookieLocaleResolverTests {
 	}
 
 	@Test
-	public void testSetLocaleContextToNull() {
+	public void testSetLocaleContextToNull() throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addPreferredLocale(Locale.TAIWAN);
 		Cookie cookie = new Cookie(CookieLocaleResolver.DEFAULT_COOKIE_NAME, Locale.UK.toString());
@@ -435,7 +436,7 @@ public class CookieLocaleResolverTests {
 	}
 
 	@Test
-	public void testSetLocaleToNullWithDefault() {
+	public void testSetLocaleToNullWithDefault() throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addPreferredLocale(Locale.TAIWAN);
 		Cookie cookie = new Cookie(CookieLocaleResolver.DEFAULT_COOKIE_NAME, Locale.UK.toString());
@@ -456,7 +457,7 @@ public class CookieLocaleResolverTests {
 	}
 
 	@Test
-	public void testSetLocaleContextToNullWithDefault() {
+	public void testSetLocaleContextToNullWithDefault() throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest();
 		request.addPreferredLocale(Locale.TAIWAN);
 		Cookie cookie = new Cookie(CookieLocaleResolver.DEFAULT_COOKIE_NAME, Locale.UK.toString());

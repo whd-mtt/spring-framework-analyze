@@ -1,11 +1,11 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -58,7 +58,6 @@ import org.springframework.util.xml.StaxUtils;
  * @author Arjen Poutsma
  * @author Rossen Stoyanchev
  * @since 3.2
- * @param <T> the converted object type
  */
 @SuppressWarnings("rawtypes")
 public class Jaxb2CollectionHttpMessageConverter<T extends Collection>
@@ -132,7 +131,7 @@ public class Jaxb2CollectionHttpMessageConverter<T extends Collection>
 	}
 
 	@Override
-	protected T readFromSource(Class<? extends T> clazz, HttpHeaders headers, Source source) throws Exception {
+	protected T readFromSource(Class<? extends T> clazz, HttpHeaders headers, Source source) throws IOException {
 		// should not be called, since we return false for canRead(Class)
 		throw new UnsupportedOperationException();
 	}
@@ -160,23 +159,21 @@ public class Jaxb2CollectionHttpMessageConverter<T extends Collection>
 				}
 				else {
 					// should not happen, since we check in canRead(Type)
-					throw new HttpMessageNotReadableException(
-							"Cannot unmarshal to [" + elementClass + "]", inputMessage);
+					throw new HttpMessageConversionException("Could not unmarshal to [" + elementClass + "]");
 				}
 				event = moveToNextElement(streamReader);
 			}
 			return result;
 		}
-		catch (XMLStreamException ex) {
-			throw new HttpMessageNotReadableException(
-					"Failed to read XML stream: " + ex.getMessage(), ex, inputMessage);
-		}
 		catch (UnmarshalException ex) {
 			throw new HttpMessageNotReadableException(
-					"Could not unmarshal to [" + elementClass + "]: " + ex.getMessage(), ex, inputMessage);
+					"Could not unmarshal to [" + elementClass + "]: " + ex.getMessage(), ex);
 		}
 		catch (JAXBException ex) {
-			throw new HttpMessageConversionException("Invalid JAXB setup: " + ex.getMessage(), ex);
+			throw new HttpMessageConversionException("Could not instantiate JAXBContext: " + ex.getMessage(), ex);
+		}
+		catch (XMLStreamException ex) {
+			throw new HttpMessageConversionException(ex.getMessage(), ex);
 		}
 	}
 
@@ -239,7 +236,7 @@ public class Jaxb2CollectionHttpMessageConverter<T extends Collection>
 	}
 
 	@Override
-	protected void writeToResult(T t, HttpHeaders headers, Result result) throws Exception {
+	protected void writeToResult(T t, HttpHeaders headers, Result result) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 

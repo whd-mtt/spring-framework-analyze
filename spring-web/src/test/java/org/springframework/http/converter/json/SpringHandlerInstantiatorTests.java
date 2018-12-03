@@ -92,7 +92,7 @@ public class SpringHandlerInstantiatorTests {
 	public void autowiredDeserializer() throws IOException {
 		String json = "{\"username\":\"bob\"}";
 		User user = this.objectMapper.readValue(json, User.class);
-		assertEquals("BOB", user.getUsername());
+		assertEquals(user.getUsername(), "BOB");
 	}
 
 	@Test

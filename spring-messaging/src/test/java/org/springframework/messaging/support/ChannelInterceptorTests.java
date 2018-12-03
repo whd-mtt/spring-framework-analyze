@@ -88,7 +88,7 @@ public class ChannelInterceptorTests {
 	public void postSendInterceptorMessageWasSent() {
 		final AtomicBoolean preSendInvoked = new AtomicBoolean(false);
 		final AtomicBoolean completionInvoked = new AtomicBoolean(false);
-		this.channel.addInterceptor(new ChannelInterceptor() {
+		this.channel.addInterceptor(new ChannelInterceptorAdapter() {
 			@Override
 			public void postSend(Message<?> message, MessageChannel channel, boolean sent) {
 				assertInput(message, channel, sent);
@@ -121,7 +121,7 @@ public class ChannelInterceptorTests {
 		};
 		final AtomicBoolean preSendInvoked = new AtomicBoolean(false);
 		final AtomicBoolean completionInvoked = new AtomicBoolean(false);
-		testChannel.addInterceptor(new ChannelInterceptor() {
+		testChannel.addInterceptor(new ChannelInterceptorAdapter() {
 			@Override
 			public void postSend(Message<?> message, MessageChannel channel, boolean sent) {
 				assertInput(message, channel, sent);
@@ -199,7 +199,7 @@ public class ChannelInterceptorTests {
 	}
 
 
-	private abstract static class AbstractTestInterceptor implements ChannelInterceptor {
+	private abstract static class AbstractTestInterceptor extends ChannelInterceptorAdapter {
 
 		private AtomicInteger counter = new AtomicInteger();
 

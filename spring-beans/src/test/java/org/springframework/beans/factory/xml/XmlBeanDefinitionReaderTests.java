@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,8 @@ public class XmlBeanDefinitionReaderTests {
 	@Test(expected = BeanDefinitionStoreException.class)
 	public void withOpenInputStream() {
 		SimpleBeanDefinitionRegistry registry = new SimpleBeanDefinitionRegistry();
-		Resource resource = new InputStreamResource(getClass().getResourceAsStream("test.xml"));
+		Resource resource = new InputStreamResource(getClass().getResourceAsStream(
+				"test.xml"));
 		new XmlBeanDefinitionReader(registry).loadBeanDefinitions(resource);
 	}
 
@@ -121,16 +122,16 @@ public class XmlBeanDefinitionReaderTests {
 	}
 
 	@Test
-	public void dtdValidationAutodetect() {
+	public void dtdValidationAutodetect() throws Exception {
 		doTestValidation("validateWithDtd.xml");
 	}
 
 	@Test
-	public void xsdValidationAutodetect() {
+	public void xsdValidationAutodetect() throws Exception {
 		doTestValidation("validateWithXsd.xml");
 	}
 
-	private void doTestValidation(String resourceName) {
+	private void doTestValidation(String resourceName) throws Exception {
 		DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
 		Resource resource = new ClassPathResource(resourceName, getClass());
 		new XmlBeanDefinitionReader(factory).loadBeanDefinitions(resource);

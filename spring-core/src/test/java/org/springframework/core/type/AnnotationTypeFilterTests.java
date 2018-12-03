@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class AnnotationTypeFilterTests {
 	@Test
 	public void testInheritedAnnotationFromInterfaceDoesNotMatch() throws Exception {
 		MetadataReaderFactory metadataReaderFactory = new SimpleMetadataReaderFactory();
-		String classUnderTest = "org.springframework.core.type.AnnotationTypeFilterTests$SomeClassWithSomeComponentInterface";
+		String classUnderTest = "org.springframework.core.type.AnnotationTypeFilterTests$SomeSubClassOfSomeComponentInterface";
 		MetadataReader metadataReader = metadataReaderFactory.getMetadataReader(classUnderTest);
 
 		AnnotationTypeFilter filter = new AnnotationTypeFilter(InheritedAnnotation.class);
@@ -61,7 +61,7 @@ public class AnnotationTypeFilterTests {
 	@Test
 	public void testInheritedAnnotationFromBaseClassDoesMatch() throws Exception {
 		MetadataReaderFactory metadataReaderFactory = new SimpleMetadataReaderFactory();
-		String classUnderTest = "org.springframework.core.type.AnnotationTypeFilterTests$SomeSubclassOfSomeComponent";
+		String classUnderTest = "org.springframework.core.type.AnnotationTypeFilterTests$SomeSubClassOfSomeComponent";
 		MetadataReader metadataReader = metadataReaderFactory.getMetadataReader(classUnderTest);
 
 		AnnotationTypeFilter filter = new AnnotationTypeFilter(InheritedAnnotation.class);
@@ -94,21 +94,22 @@ public class AnnotationTypeFilterTests {
 
 	@Test
 	public void testMatchesInterfacesIfConfigured() throws Exception {
+
 		MetadataReaderFactory metadataReaderFactory = new SimpleMetadataReaderFactory();
-		String classUnderTest = "org.springframework.core.type.AnnotationTypeFilterTests$SomeClassWithSomeComponentInterface";
+		String classUnderTest = "org.springframework.core.type.AnnotationTypeFilterTests$SomeComponentInterface";
 		MetadataReader metadataReader = metadataReaderFactory.getMetadataReader(classUnderTest);
 
 		AnnotationTypeFilter filter = new AnnotationTypeFilter(InheritedAnnotation.class, false, true);
+
 		assertTrue(filter.match(metadataReader, metadataReaderFactory));
 		ClassloadingAssertions.assertClassNotLoaded(classUnderTest);
 	}
-
 
 	// We must use a standalone set of types to ensure that no one else is loading them
 	// and interfering with ClassloadingAssertions.assertClassNotLoaded()
 
 	@Inherited
-	private @interface InheritedAnnotation {
+	private static @interface InheritedAnnotation {
 	}
 
 
@@ -118,21 +119,21 @@ public class AnnotationTypeFilterTests {
 
 
 	@InheritedAnnotation
-	private interface SomeComponentInterface {
+	private static interface SomeComponentInterface {
 	}
 
 
 	@SuppressWarnings("unused")
-	private static class SomeClassWithSomeComponentInterface implements Cloneable, SomeComponentInterface {
+	private static class SomeSubClassOfSomeComponentInterface implements SomeComponentInterface {
 	}
 
 
 	@SuppressWarnings("unused")
-	private static class SomeSubclassOfSomeComponent extends SomeComponent {
+	private static class SomeSubClassOfSomeComponent extends SomeComponent {
 	}
 
 
-	private @interface NonInheritedAnnotation {
+	private static @interface NonInheritedAnnotation {
 	}
 
 

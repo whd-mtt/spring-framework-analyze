@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,8 @@ import static org.springframework.test.context.junit4.JUnitTestingUtils.*;
  */
 public class SpringJUnit4ConcurrencyTests {
 
-	private final Class<?>[] testClasses = new Class<?>[] {
+	// @formatter:off
+	private final Class<?>[] testClasses = new Class[] {
 		// Basics
 			SpringJUnit4ClassRunnerAppCtxTests.class,
 			InheritedConfigSpringJUnit4ClassRunnerAppCtxTests.class,
@@ -93,7 +94,7 @@ public class SpringJUnit4ConcurrencyTests {
 			WebAppResourceTests.class,
 			SampleTests.class
 	};
-
+	// @formatter:on
 
 	@BeforeClass
 	public static void abortIfLongRunningTestGroupIsNotEnabled() {
@@ -108,7 +109,7 @@ public class SpringJUnit4ConcurrencyTests {
 		final int TESTS = countAnnotatedMethods(Test.class) - IGNORED;
 
 		runTestsAndAssertCounters(new ParallelComputer(true, true), TESTS, FAILED, TESTS, IGNORED, ABORTED,
-				this.testClasses);
+			this.testClasses);
 	}
 
 	private int countAnnotatedMethods(Class<? extends Annotation> annotationType) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -38,15 +37,10 @@ import org.mockito.Mockito;
 import org.springframework.beans.PropertyEditorRegistrar;
 import org.springframework.beans.PropertyEditorRegistry;
 import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.TypedStringValue;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.beans.propertyeditors.CustomNumberEditor;
-import org.springframework.core.OverridingClassLoader;
 import org.springframework.core.ResolvableType;
-import org.springframework.core.annotation.AnnotationAwareOrderComparator;
-import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.tests.Assume;
@@ -84,7 +78,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericListProperty() throws Exception {
+	public void testGenericListProperty() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		RootBeanDefinition rbd = new RootBeanDefinition(GenericBean.class);
 
@@ -101,7 +95,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericListPropertyWithAutowiring() throws Exception {
+	public void testGenericListPropertyWithAutowiring() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		bf.registerSingleton("resource1", new UrlResource("http://localhost:8080"));
 		bf.registerSingleton("resource2", new UrlResource("http://localhost:9090"));
@@ -136,7 +130,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericListPropertyWithOptionalAutowiring() {
+	public void testGenericListPropertyWithOptionalAutowiring() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 
 		RootBeanDefinition rbd = new RootBeanDefinition(GenericBean.class);
@@ -165,7 +159,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericListOfArraysProperty() {
+	public void testGenericListOfArraysProperty() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		new XmlBeanDefinitionReader(bf).loadBeanDefinitions(
 				new ClassPathResource("genericBeanTests.xml", getClass()));
@@ -224,7 +218,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericSetListConstructor() throws Exception {
+	public void testGenericSetListConstructor() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		RootBeanDefinition rbd = new RootBeanDefinition(GenericBean.class);
 
@@ -247,7 +241,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericSetListConstructorWithAutowiring() throws Exception {
+	public void testGenericSetListConstructorWithAutowiring() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		bf.registerSingleton("integer1", new Integer(4));
 		bf.registerSingleton("integer2", new Integer(5));
@@ -266,7 +260,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericSetListConstructorWithOptionalAutowiring() throws Exception {
+	public void testGenericSetListConstructorWithOptionalAutowiring() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		bf.registerSingleton("resource1", new UrlResource("http://localhost:8080"));
 		bf.registerSingleton("resource2", new UrlResource("http://localhost:9090"));
@@ -281,7 +275,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericSetMapConstructor() {
+	public void testGenericSetMapConstructor() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		RootBeanDefinition rbd = new RootBeanDefinition(GenericBean.class);
 
@@ -304,7 +298,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericMapResourceConstructor() throws Exception {
+	public void testGenericMapResourceConstructor() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		RootBeanDefinition rbd = new RootBeanDefinition(GenericBean.class);
 
@@ -323,7 +317,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericMapMapConstructor() {
+	public void testGenericMapMapConstructor() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		RootBeanDefinition rbd = new RootBeanDefinition(GenericBean.class);
 
@@ -349,7 +343,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericMapMapConstructorWithSameRefAndConversion() {
+	public void testGenericMapMapConstructorWithSameRefAndConversion() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		RootBeanDefinition rbd = new RootBeanDefinition(GenericBean.class);
 
@@ -372,7 +366,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericMapMapConstructorWithSameRefAndNoConversion() {
+	public void testGenericMapMapConstructorWithSameRefAndNoConversion() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		RootBeanDefinition rbd = new RootBeanDefinition(GenericBean.class);
 
@@ -392,7 +386,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericMapWithKeyTypeConstructor() {
+	public void testGenericMapWithKeyTypeConstructor() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		RootBeanDefinition rbd = new RootBeanDefinition(GenericBean.class);
 
@@ -409,7 +403,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericMapWithCollectionValueConstructor() {
+	public void testGenericMapWithCollectionValueConstructor() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		bf.addPropertyEditorRegistrar(new PropertyEditorRegistrar() {
 			@Override
@@ -456,7 +450,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericSetListFactoryMethod() throws Exception {
+	public void testGenericSetListFactoryMethod() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		RootBeanDefinition rbd = new RootBeanDefinition(GenericBean.class);
 		rbd.setFactoryMethodName("createInstance");
@@ -480,7 +474,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericSetMapFactoryMethod() {
+	public void testGenericSetMapFactoryMethod() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		RootBeanDefinition rbd = new RootBeanDefinition(GenericBean.class);
 		rbd.setFactoryMethodName("createInstance");
@@ -504,7 +498,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericMapResourceFactoryMethod() throws Exception {
+	public void testGenericMapResourceFactoryMethod() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		RootBeanDefinition rbd = new RootBeanDefinition(GenericBean.class);
 		rbd.setFactoryMethodName("createInstance");
@@ -524,7 +518,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericMapMapFactoryMethod() {
+	public void testGenericMapMapFactoryMethod() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		RootBeanDefinition rbd = new RootBeanDefinition(GenericBean.class);
 		rbd.setFactoryMethodName("createInstance");
@@ -548,7 +542,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericMapWithKeyTypeFactoryMethod() {
+	public void testGenericMapWithKeyTypeFactoryMethod() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		RootBeanDefinition rbd = new RootBeanDefinition(GenericBean.class);
 		rbd.setFactoryMethodName("createInstance");
@@ -566,7 +560,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericMapWithCollectionValueFactoryMethod() {
+	public void testGenericMapWithCollectionValueFactoryMethod() throws MalformedURLException {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		bf.addPropertyEditorRegistrar(new PropertyEditorRegistrar() {
 			@Override
@@ -626,7 +620,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericallyTypedIntegerBean() {
+	public void testGenericallyTypedIntegerBean() throws Exception {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		new XmlBeanDefinitionReader(bf).loadBeanDefinitions(
 				new ClassPathResource("genericBeanTests.xml", getClass()));
@@ -637,7 +631,7 @@ public class BeanFactoryGenericsTests {
 	}
 
 	@Test
-	public void testGenericallyTypedSetOfIntegerBean() {
+	public void testGenericallyTypedSetOfIntegerBean() throws Exception {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		new XmlBeanDefinitionReader(bf).loadBeanDefinitions(
 				new ClassPathResource("genericBeanTests.xml", getClass()));
@@ -678,8 +672,6 @@ public class BeanFactoryGenericsTests {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
 		bf.registerBeanDefinition("mock", rbd);
 
-		assertEquals(Runnable.class, bf.getType("mock"));
-		assertEquals(Runnable.class, bf.getType("mock"));
 		Map<String, Runnable> beans = bf.getBeansOfType(Runnable.class);
 		assertEquals(1, beans.size());
 	}
@@ -708,10 +700,6 @@ public class BeanFactoryGenericsTests {
 		rbd.getConstructorArgumentValues().addGenericArgumentValue(Runnable.class);
 		bf.registerBeanDefinition("mock", rbd);
 
-		assertTrue(bf.isTypeMatch("mock", Runnable.class));
-		assertTrue(bf.isTypeMatch("mock", Runnable.class));
-		assertEquals(Runnable.class, bf.getType("mock"));
-		assertEquals(Runnable.class, bf.getType("mock"));
 		Map<String, Runnable> beans = bf.getBeansOfType(Runnable.class);
 		assertEquals(1, beans.size());
 	}
@@ -729,10 +717,6 @@ public class BeanFactoryGenericsTests {
 		rbd.getConstructorArgumentValues().addGenericArgumentValue(Runnable.class.getName());
 		bf.registerBeanDefinition("mock", rbd);
 
-		assertTrue(bf.isTypeMatch("mock", Runnable.class));
-		assertTrue(bf.isTypeMatch("mock", Runnable.class));
-		assertEquals(Runnable.class, bf.getType("mock"));
-		assertEquals(Runnable.class, bf.getType("mock"));
 		Map<String, Runnable> beans = bf.getBeansOfType(Runnable.class);
 		assertEquals(1, beans.size());
 	}
@@ -748,10 +732,6 @@ public class BeanFactoryGenericsTests {
 		rbd.getConstructorArgumentValues().addGenericArgumentValue(new TypedStringValue(Runnable.class.getName()));
 		bf.registerBeanDefinition("mock", rbd);
 
-		assertTrue(bf.isTypeMatch("mock", Runnable.class));
-		assertTrue(bf.isTypeMatch("mock", Runnable.class));
-		assertEquals(Runnable.class, bf.getType("mock"));
-		assertEquals(Runnable.class, bf.getType("mock"));
 		Map<String, Runnable> beans = bf.getBeansOfType(Runnable.class);
 		assertEquals(1, beans.size());
 	}
@@ -769,10 +749,6 @@ public class BeanFactoryGenericsTests {
 		rbd.getConstructorArgumentValues().addGenericArgumentValue("x");
 		bf.registerBeanDefinition("mock", rbd);
 
-		assertFalse(bf.isTypeMatch("mock", Runnable.class));
-		assertFalse(bf.isTypeMatch("mock", Runnable.class));
-		assertNull(bf.getType("mock"));
-		assertNull(bf.getType("mock"));
 		Map<String, Runnable> beans = bf.getBeansOfType(Runnable.class);
 		assertEquals(0, beans.size());
 	}
@@ -790,32 +766,6 @@ public class BeanFactoryGenericsTests {
 		rbd.getConstructorArgumentValues().addIndexedArgumentValue(0, Runnable.class);
 		bf.registerBeanDefinition("mock", rbd);
 
-		assertTrue(bf.isTypeMatch("mock", Runnable.class));
-		assertTrue(bf.isTypeMatch("mock", Runnable.class));
-		assertEquals(Runnable.class, bf.getType("mock"));
-		assertEquals(Runnable.class, bf.getType("mock"));
-		Map<String, Runnable> beans = bf.getBeansOfType(Runnable.class);
-		assertEquals(1, beans.size());
-	}
-
-	@Test  // SPR-16720
-	public void parameterizedInstanceFactoryMethodWithTempClassLoader() {
-		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
-		bf.setTempClassLoader(new OverridingClassLoader(getClass().getClassLoader()));
-
-		RootBeanDefinition rbd = new RootBeanDefinition(MocksControl.class);
-		bf.registerBeanDefinition("mocksControl", rbd);
-
-		rbd = new RootBeanDefinition();
-		rbd.setFactoryBeanName("mocksControl");
-		rbd.setFactoryMethodName("createMock");
-		rbd.getConstructorArgumentValues().addGenericArgumentValue(Runnable.class);
-		bf.registerBeanDefinition("mock", rbd);
-
-		assertTrue(bf.isTypeMatch("mock", Runnable.class));
-		assertTrue(bf.isTypeMatch("mock", Runnable.class));
-		assertEquals(Runnable.class, bf.getType("mock"));
-		assertEquals(Runnable.class, bf.getType("mock"));
 		Map<String, Runnable> beans = bf.getBeansOfType(Runnable.class);
 		assertEquals(1, beans.size());
 	}
@@ -847,15 +797,10 @@ public class BeanFactoryGenericsTests {
 	@Test
 	public void testGenericMatchingWithFullTypeDifferentiation() {
 		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
-		bf.setDependencyComparator(AnnotationAwareOrderComparator.INSTANCE);
 		bf.setAutowireCandidateResolver(new GenericTypeAwareAutowireCandidateResolver());
 
-		RootBeanDefinition bd1 = new RootBeanDefinition(NumberStoreFactory.class);
-		bd1.setFactoryMethodName("newDoubleStore");
-		bf.registerBeanDefinition("store1", bd1);
-		RootBeanDefinition bd2 = new RootBeanDefinition(NumberStoreFactory.class);
-		bd2.setFactoryMethodName("newFloatStore");
-		bf.registerBeanDefinition("store2", bd2);
+		bf.registerBeanDefinition("store1", new RootBeanDefinition(DoubleStore.class));
+		bf.registerBeanDefinition("store2", new RootBeanDefinition(FloatStore.class));
 		bf.registerBeanDefinition("numberBean",
 				new RootBeanDefinition(NumberBean.class, RootBeanDefinition.AUTOWIRE_CONSTRUCTOR, false));
 
@@ -873,99 +818,6 @@ public class BeanFactoryGenericsTests {
 		assertEquals("store1", doubleStoreNames[0]);
 		assertEquals(1, floatStoreNames.length);
 		assertEquals("store2", floatStoreNames[0]);
-
-		ObjectProvider<NumberStore<?>> numberStoreProvider = bf.getBeanProvider(ResolvableType.forClass(NumberStore.class));
-		ObjectProvider<NumberStore<Double>> doubleStoreProvider = bf.getBeanProvider(ResolvableType.forClassWithGenerics(NumberStore.class, Double.class));
-		ObjectProvider<NumberStore<Float>> floatStoreProvider = bf.getBeanProvider(ResolvableType.forClassWithGenerics(NumberStore.class, Float.class));
-		try {
-			numberStoreProvider.getObject();
-			fail("Should have thrown NoUniqueBeanDefinitionException");
-		}
-		catch (NoUniqueBeanDefinitionException ex) {
-			// expected
-		}
-		try {
-			numberStoreProvider.getIfAvailable();
-			fail("Should have thrown NoUniqueBeanDefinitionException");
-		}
-		catch (NoUniqueBeanDefinitionException ex) {
-			// expected
-		}
-		assertNull(numberStoreProvider.getIfUnique());
-		assertSame(bf.getBean("store1"), doubleStoreProvider.getObject());
-		assertSame(bf.getBean("store1"), doubleStoreProvider.getIfAvailable());
-		assertSame(bf.getBean("store1"), doubleStoreProvider.getIfUnique());
-		assertSame(bf.getBean("store2"), floatStoreProvider.getObject());
-		assertSame(bf.getBean("store2"), floatStoreProvider.getIfAvailable());
-		assertSame(bf.getBean("store2"), floatStoreProvider.getIfUnique());
-
-		List<NumberStore<?>> resolved = new ArrayList<>();
-		for (NumberStore<?> instance : numberStoreProvider) {
-			resolved.add(instance);
-		}
-		assertEquals(2, resolved.size());
-		assertSame(bf.getBean("store1"), resolved.get(0));
-		assertSame(bf.getBean("store2"), resolved.get(1));
-
-		resolved = numberStoreProvider.stream().collect(Collectors.toList());
-		assertEquals(2, resolved.size());
-		assertSame(bf.getBean("store1"), resolved.get(0));
-		assertSame(bf.getBean("store2"), resolved.get(1));
-
-		resolved = numberStoreProvider.orderedStream().collect(Collectors.toList());
-		assertEquals(2, resolved.size());
-		assertSame(bf.getBean("store2"), resolved.get(0));
-		assertSame(bf.getBean("store1"), resolved.get(1));
-
-		resolved = new ArrayList<>();
-		for (NumberStore<Double> instance : doubleStoreProvider) {
-			resolved.add(instance);
-		}
-		assertEquals(1, resolved.size());
-		assertTrue(resolved.contains(bf.getBean("store1")));
-
-		resolved = doubleStoreProvider.stream().collect(Collectors.toList());
-		assertEquals(1, resolved.size());
-		assertTrue(resolved.contains(bf.getBean("store1")));
-
-		resolved = doubleStoreProvider.orderedStream().collect(Collectors.toList());
-		assertEquals(1, resolved.size());
-		assertTrue(resolved.contains(bf.getBean("store1")));
-
-		resolved = new ArrayList<>();
-		for (NumberStore<Float> instance : floatStoreProvider) {
-			resolved.add(instance);
-		}
-		assertEquals(1, resolved.size());
-		assertTrue(resolved.contains(bf.getBean("store2")));
-
-		resolved = floatStoreProvider.stream().collect(Collectors.toList());
-		assertEquals(1, resolved.size());
-		assertTrue(resolved.contains(bf.getBean("store2")));
-
-		resolved = floatStoreProvider.orderedStream().collect(Collectors.toList());
-		assertEquals(1, resolved.size());
-		assertTrue(resolved.contains(bf.getBean("store2")));
-	}
-
-	@Test
-	public void testGenericMatchingWithUnresolvedOrderedStream() {
-		DefaultListableBeanFactory bf = new DefaultListableBeanFactory();
-		bf.setDependencyComparator(AnnotationAwareOrderComparator.INSTANCE);
-		bf.setAutowireCandidateResolver(new GenericTypeAwareAutowireCandidateResolver());
-
-		RootBeanDefinition bd1 = new RootBeanDefinition(NumberStoreFactory.class);
-		bd1.setFactoryMethodName("newDoubleStore");
-		bf.registerBeanDefinition("store1", bd1);
-		RootBeanDefinition bd2 = new RootBeanDefinition(NumberStoreFactory.class);
-		bd2.setFactoryMethodName("newFloatStore");
-		bf.registerBeanDefinition("store2", bd2);
-
-		ObjectProvider<NumberStore<?>> numberStoreProvider = bf.getBeanProvider(ResolvableType.forClass(NumberStore.class));
-		List<NumberStore<?>> resolved = numberStoreProvider.orderedStream().collect(Collectors.toList());
-		assertEquals(2, resolved.size());
-		assertSame(bf.getBean("store2"), resolved.get(0));
-		assertSame(bf.getBean("store1"), resolved.get(1));
 	}
 
 
@@ -1060,20 +912,6 @@ public class BeanFactoryGenericsTests {
 
 		public NumberStore<Float> getFloatStore() {
 			return this.floatStore;
-		}
-	}
-
-
-	public static class NumberStoreFactory {
-
-		@Order(1)
-		public static NumberStore<Double> newDoubleStore() {
-			return new DoubleStore();
-		}
-
-		@Order(0)
-		public static NumberStore<Float> newFloatStore() {
-			return new FloatStore();
 		}
 	}
 

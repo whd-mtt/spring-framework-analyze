@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,13 +65,13 @@ import org.springframework.web.context.support.WebApplicationObjectSupport;
  */
 public abstract class WebContentGenerator extends WebApplicationObjectSupport {
 
-	/** HTTP method "GET". */
+	/** HTTP method "GET" */
 	public static final String METHOD_GET = "GET";
 
-	/** HTTP method "HEAD". */
+	/** HTTP method "HEAD" */
 	public static final String METHOD_HEAD = "HEAD";
 
-	/** HTTP method "POST". */
+	/** HTTP method "POST" */
 	public static final String METHOD_POST = "POST";
 
 	private static final String HEADER_PRAGMA = "Pragma";
@@ -81,7 +81,7 @@ public abstract class WebContentGenerator extends WebApplicationObjectSupport {
 	protected static final String HEADER_CACHE_CONTROL = "Cache-Control";
 
 
-	/** Set of supported HTTP methods. */
+	/** Set of supported HTTP methods */
 	@Nullable
 	private Set<String> supportedMethods;
 
@@ -174,7 +174,7 @@ public abstract class WebContentGenerator extends WebApplicationObjectSupport {
 		if (this.supportedMethods == null) {
 			allowedMethods = new ArrayList<>(HttpMethod.values().length - 1);
 			for (HttpMethod method : HttpMethod.values()) {
-				if (method != HttpMethod.TRACE) {
+				if (!HttpMethod.TRACE.equals(method)) {
 					allowedMethods.add(method.name());
 				}
 			}
@@ -191,13 +191,13 @@ public abstract class WebContentGenerator extends WebApplicationObjectSupport {
 	}
 
 	/**
-	 * Return the "Allow" header value to use in response to an HTTP OPTIONS request
-	 * based on the configured {@link #setSupportedMethods supported methods} also
-	 * automatically adding "OPTIONS" to the list even if not present as a supported
-	 * method. This means subclasses don't have to explicitly list "OPTIONS" as a
-	 * supported method as long as HTTP OPTIONS requests are handled before making a
-	 * call to {@link #checkRequest(HttpServletRequest)}.
-	 * @since 4.3
+	 * Return the "Allow" header value to use in response to an HTTP OPTIONS
+	 * request based on the configured {@link #setSupportedMethods supported
+	 * methods} also automatically adding "OPTIONS" to the list even if not
+	 * present as a supported method. This means sub-classes don't have to
+	 * explicitly list "OPTIONS" as a supported method as long as HTTP OPTIONS
+	 * requests are handled before making a call to
+	 * {@link #checkRequest(HttpServletRequest)}.
 	 */
 	@Nullable
 	protected String getAllowHeader() {
@@ -469,8 +469,6 @@ public abstract class WebContentGenerator extends WebApplicationObjectSupport {
 
 
 	/**
-	 * Check and prepare the given request and response according to the settings
-	 * of this generator.
 	 * @see #checkRequest(HttpServletRequest)
 	 * @see #prepareResponse(HttpServletResponse)
 	 * @deprecated as of 4.2, since the {@code lastModified} flag is effectively ignored,
@@ -485,8 +483,6 @@ public abstract class WebContentGenerator extends WebApplicationObjectSupport {
 	}
 
 	/**
-	 * Check and prepare the given request and response according to the settings
-	 * of this generator.
 	 * @see #checkRequest(HttpServletRequest)
 	 * @see #applyCacheSeconds(HttpServletResponse, int)
 	 * @deprecated as of 4.2, since the {@code lastModified} flag is effectively ignored,

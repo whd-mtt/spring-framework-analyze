@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.hamcrest.Matcher;
 import org.reactivestreams.Publisher;
 
 import org.springframework.context.ApplicationContext;
@@ -37,7 +36,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.http.client.reactive.ClientHttpRequest;
 import org.springframework.http.codec.ServerCodecConfigurer;
-import org.springframework.lang.Nullable;
 import org.springframework.util.MultiValueMap;
 import org.springframework.validation.Validator;
 import org.springframework.web.reactive.accept.RequestedContentTypeResolverBuilder;
@@ -170,7 +168,6 @@ public interface WebTestClient {
 	 * WebFlux application will be tested without an HTTP server using a mock
 	 * request and response.
 	 * @param controllers one or more controller instances to tests
-	 * (specified {@code Class} will be turned into instance)
 	 * @return chained API to customize server and client config; use
 	 * {@link MockServerSpec#configureClient()} to transition to client config
 	 */
@@ -199,7 +196,7 @@ public interface WebTestClient {
 	 * without an HTTP server using a mock request and response.
 	 * <p>Consider using the TestContext framework and
 	 * {@link org.springframework.test.context.ContextConfiguration @ContextConfiguration}
-	 * in order to efficiently load and inject the Spring configuration into the
+	 * in order to efficently load and inject the Spring configuration into the
 	 * test class.
 	 * @param applicationContext the Spring context
 	 * @return chained API to customize server and client config; use
@@ -250,8 +247,6 @@ public interface WebTestClient {
 
 	/**
 	 * Base specification for setting up tests without a server.
-	 *
-	 * @param <B> a self reference to the builder type
 	 */
 	interface MockServerSpec<B extends MockServerSpec<B>> {
 
@@ -295,8 +290,9 @@ public interface WebTestClient {
 	interface ControllerSpec extends MockServerSpec<ControllerSpec> {
 
 		/**
-		 * Register one or more {@link org.springframework.web.bind.annotation.ControllerAdvice}
-		 * instances to be used in tests (specified {@code Class} will be turned into instance).
+		 * Register one or more
+		 * {@link org.springframework.web.bind.annotation.ControllerAdvice
+		 * ControllerAdvice} instances to be used in tests.
 		 */
 		ControllerSpec controllerAdvice(Object... controllerAdvice);
 
@@ -363,10 +359,8 @@ public interface WebTestClient {
 
 
 	/**
-	 * Steps for customizing the {@link WebClient} used to test with,
-	 * internally delegating to a
-	 * {@link org.springframework.web.reactive.function.client.WebClient.Builder
-	 * WebClient.Builder}.
+	 * Steps for customizing the {@link WebClient} used to test with
+	 * internally delegating to a {@link WebClient.Builder}.
 	 */
 	interface Builder {
 
@@ -449,8 +443,7 @@ public interface WebTestClient {
 		Builder responseTimeout(Duration timeout);
 
 		/**
-		 * Apply the given configurer to this builder instance.
-		 * <p>This can be useful for applying pre-packaged customizations.
+		 * Shortcut for pre-packaged customizations to WebTestClient builder.
 		 * @param configurer the configurer to apply
 		 */
 		Builder apply(WebTestClientConfigurer configurer);
@@ -464,8 +457,6 @@ public interface WebTestClient {
 
 	/**
 	 * Specification for providing the URI of a request.
-	 *
-	 * @param <S> a self reference to the spec type
 	 */
 	interface UriSpec<S extends RequestHeadersSpec<?>> {
 
@@ -502,8 +493,6 @@ public interface WebTestClient {
 
 	/**
 	 * Specification for adding request headers and performing an exchange.
-	 *
-	 * @param <S> a self reference to the spec type
 	 */
 	interface RequestHeadersSpec<S extends RequestHeadersSpec<S>> {
 
@@ -602,9 +591,6 @@ public interface WebTestClient {
 	}
 
 
-	/**
-	 * Specification for providing body of a request.
-	 */
 	interface RequestBodySpec extends RequestHeadersSpec<RequestBodySpec> {
 		/**
 		 * Set the length of the body in bytes, as specified by the
@@ -663,17 +649,10 @@ public interface WebTestClient {
 	}
 
 
-	/**
-	 * Specification for providing request headers and the URI of a request.
-	 *
-	 * @param <S> a self reference to the spec type
-	 */
 	interface RequestHeadersUriSpec<S extends RequestHeadersSpec<S>> extends UriSpec<S>, RequestHeadersSpec<S> {
 	}
 
-	/**
-	 * Specification for providing the body and the URI of a request.
-	 */
+
 	interface RequestBodyUriSpec extends RequestBodySpec, RequestHeadersUriSpec<RequestBodySpec> {
 	}
 
@@ -751,9 +730,6 @@ public interface WebTestClient {
 
 	/**
 	 * Spec for expectations on the response body decoded to a single Object.
-	 *
-	 * @param <S> a self reference to the spec type
-	 * @param <B> the body type
 	 */
 	interface BodySpec<B, S extends BodySpec<B, S>> {
 
@@ -761,25 +737,6 @@ public interface WebTestClient {
 		 * Assert the extracted body is equal to the given value.
 		 */
 		<T extends S> T isEqualTo(B expected);
-
-		/**
-		 * Assert the extracted body with a {@link Matcher}.
-		 * @since 5.1
-		 */
-		<T extends S> T value(Matcher<B> matcher);
-
-		/**
-		 * Transform the extracted the body with a function, e.g. extracting a
-		 * property, and assert the mapped value with a {@link Matcher}.
-		 * @since 5.1
-		 */
-		<T extends S, R> T value(Function<B, R> bodyMapper, Matcher<R> matcher);
-
-		/**
-		 * Assert the extracted body with a {@link Matcher}.
-		 * @since 5.1
-		 */
-		<T extends S> T value(Consumer<B> consumer);
 
 		/**
 		 * Assert the exchange result with the given {@link Consumer}.
@@ -796,8 +753,6 @@ public interface WebTestClient {
 
 	/**
 	 * Spec for expectations on the response body decoded to a List.
-	 *
-	 * @param <E> the body list element type
 	 */
 	interface ListBodySpec<E> extends BodySpec<List<E>, ListBodySpec<E>> {
 
@@ -837,24 +792,11 @@ public interface WebTestClient {
 		 * Parse the expected and actual response content as JSON and perform a
 		 * "lenient" comparison verifying the same attribute-value pairs.
 		 * <p>Use of this option requires the
-		 * <a href="http://jsonassert.skyscreamer.org/">JSONassert</a> library
+		 * <a href="http://jsonassert.skyscreamer.org/">JSONassert<a/> library
 		 * on to be on the classpath.
 		 * @param expectedJson the expected JSON content.
 		 */
 		BodyContentSpec json(String expectedJson);
-
-		/**
-		 * Parse expected and actual response content as XML and assert that
-		 * the two are "similar", i.e. they contain the same elements and
-		 * attributes regardless of order.
-		 * <p>Use of this method requires the
-		 * <a href="https://github.com/xmlunit/xmlunit">XMLUnit</a> library on
-		 * the classpath.
-		 * @param expectedXml the expected JSON content.
-		 * @since 5.1
-		 * @see org.springframework.test.util.XmlExpectationsHelper#assertXmlEqual(String, String)
-		 */
-		BodyContentSpec xml(String expectedXml);
 
 		/**
 		 * Access to response body assertions using a
@@ -866,32 +808,6 @@ public interface WebTestClient {
 		 * @param args arguments to parameterize the expression
 		 */
 		JsonPathAssertions jsonPath(String expression, Object... args);
-
-		/**
-		 * Access to response body assertions using an XPath expression to
-		 * inspect a specific subset of the body.
-		 * <p>The XPath expression can be a parameterized string using
-		 * formatting specifiers as defined in {@link String#format}.
-		 * @param expression the XPath expression
-		 * @param args arguments to parameterize the expression
-		 * @since 5.1
-		 * @see #xpath(String, Map, Object...)
-		 */
-		default XpathAssertions xpath(String expression, Object... args){
-			return xpath(expression, null, args);
-		}
-
-		/**
-		 * Access to response body assertions with specific namespaces using an
-		 * XPath expression to inspect a specific subset of the body.
-		 * <p>The XPath expression can be a parameterized string using
-		 * formatting specifiers as defined in {@link String#format}.
-		 * @param expression the XPath expression
-		 * @param namespaces namespaces to use
-		 * @param args arguments to parameterize the expression
-		 * @since 5.1
-		 */
-		XpathAssertions xpath(String expression, @Nullable  Map<String, String> namespaces, Object... args);
 
 		/**
 		 * Assert the response body content with the given {@link Consumer}.

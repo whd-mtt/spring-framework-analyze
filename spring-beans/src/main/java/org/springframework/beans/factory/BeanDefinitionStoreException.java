@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,10 @@ import org.springframework.lang.Nullable;
 public class BeanDefinitionStoreException extends FatalBeanException {
 
 	@Nullable
-	private final String resourceDescription;
+	private String resourceDescription;
 
 	@Nullable
-	private final String beanName;
+	private String beanName;
 
 
 	/**
@@ -43,8 +43,6 @@ public class BeanDefinitionStoreException extends FatalBeanException {
 	 */
 	public BeanDefinitionStoreException(String msg) {
 		super(msg);
-		this.resourceDescription = null;
-		this.beanName = null;
 	}
 
 	/**
@@ -54,8 +52,6 @@ public class BeanDefinitionStoreException extends FatalBeanException {
 	 */
 	public BeanDefinitionStoreException(String msg, @Nullable Throwable cause) {
 		super(msg, cause);
-		this.resourceDescription = null;
-		this.beanName = null;
 	}
 
 	/**
@@ -66,7 +62,6 @@ public class BeanDefinitionStoreException extends FatalBeanException {
 	public BeanDefinitionStoreException(@Nullable String resourceDescription, String msg) {
 		super(msg);
 		this.resourceDescription = resourceDescription;
-		this.beanName = null;
 	}
 
 	/**
@@ -78,13 +73,12 @@ public class BeanDefinitionStoreException extends FatalBeanException {
 	public BeanDefinitionStoreException(@Nullable String resourceDescription, String msg, @Nullable Throwable cause) {
 		super(msg, cause);
 		this.resourceDescription = resourceDescription;
-		this.beanName = null;
 	}
 
 	/**
 	 * Create a new BeanDefinitionStoreException.
 	 * @param resourceDescription description of the resource that the bean definition came from
-	 * @param beanName the name of the bean
+	 * @param beanName the name of the bean requested
 	 * @param msg the detail message (appended to an introductory message that indicates
 	 * the resource and the name of the bean)
 	 */
@@ -95,23 +89,21 @@ public class BeanDefinitionStoreException extends FatalBeanException {
 	/**
 	 * Create a new BeanDefinitionStoreException.
 	 * @param resourceDescription description of the resource that the bean definition came from
-	 * @param beanName the name of the bean
+	 * @param beanName the name of the bean requested
 	 * @param msg the detail message (appended to an introductory message that indicates
 	 * the resource and the name of the bean)
 	 * @param cause the root cause (may be {@code null})
 	 */
-	public BeanDefinitionStoreException(
-			@Nullable String resourceDescription, String beanName, String msg, @Nullable Throwable cause) {
-
-		super("Invalid bean definition with name '" + beanName + "' defined in " + resourceDescription + ": " + msg,
-				cause);
+	public BeanDefinitionStoreException(@Nullable String resourceDescription, String beanName, String msg, @Nullable Throwable cause) {
+		super("Invalid bean definition with name '" + beanName + "' defined in " + resourceDescription + ": " + msg, cause);
 		this.resourceDescription = resourceDescription;
 		this.beanName = beanName;
 	}
 
 
 	/**
-	 * Return the description of the resource that the bean definition came from, if available.
+	 * Return the description of the resource that the bean
+	 * definition came from, if any.
 	 */
 	@Nullable
 	public String getResourceDescription() {
@@ -119,7 +111,7 @@ public class BeanDefinitionStoreException extends FatalBeanException {
 	}
 
 	/**
-	 * Return the name of the bean, if available.
+	 * Return the name of the bean requested, if any.
 	 */
 	@Nullable
 	public String getBeanName() {

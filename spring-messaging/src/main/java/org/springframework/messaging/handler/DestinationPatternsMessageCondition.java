@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ import org.springframework.util.PathMatcher;
 import org.springframework.util.StringUtils;
 
 /**
- * A {@link MessageCondition} for matching the destination of a Message
- * against one or more destination patterns using a {@link PathMatcher}.
+ * A {@link MessageCondition} for matching the destination of a Message against one or
+ * more destination patterns using a {@link PathMatcher}.
  *
  * @author Rossen Stoyanchev
  * @since 4.0
@@ -42,9 +42,6 @@ import org.springframework.util.StringUtils;
 public class DestinationPatternsMessageCondition
 		extends AbstractMessageCondition<DestinationPatternsMessageCondition> {
 
-	/**
-	 * The name of the "lookup destination" header.
-	 */
 	public static final String LOOKUP_DESTINATION_HEADER = "lookupDestination";
 
 
@@ -81,8 +78,10 @@ public class DestinationPatternsMessageCondition
 		boolean slashSeparator = pathMatcher.combine("a", "a").equals("a/a");
 		Set<String> result = new LinkedHashSet<>(patterns.size());
 		for (String pattern : patterns) {
-			if (slashSeparator && StringUtils.hasLength(pattern) && !pattern.startsWith("/")) {
-				pattern = "/" + pattern;
+			if (slashSeparator) {
+				if (StringUtils.hasLength(pattern) && !pattern.startsWith("/")) {
+					pattern = "/" + pattern;
+				}
 			}
 			result.add(pattern);
 		}
@@ -153,6 +152,7 @@ public class DestinationPatternsMessageCondition
 		if (destination == null) {
 			return null;
 		}
+
 		if (this.patterns.isEmpty()) {
 			return this;
 		}
@@ -163,11 +163,12 @@ public class DestinationPatternsMessageCondition
 				matches.add(pattern);
 			}
 		}
+
 		if (matches.isEmpty()) {
 			return null;
 		}
 
-		matches.sort(this.pathMatcher.getPatternComparator(destination));
+		Collections.sort(matches, this.pathMatcher.getPatternComparator(destination));
 		return new DestinationPatternsMessageCondition(matches, this.pathMatcher);
 	}
 
@@ -178,8 +179,9 @@ public class DestinationPatternsMessageCondition
 	 * If all compared patterns match equally, but one instance has more patterns,
 	 * it is considered a closer match.
 	 * <p>It is assumed that both instances have been obtained via
-	 * {@link #getMatchingCondition(Message)} to ensure they contain only patterns
-	 * that match the request and are sorted with the best matches on top.
+	 * {@link #getMatchingCondition(Message)} to ensure they
+	 * contain only patterns that match the request and are sorted with
+	 * the best matches on top.
 	 */
 	@Override
 	public int compareTo(DestinationPatternsMessageCondition other, Message<?> message) {
@@ -187,8 +189,8 @@ public class DestinationPatternsMessageCondition
 		if (destination == null) {
 			return 0;
 		}
-
 		Comparator<String> patternComparator = this.pathMatcher.getPatternComparator(destination);
+
 		Iterator<String> iterator = this.patterns.iterator();
 		Iterator<String> iteratorOther = other.patterns.iterator();
 		while (iterator.hasNext() && iteratorOther.hasNext()) {
@@ -197,7 +199,6 @@ public class DestinationPatternsMessageCondition
 				return result;
 			}
 		}
-
 		if (iterator.hasNext()) {
 			return -1;
 		}

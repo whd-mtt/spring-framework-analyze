@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,24 +38,30 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.HandlerMapping;
 
 /**
- * Resolves arguments of type {@link Map} annotated with {@link MatrixVariable @MatrixVariable}
- * where the annotation does not specify a name. In other words the purpose of this resolver
- * is to provide access to multiple matrix variables, either all or associated with a specific
- * path variable.
+ * Resolves arguments of type {@link Map} annotated with {@link MatrixVariable
+ * @MatrixVariable} where the annotation does not specify a name. In other words
+ * the purpose of this resolver is to provide access to multiple matrix
+ * variables, either all or associted with a specific path variable.
  *
- * <p>When a name is specified, an argument of type Map is considered to be a single attribute
- * with a Map value, and is resolved by {@link MatrixVariableMethodArgumentResolver} instead.
+ * <p>When a name is specified, an argument of type Map is considered to be an
+ * single attribute with a Map value, and is resolved by
+ * {@link MatrixVariableMethodArgumentResolver} instead.
  *
  * @author Rossen Stoyanchev
  * @since 3.2
  */
 public class MatrixVariableMapMethodArgumentResolver implements HandlerMethodArgumentResolver {
 
+
 	@Override
 	public boolean supportsParameter(MethodParameter parameter) {
 		MatrixVariable matrixVariable = parameter.getParameterAnnotation(MatrixVariable.class);
-		return (matrixVariable != null && Map.class.isAssignableFrom(parameter.getParameterType()) &&
-				!StringUtils.hasText(matrixVariable.name()));
+		if (matrixVariable != null) {
+			if (Map.class.isAssignableFrom(parameter.getParameterType())) {
+				return !StringUtils.hasText(matrixVariable.name());
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -86,11 +92,11 @@ public class MatrixVariableMapMethodArgumentResolver implements HandlerMethodArg
 		}
 		else {
 			for (MultiValueMap<String, String> vars : matrixVariables.values()) {
-				vars.forEach((name, values) -> {
-					for (String value : values) {
+				for (String name : vars.keySet()) {
+					for (String value : vars.get(name)) {
 						map.add(name, value);
 					}
-				});
+				}
 			}
 		}
 
@@ -101,7 +107,8 @@ public class MatrixVariableMapMethodArgumentResolver implements HandlerMethodArg
 		if (!MultiValueMap.class.isAssignableFrom(parameter.getParameterType())) {
 			ResolvableType[] genericTypes = ResolvableType.forMethodParameter(parameter).getGenerics();
 			if (genericTypes.length == 2) {
-				return !List.class.isAssignableFrom(genericTypes[1].toClass());
+				Class<?> declaredClass = genericTypes[1].getRawClass();
+				return (declaredClass == null || !List.class.isAssignableFrom(declaredClass));
 			}
 		}
 		return false;

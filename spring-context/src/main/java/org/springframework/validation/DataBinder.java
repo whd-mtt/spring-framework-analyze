@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,10 +108,10 @@ import org.springframework.util.StringUtils;
  */
 public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 
-	/** Default object name used for binding: "target". */
+	/** Default object name used for binding: "target" */
 	public static final String DEFAULT_OBJECT_NAME = "target";
 
-	/** Default limit for array and collection growing: 256. */
+	/** Default limit for array and collection growing: 256 */
 	public static final int DEFAULT_AUTO_GROW_COLLECTION_LIMIT = 256;
 
 
@@ -535,10 +535,9 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	}
 
 	private void assertValidators(Validator... validators) {
-		Object target = getTarget();
 		for (Validator validator : validators) {
-			if (validator != null && (target != null && !validator.supports(target.getClass()))) {
-				throw new IllegalStateException("Invalid target for Validator [" + validator + "]: " + target);
+			if (validator != null && (getTarget() != null && !validator.supports(getTarget().getClass()))) {
+				throw new IllegalStateException("Invalid target for Validator [" + validator + "]: " + getTarget());
 			}
 		}
 	}
@@ -569,7 +568,7 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 */
 	@Nullable
 	public Validator getValidator() {
-		return (!this.validators.isEmpty() ? this.validators.get(0) : null);
+		return (this.validators.size() > 0 ? this.validators.get(0) : null);
 	}
 
 	/**
@@ -715,8 +714,8 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 * @see #doBind(org.springframework.beans.MutablePropertyValues)
 	 */
 	public void bind(PropertyValues pvs) {
-		MutablePropertyValues mpvs = (pvs instanceof MutablePropertyValues ?
-				(MutablePropertyValues) pvs : new MutablePropertyValues(pvs));
+		MutablePropertyValues mpvs = (pvs instanceof MutablePropertyValues) ?
+				(MutablePropertyValues) pvs : new MutablePropertyValues(pvs);
 		doBind(mpvs);
 	}
 
@@ -853,12 +852,8 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 * @see #getBindingResult()
 	 */
 	public void validate() {
-		Object target = getTarget();
-		Assert.state(target != null, "No target to validate");
-		BindingResult bindingResult = getBindingResult();
-		// Call each validator with the same binding result
-		for (Validator validator : getValidators()) {
-			validator.validate(target, bindingResult);
+		for (Validator validator : this.validators) {
+			validator.validate(getTarget(), getBindingResult());
 		}
 	}
 
@@ -866,21 +861,16 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 * Invoke the specified Validators, if any, with the given validation hints.
 	 * <p>Note: Validation hints may get ignored by the actual target Validator.
 	 * @param validationHints one or more hint objects to be passed to a {@link SmartValidator}
-	 * @since 3.1
 	 * @see #setValidator(Validator)
 	 * @see SmartValidator#validate(Object, Errors, Object...)
 	 */
 	public void validate(Object... validationHints) {
-		Object target = getTarget();
-		Assert.state(target != null, "No target to validate");
-		BindingResult bindingResult = getBindingResult();
-		// Call each validator with the same binding result
 		for (Validator validator : getValidators()) {
 			if (!ObjectUtils.isEmpty(validationHints) && validator instanceof SmartValidator) {
-				((SmartValidator) validator).validate(target, bindingResult, validationHints);
+				((SmartValidator) validator).validate(getTarget(), getBindingResult(), validationHints);
 			}
 			else if (validator != null) {
-				validator.validate(target, bindingResult);
+				validator.validate(getTarget(), getBindingResult());
 			}
 		}
 	}

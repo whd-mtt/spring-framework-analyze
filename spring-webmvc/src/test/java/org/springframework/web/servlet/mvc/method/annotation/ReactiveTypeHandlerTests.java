@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.web.servlet.mvc.method.annotation;
 
 import java.io.IOException;
@@ -81,8 +80,7 @@ public class ReactiveTypeHandlerTests {
 		ContentNegotiationManagerFactoryBean factoryBean = new ContentNegotiationManagerFactoryBean();
 		factoryBean.afterPropertiesSet();
 		ContentNegotiationManager manager = factoryBean.getObject();
-		ReactiveAdapterRegistry adapterRegistry = ReactiveAdapterRegistry.getSharedInstance();
-		this.handler = new ReactiveTypeHandler(adapterRegistry, new SyncTaskExecutor(), manager);
+		this.handler = new ReactiveTypeHandler(ReactiveAdapterRegistry.getSharedInstance(), new SyncTaskExecutor(), manager);
 		resetRequest();
 	}
 
@@ -91,8 +89,8 @@ public class ReactiveTypeHandlerTests {
 		this.servletResponse = new MockHttpServletResponse();
 		this.webRequest = new ServletWebRequest(this.servletRequest, this.servletResponse);
 
-		AsyncWebRequest webRequest = new StandardServletAsyncWebRequest(this.servletRequest, this.servletResponse);
-		WebAsyncUtils.getAsyncManager(this.webRequest).setAsyncWebRequest(webRequest);
+		AsyncWebRequest asyncWebRequest = new StandardServletAsyncWebRequest(this.servletRequest, this.servletResponse);
+		WebAsyncUtils.getAsyncManager(this.webRequest).setAsyncWebRequest(asyncWebRequest);
 		this.servletRequest.setAsyncSupported(true);
 	}
 
@@ -123,8 +121,7 @@ public class ReactiveTypeHandlerTests {
 		// RxJava 1 Single
 		AtomicReference<SingleEmitter<String>> ref = new AtomicReference<>();
 		Single<String> single = Single.fromEmitter(ref::set);
-		testDeferredResultSubscriber(single, Single.class, forClass(String.class),
-				() -> ref.get().onSuccess("foo"), "foo");
+		testDeferredResultSubscriber(single, Single.class, forClass(String.class), () -> ref.get().onSuccess("foo"), "foo");
 
 		// RxJava 2 Single
 		AtomicReference<io.reactivex.SingleEmitter<String>> ref2 = new AtomicReference<>();
@@ -403,10 +400,8 @@ public class ReactiveTypeHandlerTests {
 			this.value = value;
 		}
 
-		@SuppressWarnings("unused")
 		public String getValue() {
 			return this.value;
 		}
 	}
-
 }

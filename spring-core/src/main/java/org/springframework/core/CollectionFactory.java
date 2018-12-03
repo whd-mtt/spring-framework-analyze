@@ -53,7 +53,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Sam Brannen
  * @since 1.1.1
  */
-public final class CollectionFactory {
+public abstract class CollectionFactory {
 
 	private static final Set<Class<?>> approximableCollectionTypes = new HashSet<>();
 
@@ -82,10 +82,6 @@ public final class CollectionFactory {
 		approximableMapTypes.add(LinkedHashMap.class);
 		approximableMapTypes.add(TreeMap.class);
 		approximableMapTypes.add(EnumMap.class);
-	}
-
-
-	private CollectionFactory() {
 	}
 
 

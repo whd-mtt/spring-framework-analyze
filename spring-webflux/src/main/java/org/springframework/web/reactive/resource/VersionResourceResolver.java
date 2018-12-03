@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -67,7 +68,7 @@ public class VersionResourceResolver extends AbstractResourceResolver {
 
 	private AntPathMatcher pathMatcher = new AntPathMatcher();
 
-	/** Map from path pattern -> VersionStrategy. */
+	/** Map from path pattern -> VersionStrategy */
 	private final Map<String, VersionStrategy> versionStrategyMap = new LinkedHashMap<>();
 
 
@@ -134,7 +135,7 @@ public class VersionResourceResolver extends AbstractResourceResolver {
 				prefixedPatterns.add(versionPrefix + pattern);
 			}
 		}
-		return addVersionStrategy(new FixedVersionStrategy(version), StringUtils.toStringArray(prefixedPatterns));
+		return addVersionStrategy(new FixedVersionStrategy(version), prefixedPatterns.toArray(new String[0]));
 	}
 
 	/**
@@ -173,21 +174,30 @@ public class VersionResourceResolver extends AbstractResourceResolver {
 
 		String candidate = versionStrategy.extractVersion(requestPath);
 		if (StringUtils.isEmpty(candidate)) {
+			if (logger.isTraceEnabled()) {
+				logger.trace("No version found in path \"" + requestPath + "\"");
+			}
 			return Mono.empty();
 		}
 
 		String simplePath = versionStrategy.removeVersion(requestPath, candidate);
+		if (logger.isTraceEnabled()) {
+			logger.trace("Extracted version from path, re-resolving without version: \"" + simplePath + "\"");
+		}
+
 		return chain.resolveResource(exchange, simplePath, locations)
 				.filterWhen(resource -> versionStrategy.getResourceVersion(resource)
 						.map(actual -> {
 							if (candidate.equals(actual)) {
+								if (logger.isTraceEnabled()) {
+									logger.trace("Resource matches extracted version [" + candidate + "]");
+								}
 								return true;
 							}
 							else {
 								if (logger.isTraceEnabled()) {
-									String logPrefix = exchange != null ? exchange.getLogPrefix() : "";
-									logger.trace(logPrefix + "Found resource for \"" + requestPath +
-											"\", but version [" + candidate + "] does not match");
+									logger.trace("Potential resource found for \"" + requestPath + "\", " +
+											"but version [" + candidate + "] does not match");
 								}
 								return false;
 							}
@@ -206,9 +216,18 @@ public class VersionResourceResolver extends AbstractResourceResolver {
 						if (strategy == null) {
 							return Mono.just(baseUrl);
 						}
+						if (logger.isTraceEnabled()) {
+							logger.trace("Getting the original resource to determine version " +
+									"for path \"" + resourceUrlPath + "\"");
+						}
 						return chain.resolveResource(null, baseUrl, locations)
 								.flatMap(resource -> strategy.getResourceVersion(resource)
-										.map(version -> strategy.addVersion(baseUrl, version)));
+										.map(version -> {
+											if (logger.isTraceEnabled()) {
+												logger.trace("Determined version [" + version + "] for " + resource);
+											}
+											return strategy.addVersion(baseUrl, version);
+										}));
 					}
 					return Mono.empty();
 				});
@@ -229,7 +248,7 @@ public class VersionResourceResolver extends AbstractResourceResolver {
 		}
 		if (!matchingPatterns.isEmpty()) {
 			Comparator<String> comparator = this.pathMatcher.getPatternComparator(path);
-			matchingPatterns.sort(comparator);
+			Collections.sort(matchingPatterns, comparator);
 			return this.versionStrategyMap.get(matchingPatterns.get(0));
 		}
 		return null;
@@ -305,18 +324,23 @@ public class VersionResourceResolver extends AbstractResourceResolver {
 
 		@Override
 		public String getDescription() {
-			return this.original.getDescription();
+			return original.getDescription();
 		}
 
 		@Override
 		public InputStream getInputStream() throws IOException {
-			return this.original.getInputStream();
+			return original.getInputStream();
 		}
 
 		@Override
 		public HttpHeaders getResponseHeaders() {
-			HttpHeaders headers = (this.original instanceof HttpResource ?
-					((HttpResource) this.original).getResponseHeaders() : new HttpHeaders());
+			HttpHeaders headers;
+			if(this.original instanceof HttpResource) {
+				headers = ((HttpResource) this.original).getResponseHeaders();
+			}
+			else {
+				headers = new HttpHeaders();
+			}
 			headers.setETag("\"" + this.version + "\"");
 			return headers;
 		}

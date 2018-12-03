@@ -18,19 +18,17 @@ package org.springframework.test.web.reactive.server;
 import java.util.Arrays;
 
 import org.junit.Test;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 
-import static java.nio.charset.StandardCharsets.*;
-import static org.junit.Assert.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Test scenarios involving a mock server.
@@ -40,7 +38,7 @@ public class MockServerTests {
 
 
 	@Test // SPR-15674 (in comments)
-	public void mutateDoesNotCreateNewSession() {
+	public void mutateDoesNotCreateNewSession() throws Exception {
 
 		WebTestClient client = WebTestClient
 				.bindToWebHandler(exchange -> {
@@ -53,7 +51,8 @@ public class MockServerTests {
 						return exchange.getSession()
 								.map(session -> session.getAttributeOrDefault("foo", "none"))
 								.flatMap(value -> {
-									DataBuffer buffer = toDataBuffer(value);
+									byte[] bytes = value.getBytes(UTF_8);
+									DataBuffer buffer = new DefaultDataBufferFactory().wrap(bytes);
 									return exchange.getResponse().writeWith(Mono.just(buffer));
 								});
 					}
@@ -75,7 +74,7 @@ public class MockServerTests {
 	}
 
 	@Test // SPR-16059
-	public void mutateDoesCopy() {
+	public void mutateDoesCopy() throws Exception {
 
 		WebTestClient.Builder builder = WebTestClient
 				.bindToWebHandler(exchange -> exchange.getResponse().setComplete())
@@ -112,7 +111,7 @@ public class MockServerTests {
 	}
 
 	@Test // SPR-16124
-	public void exchangeResultHasCookieHeaders() {
+	public void exchangeResultHasCookieHeaders() throws Exception {
 
 		ExchangeResult result = WebTestClient
 				.bindToWebHandler(exchange -> {
@@ -135,34 +134,6 @@ public class MockServerTests {
 
 		assertEquals(Arrays.asList("a=alpha", "b=beta"),
 				result.getRequestHeaders().get(HttpHeaders.COOKIE));
-	}
-
-	@Test
-	public void responseBodyContentWithFluxExchangeResult() {
-
-		FluxExchangeResult<String> result = WebTestClient
-				.bindToWebHandler(exchange -> {
-					ServerHttpResponse response = exchange.getResponse();
-					response.getHeaders().setContentType(MediaType.TEXT_PLAIN);
-					return response.writeWith(Flux.just(toDataBuffer("body")));
-				})
-				.build()
-				.get().uri("/")
-				.exchange()
-				.expectStatus().isOk()
-				.returnResult(String.class);
-
-		// Get the raw content without consuming the response body flux..
-		byte[] bytes = result.getResponseBodyContent();
-
-		assertNotNull(bytes);
-		assertEquals("body", new String(bytes, UTF_8));
-	}
-
-
-	private DataBuffer toDataBuffer(String value) {
-		byte[] bytes = value.getBytes(UTF_8);
-		return new DefaultDataBufferFactory().wrap(bytes);
 	}
 
 }

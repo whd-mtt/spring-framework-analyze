@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import static org.springframework.web.reactive.function.BodyInserters.*;
 public class RouterFunctionTests {
 
 	@Test
-	public void and() {
+	public void and() throws Exception {
 		HandlerFunction<ServerResponse> handlerFunction = request -> ServerResponse.ok().build();
 		RouterFunction<ServerResponse> routerFunction1 = request -> Mono.empty();
 		RouterFunction<ServerResponse> routerFunction2 = request -> Mono.just(handlerFunction);
@@ -48,7 +48,7 @@ public class RouterFunctionTests {
 	}
 
 	@Test
-	public void andOther() {
+	public void andOther() throws Exception {
 		HandlerFunction<ServerResponse> handlerFunction =
 				request -> ServerResponse.ok().body(fromObject("42"));
 		RouterFunction<?> routerFunction1 = request -> Mono.empty();
@@ -68,7 +68,7 @@ public class RouterFunctionTests {
 	}
 
 	@Test
-	public void andRoute() {
+	public void andRoute() throws Exception {
 		RouterFunction<ServerResponse> routerFunction1 = request -> Mono.empty();
 		RequestPredicate requestPredicate = request -> true;
 
@@ -85,7 +85,7 @@ public class RouterFunctionTests {
 	}
 
 	@Test
-	public void filter() {
+	public void filter() throws Exception {
 		Mono<String> stringMono = Mono.just("42");
 		HandlerFunction<EntityResponse<Mono<String>>> handlerFunction =
 				request -> EntityResponse.fromPublisher(stringMono, String.class).build();
@@ -99,7 +99,6 @@ public class RouterFunctionTests {
 									.map(Integer::parseInt);
 							return EntityResponse.fromPublisher(intMono, Integer.class).build();
 						});
-
 		RouterFunction<EntityResponse<Mono<Integer>>> result = routerFunction.filter(filterFunction);
 		assertNotNull(result);
 

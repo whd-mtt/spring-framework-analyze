@@ -72,7 +72,7 @@ public class ParameterContentTypeResolver implements RequestedContentTypeResolve
 	public List<MediaType> resolveMediaTypes(ServerWebExchange exchange) throws NotAcceptableStatusException {
 		String key = exchange.getRequest().getQueryParams().getFirst(getParameterName());
 		if (!StringUtils.hasText(key)) {
-			return MEDIA_TYPE_ALL_LIST;
+			return Collections.emptyList();
 		}
 		key = formatKey(key);
 		MediaType match = this.mediaTypes.get(key);

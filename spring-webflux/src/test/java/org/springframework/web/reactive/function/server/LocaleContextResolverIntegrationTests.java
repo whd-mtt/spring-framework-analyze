@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import org.springframework.web.reactive.result.view.ViewResolver;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.i18n.FixedLocaleContextResolver;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Sebastien Deleuze
@@ -44,6 +44,21 @@ public class LocaleContextResolverIntegrationTests extends AbstractRouterFunctio
 
 	private final WebClient webClient = WebClient.create();
 
+	@Test
+	public void fixedLocale() {
+		Mono<ClientResponse> result = webClient
+				.get()
+				.uri("http://localhost:" + this.port + "/")
+				.exchange();
+
+		StepVerifier
+				.create(result)
+				.consumeNextWith(response -> {
+					assertEquals(HttpStatus.OK, response.statusCode());
+					assertEquals(Locale.GERMANY, response.headers().asHttpHeaders().getContentLanguage());
+				})
+				.verifyComplete();
+	}
 
 	@Override
 	protected RouterFunction<?> routerFunction() {
@@ -62,24 +77,6 @@ public class LocaleContextResolverIntegrationTests extends AbstractRouterFunctio
 				.build();
 	}
 
-
-	@Test
-	public void fixedLocale() {
-		Mono<ClientResponse> result = webClient
-				.get()
-				.uri("http://localhost:" + this.port + "/")
-				.exchange();
-
-		StepVerifier
-				.create(result)
-				.consumeNextWith(response -> {
-					assertEquals(HttpStatus.OK, response.statusCode());
-					assertEquals(Locale.GERMANY, response.headers().asHttpHeaders().getContentLanguage());
-				})
-				.verifyComplete();
-	}
-
-
 	private static class DummyViewResolver implements ViewResolver {
 
 		@Override
@@ -87,7 +84,6 @@ public class LocaleContextResolverIntegrationTests extends AbstractRouterFunctio
 			return Mono.just(new DummyView(locale));
 		}
 	}
-
 
 	private static class DummyView implements View {
 
@@ -109,5 +105,4 @@ public class LocaleContextResolverIntegrationTests extends AbstractRouterFunctio
 			return Mono.empty();
 		}
 	}
-
 }

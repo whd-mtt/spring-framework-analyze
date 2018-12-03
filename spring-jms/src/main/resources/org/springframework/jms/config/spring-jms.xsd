@@ -20,12 +20,12 @@
 	<xsd:element name="annotation-driven">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[
-	Enables the detection of @JmsListener annotation on any Spring-managed object.
-	If present, a message listener container will be created to receive the relevant
+	Enables the detection of @JmsListener annotation on any Spring-managed object. If
+	present, a message listener container will be created to receive the relevant
 	messages and invoke the annotated method accordingly.
 
-	See org.springframework.jms.annotation.EnableJms javadoc for information on
-	code-based alternatives to this XML element.
+	See Javadoc for the org.springframework.jms.annotation.EnableJms annotation for
+	information	on code-based alternatives to this XML element.
 			]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:complexType>
@@ -68,7 +68,7 @@
 	processor. By default, DefaultMessageHandlerMethodFactory is used and it can be configured
 	further to support additional method arguments or to customize conversion and validation
 	support. See org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory
-	javadoc for more details.
+	Javadoc for more details.
 					]]></xsd:documentation>
 					<xsd:appinfo>
 						<tool:annotation kind="ref">
@@ -77,6 +77,8 @@
 					</xsd:appinfo>
 				</xsd:annotation>
 			</xsd:attribute>
+
+
 		</xsd:complexType>
 	</xsd:element>
 
@@ -126,7 +128,7 @@
 			<xsd:attribute name="container-class" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A custom listener container implementation class as fully qualified class name.
+	AppConfig custom listener container implementation class as fully qualified class name.
 	Default is Spring's standard DefaultMessageListenerContainer or
 	SimpleMessageListenerContainer, according to the "container-type" attribute.
 	Note that a custom container class will typically be a subclass of either of
@@ -146,7 +148,7 @@
 			<xsd:attribute name="connection-factory" type="xsd:string" default="connectionFactory">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A reference to the JMS ConnectionFactory bean.
+	AppConfig reference to the JMS ConnectionFactory bean.
 	Default is "connectionFactory".
 					]]></xsd:documentation>
 					<xsd:appinfo>
@@ -159,7 +161,7 @@
 			<xsd:attribute name="task-executor" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A reference to a Spring TaskExecutor (or standard JDK 1.5 Executor) for executing
+	AppConfig reference to a Spring TaskExecutor (or standard JDK 1.5 Executor) for executing
 	JMS listener invokers. Default is a SimpleAsyncTaskExecutor in case of a
 	DefaultMessageListenerContainer, using internally managed threads. For a
 	SimpleMessageListenerContainer, listeners will always get invoked within the
@@ -175,7 +177,7 @@
 			<xsd:attribute name="destination-resolver" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A reference to the DestinationResolver strategy for resolving destination names.
+	AppConfig reference to the DestinationResolver strategy for resolving destination names.
 	Default is a DynamicDestinationResolver, using the JMS provider's queue/topic
 	name resolution. Alternatively, specify a reference to a JndiDestinationResolver
 	(typically in a Java EE environment).
@@ -190,7 +192,7 @@
 			<xsd:attribute name="message-converter" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A reference to the MessageConverter strategy for converting JMS Messages to
+	AppConfig reference to the MessageConverter strategy for converting JMS Messages to
 	listener method arguments. Default is a SimpleMessageConverter.
 					]]></xsd:documentation>
 					<xsd:appinfo>
@@ -203,7 +205,7 @@
 			<xsd:attribute name="error-handler" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A reference to an ErrorHandler strategy for handling any uncaught Exceptions
+	AppConfig reference to an ErrorHandler strategy for handling any uncaught Exceptions
 	that may occur during the execution of the MessageListener.
 					]]></xsd:documentation>
 					<xsd:appinfo>
@@ -278,7 +280,7 @@
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
 	The native JMS acknowledge mode: "auto", "client", "dups-ok" or "transacted".
-	A value of "transacted" effectively activates a locally transacted Session;
+	AppConfig value of "transacted" effectively activates a locally transacted Session;
 	as alternative, specify an external "transaction-manager" via the corresponding
 	attribute. Default is "auto".
 					]]></xsd:documentation>
@@ -295,7 +297,7 @@
 			<xsd:attribute name="transaction-manager" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A reference to an external PlatformTransactionManager (typically an
+	AppConfig reference to an external PlatformTransactionManager (typically an
 	XA-based transaction coordinator, e.g. Spring's JtaTransactionManager).
 	If not specified, native acknowledging will be used (see "acknowledge" attribute).
 					]]></xsd:documentation>
@@ -376,13 +378,14 @@
 	<xsd:element name="jca-listener-container">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[
-	Each listener child element will be hosted by a container whose configuration is
-	determined by this parent element. This variant builds standard JCA-based listener
-	containers, operating against a specified JCA ResourceAdapter (which needs to be
-	provided by the JMS message broker, e.g. ActiveMQ). When a factory-id attribute is
-	present, the configuration defined by this element is exposed as a bean of type
-	org.springframework.jms.config.JmsListenerContainerFactory. It is therefore possible
-	to only define this element without any child to just expose a container factory.
+	Each listener child element will be hosted by a container whose configuration
+	is determined by this parent element. This variant builds standard JCA-based
+	listener containers, operating against a specified JCA ResourceAdapter
+	(which needs to be provided by the JMS message broker, e.g. ActiveMQ). When
+	a factory-id attribute is present, the configuration defined by this element is
+	exposed as a org.springframework.jms.config.JmsListenerContainerFactory. It is
+	therefore possible to only define this element without any child to just expose
+	a container factory.
 			]]></xsd:documentation>
 			<xsd:appinfo>
 				<tool:annotation>
@@ -397,8 +400,7 @@
 			<xsd:attribute name="factory-id" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	Expose the settings defined by this element as a bean of type
-	org.springframework.jms.config.JmsListenerContainerFactory
+	Expose the settings defined by this element as a org.springframework.jms.config.JmsListenerContainerFactory
 	so that they can be reused with other endpoints.
 				]]></xsd:documentation>
 				</xsd:annotation>
@@ -406,7 +408,7 @@
 			<xsd:attribute name="resource-adapter" type="xsd:string" default="resourceAdapter">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A reference to the JCA ResourceAdapter bean for the JMS provider.
+	AppConfig reference to the JCA ResourceAdapter bean for the JMS provider.
 	Default is "resourceAdapter".
 					]]></xsd:documentation>
 					<xsd:appinfo>
@@ -419,7 +421,7 @@
 			<xsd:attribute name="activation-spec-factory" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A reference to the JmsActivationSpecFactory.
+	AppConfig reference to the JmsActivationSpecFactory.
 	Default is to autodetect the JMS provider and its ActivationSpec class
 	(see DefaultJmsActivationSpecFactory).
 					]]></xsd:documentation>
@@ -433,7 +435,7 @@
 			<xsd:attribute name="destination-resolver" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A reference to the DestinationResolver strategy for resolving destination names.
+	AppConfig reference to the DestinationResolver strategy for resolving destination names.
 	Default is to pass in the destination name Strings into the JCA ActivationSpec as-is.
 	Alternatively, specify a reference to a JndiDestinationResolver (typically in a Java EE
 	environment, in particular if the server insists on receiving Destination objects).
@@ -448,7 +450,7 @@
 			<xsd:attribute name="message-converter" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A reference to the MessageConverter strategy for converting JMS Messages to
+	AppConfig reference to the MessageConverter strategy for converting JMS Messages to
 	listener method arguments. Default is a SimpleMessageConverter.
 					]]></xsd:documentation>
 					<xsd:appinfo>
@@ -476,8 +478,8 @@
 			<xsd:attribute name="response-destination-type" default="queue">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	The JMS destination type for responses: "queue", "topic".
-	Default is the value of the "destination-type" attribute.
+	The JMS destination type for responses: "queue", "topic". Default
+	is the value of the "destination-type" attribute.
 					]]></xsd:documentation>
 				</xsd:annotation>
 				<xsd:simpleType>
@@ -499,7 +501,7 @@
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
 	The native JMS acknowledge mode: "auto", "client", "dups-ok" or "transacted".
-	A value of "transacted" effectively activates a locally transacted Session;
+	AppConfig value of "transacted" effectively activates a locally transacted Session;
 	as alternative, specify an external "transaction-manager" via the corresponding
 	attribute. Default is "auto".
 					]]></xsd:documentation>
@@ -516,7 +518,7 @@
 			<xsd:attribute name="transaction-manager" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A reference to the Spring JtaTransactionManager or [javax.transaction.TransactionManager],
+	AppConfig reference to the Spring JtaTransactionManager or [javax.transaction.TransactionManager],
 	for kicking off an XA transaction for each incoming message.
 	If not specified, native acknowledging will be used (see "acknowledge" attribute).
 					]]></xsd:documentation>

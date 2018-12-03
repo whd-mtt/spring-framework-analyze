@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import org.springframework.lang.Nullable;
  */
 public class JmsActivationSpecConfig {
 
-	/** Constants instance for {@code javax.jms.Session}. */
+	/** Constants instance for javax.jms.Session */
 	private static final Constants sessionConstants = new Constants(Session.class);
 
 
@@ -217,7 +217,7 @@ public class JmsActivationSpecConfig {
 	 * Specify concurrency limits via a "lower-upper" String, e.g. "5-10", or a simple
 	 * upper limit String, e.g. "10".
 	 * <p>JCA listener containers will always scale from zero to the given upper limit.
-	 * A specified lower limit will effectively be ignored.
+	 * AppConfig specified lower limit will effectively be ignored.
 	 * <p>This property is primarily supported for configuration compatibility with
 	 * {@link org.springframework.jms.listener.DefaultMessageListenerContainer}.
 	 * For this activation config, generally use {@link #setMaxConcurrency} instead.

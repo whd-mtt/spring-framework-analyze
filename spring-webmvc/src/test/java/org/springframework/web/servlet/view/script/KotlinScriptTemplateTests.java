@@ -22,6 +22,7 @@ import java.util.Map;
 import javax.servlet.ServletContext;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -41,6 +42,7 @@ import static org.mockito.Mockito.*;
  *
  * @author Sebastien Deleuze
  */
+@Ignore  // for JDK 9 compatibility, see KT-18833
 public class KotlinScriptTemplateTests {
 
 	private WebApplicationContext webAppContext;

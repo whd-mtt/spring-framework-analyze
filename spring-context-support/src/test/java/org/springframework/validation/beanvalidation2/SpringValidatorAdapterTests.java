@@ -168,7 +168,7 @@ public class SpringValidatorAdapterTests {
 	@Test  // SPR-16177
 	public void testWithSet() {
 		Parent parent = new Parent();
-		parent.setName("Parent with set");
+		parent.setName("Parent whith set");
 		parent.getChildSet().addAll(createChildren(parent));
 
 		BeanPropertyBindingResult errors = new BeanPropertyBindingResult(parent, "parent");

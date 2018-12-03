@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
 
 /**
- * A {@link JmsListenerEndpoint} providing the method to invoke to process
+ * AppConfig {@link JmsListenerEndpoint} providing the method to invoke to process
  * an incoming message for this endpoint.
  *
  * @author Stephane Nicoll
@@ -105,14 +105,13 @@ public class MethodJmsListenerEndpoint extends AbstractJmsListenerEndpoint imple
 			return this.mostSpecificMethod;
 		}
 		Method method = getMethod();
-		if (method != null) {
-			Object bean = getBean();
-			if (AopUtils.isAopProxy(bean)) {
-				Class<?> targetClass = AopProxyUtils.ultimateTargetClass(bean);
-				method = AopUtils.getMostSpecificMethod(method, targetClass);
-			}
+		if (method != null && AopUtils.isAopProxy(this.bean)) {
+			Class<?> target = AopProxyUtils.ultimateTargetClass(this.bean);
+			return AopUtils.getMostSpecificMethod(method, target);
 		}
-		return method;
+		else {
+			return method;
+		}
 	}
 
 	/**

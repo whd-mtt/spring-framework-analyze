@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,13 +44,12 @@ import org.springframework.util.Assert;
  * lifecycle of the listener containers, in particular within the lifecycle
  * of the application context.
  *
- * <p>Contrary to {@link MessageListenerContainer MessageListenerContainers}
- * created manually, listener containers managed by registry are not beans
- * in the application context and are not candidates for autowiring.
- * Use {@link #getListenerContainers()} if you need to access this registry's
- * listener containers for management purposes. If you need to access to a
- * specific message listener container, use {@link #getListenerContainer(String)}
- * with the id of the endpoint.
+ * <p>Contrary to {@link MessageListenerContainer}s created manually, listener
+ * containers managed by registry are not beans in the application context and
+ * are not candidates for autowiring. Use {@link #getListenerContainers()} if
+ * you need to access this registry's listener containers for management purposes.
+ * If you need to access to a specific message listener container, use
+ * {@link #getListenerContainer(String)} with the id of the endpoint.
  *
  * @author Stephane Nicoll
  * @author Juergen Hoeller
@@ -67,7 +66,7 @@ public class JmsListenerEndpointRegistry implements DisposableBean, SmartLifecyc
 	private final Map<String, MessageListenerContainer> listenerContainers =
 			new ConcurrentHashMap<>();
 
-	private int phase = DEFAULT_PHASE;
+	private int phase = Integer.MAX_VALUE;
 
 	@Nullable
 	private ApplicationContext applicationContext;
@@ -104,8 +103,8 @@ public class JmsListenerEndpointRegistry implements DisposableBean, SmartLifecyc
 
 	/**
 	 * Return the ids of the managed {@link MessageListenerContainer} instance(s).
-	 * @since 4.2.3
 	 * @see #getListenerContainer(String)
+	 * @since 4.2.3
 	 */
 	public Set<String> getListenerContainerIds() {
 		return Collections.unmodifiableSet(this.listenerContainers.keySet());
@@ -197,6 +196,11 @@ public class JmsListenerEndpointRegistry implements DisposableBean, SmartLifecyc
 	@Override
 	public int getPhase() {
 		return this.phase;
+	}
+
+	@Override
+	public boolean isAutoStartup() {
+		return true;
 	}
 
 	@Override

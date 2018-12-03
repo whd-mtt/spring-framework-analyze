@@ -99,8 +99,8 @@ public class CauchoRemotingTests {
 		assertTrue(factory.getObject() instanceof ITestBean);
 		ITestBean bean = (ITestBean) factory.getObject();
 
-		assertEquals("test", proxyFactory.user);
-		assertEquals("bean", proxyFactory.password);
+		assertEquals(proxyFactory.user, "test");
+		assertEquals(proxyFactory.password, "bean");
 		assertTrue(proxyFactory.overloadEnabled);
 
 		exception.expect(RemoteAccessException.class);

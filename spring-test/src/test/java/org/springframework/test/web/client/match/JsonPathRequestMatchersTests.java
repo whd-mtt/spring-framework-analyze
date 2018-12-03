@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,19 +55,14 @@ public class JsonPathRequestMatchersTests {
 	}
 
 
-	@Test(expected = AssertionError.class)
-	public void valueWithMismatch() throws Exception {
-		new JsonPathRequestMatchers("$.str").value("bogus").match(request);
-	}
-
 	@Test
-	public void valueWithDirectMatch() throws Exception {
+	public void value() throws Exception {
 		new JsonPathRequestMatchers("$.str").value("foo").match(request);
 	}
 
-	@Test // SPR-14498
-	public void valueWithNumberConversion() throws Exception {
-		new JsonPathRequestMatchers("$.num").value(5.0f).match(request);
+	@Test(expected = AssertionError.class)
+	public void valueNoMatch() throws Exception {
+		new JsonPathRequestMatchers("$.str").value("bogus").match(request);
 	}
 
 	@Test
@@ -75,13 +70,8 @@ public class JsonPathRequestMatchersTests {
 		new JsonPathRequestMatchers("$.str").value(equalTo("foo")).match(request);
 	}
 
-	@Test // SPR-14498
-	public void valueWithMatcherAndNumberConversion() throws Exception {
-		new JsonPathRequestMatchers("$.num").value(equalTo(5.0f), Float.class).match(request);
-	}
-
 	@Test(expected = AssertionError.class)
-	public void valueWithMatcherAndMismatch() throws Exception {
+	public void valueWithMatcherNoMatch() throws Exception {
 		new JsonPathRequestMatchers("$.str").value(equalTo("bogus")).match(request);
 	}
 

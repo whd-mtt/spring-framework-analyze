@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -29,9 +30,7 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 import org.springframework.core.ResolvableType;
-import org.springframework.core.codec.Hints;
 import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.log.LogFormatUtils;
 import org.springframework.http.MediaType;
 import org.springframework.http.ReactiveHttpOutputMessage;
 import org.springframework.lang.Nullable;
@@ -58,22 +57,15 @@ import org.springframework.util.MultiValueMap;
  * @since 5.0
  * @see org.springframework.http.codec.multipart.MultipartHttpMessageWriter
  */
-public class FormHttpMessageWriter extends LoggingCodecSupport
-		implements HttpMessageWriter<MultiValueMap<String, String>> {
+public class FormHttpMessageWriter implements HttpMessageWriter<MultiValueMap<String, String>> {
 
-	/**
-	 * The default charset used by the writer.
-	 */
 	public static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
-
-	private static final MediaType DEFAULT_FORM_DATA_MEDIA_TYPE =
-			new MediaType(MediaType.APPLICATION_FORM_URLENCODED, DEFAULT_CHARSET);
-
-	private static final List<MediaType> MEDIA_TYPES =
-			Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED);
 
 	private static final ResolvableType MULTIVALUE_TYPE =
 			ResolvableType.forClassWithGenerics(MultiValueMap.class, String.class, String.class);
+
+	private static final List<MediaType> MEDIA_TYPES =
+			Collections.singletonList(MediaType.APPLICATION_FORM_URLENCODED);
 
 
 	private Charset defaultCharset = DEFAULT_CHARSET;
@@ -105,7 +97,8 @@ public class FormHttpMessageWriter extends LoggingCodecSupport
 
 	@Override
 	public boolean canWrite(ResolvableType elementType, @Nullable MediaType mediaType) {
-		if (!MultiValueMap.class.isAssignableFrom(elementType.toClass())) {
+		Class<?> rawClass = elementType.getRawClass();
+		if (rawClass == null || !MultiValueMap.class.isAssignableFrom(rawClass)) {
 			return false;
 		}
 		if (MediaType.APPLICATION_FORM_URLENCODED.isCompatibleWith(mediaType)) {
@@ -124,59 +117,60 @@ public class FormHttpMessageWriter extends LoggingCodecSupport
 			ResolvableType elementType, @Nullable MediaType mediaType, ReactiveHttpOutputMessage message,
 			Map<String, Object> hints) {
 
-		mediaType = getMediaType(mediaType);
-		message.getHeaders().setContentType(mediaType);
+		MediaType contentType = message.getHeaders().getContentType();
+		if (contentType == null) {
+			contentType = MediaType.APPLICATION_FORM_URLENCODED;
+			message.getHeaders().setContentType(contentType);
+		}
 
-		Charset charset = mediaType.getCharset();
-		Assert.notNull(charset, "No charset"); // should never occur
+		Charset charset = getMediaTypeCharset(contentType);
 
 		return Mono.from(inputStream).flatMap(form -> {
-			logFormData(form, hints);
-			String value = serializeForm(form, charset);
-			ByteBuffer byteBuffer = charset.encode(value);
-			DataBuffer buffer = message.bufferFactory().wrap(byteBuffer);
-			message.getHeaders().setContentLength(byteBuffer.remaining());
-			return message.writeWith(Mono.just(buffer));
-		});
+					String value = serializeForm(form, charset);
+					ByteBuffer byteBuffer = charset.encode(value);
+					DataBuffer buffer = message.bufferFactory().wrap(byteBuffer);
+					message.getHeaders().setContentLength(byteBuffer.remaining());
+					return message.writeWith(Mono.just(buffer));
+				});
+
 	}
 
-	private MediaType getMediaType(@Nullable MediaType mediaType) {
-		if (mediaType == null) {
-			return DEFAULT_FORM_DATA_MEDIA_TYPE;
-		}
-		else if (mediaType.getCharset() == null) {
-			return new MediaType(mediaType, getDefaultCharset());
+	private Charset getMediaTypeCharset(@Nullable MediaType mediaType) {
+		if (mediaType != null && mediaType.getCharset() != null) {
+			return mediaType.getCharset();
 		}
 		else {
-			return mediaType;
+			return getDefaultCharset();
 		}
 	}
 
-	private void logFormData(MultiValueMap<String, String> form, Map<String, Object> hints) {
-		LogFormatUtils.traceDebug(logger, traceOn -> Hints.getLogPrefix(hints) + "Writing " +
-				(isEnableLoggingRequestDetails() ?
-						LogFormatUtils.formatValue(form, !traceOn) :
-						"form fields " + form.keySet() + " (content masked)"));
-	}
-
-	protected String serializeForm(MultiValueMap<String, String> formData, Charset charset) {
+	private String serializeForm(MultiValueMap<String, String> form, Charset charset) {
 		StringBuilder builder = new StringBuilder();
-		formData.forEach((name, values) ->
-				values.forEach(value -> {
-					try {
-						if (builder.length() != 0) {
+		try {
+			for (Iterator<String> names = form.keySet().iterator(); names.hasNext();) {
+				String name = names.next();
+				for (Iterator<?> values = form.get(name).iterator(); values.hasNext();) {
+					Object rawValue = values.next();
+					builder.append(URLEncoder.encode(name, charset.name()));
+					if (rawValue != null) {
+						builder.append('=');
+						Assert.isInstanceOf(String.class, rawValue,
+								"FormHttpMessageWriter supports String values only. " +
+										"Use MultipartHttpMessageWriter for multipart requests.");
+						builder.append(URLEncoder.encode((String) rawValue, charset.name()));
+						if (values.hasNext()) {
 							builder.append('&');
 						}
-						builder.append(URLEncoder.encode(name, charset.name()));
-						if (value != null) {
-							builder.append('=');
-							builder.append(URLEncoder.encode(value, charset.name()));
-						}
 					}
-					catch (UnsupportedEncodingException ex) {
-						throw new IllegalStateException(ex);
-					}
-				}));
+				}
+				if (names.hasNext()) {
+					builder.append('&');
+				}
+			}
+		}
+		catch (UnsupportedEncodingException ex) {
+			throw new IllegalStateException(ex);
+		}
 		return builder.toString();
 	}
 

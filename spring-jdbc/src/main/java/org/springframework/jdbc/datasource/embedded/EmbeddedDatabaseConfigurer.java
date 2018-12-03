@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ import javax.sql.DataSource;
 public interface EmbeddedDatabaseConfigurer {
 
 	/**
-	 * Configure the properties required to create and connect to the embedded database.
+	 * Configure the properties required to create and connect to the embedded
+	 * database instance.
 	 * @param properties connection properties to configure
 	 * @param databaseName the name of the embedded database
 	 */
@@ -38,7 +39,7 @@ public interface EmbeddedDatabaseConfigurer {
 
 	/**
 	 * Shut down the embedded database instance that backs the supplied {@link DataSource}.
-	 * @param dataSource the corresponding {@link DataSource}
+	 * @param dataSource the data source
 	 * @param databaseName the name of the database being shut down
 	 */
 	void shutdown(DataSource dataSource, String databaseName);

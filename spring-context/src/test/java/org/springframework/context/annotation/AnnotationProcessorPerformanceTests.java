@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,11 @@ import javax.annotation.Resource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
@@ -46,8 +47,8 @@ public class AnnotationProcessorPerformanceTests {
 
 	private static final Log factoryLog = LogFactory.getLog(DefaultListableBeanFactory.class);
 
-	@BeforeClass
-	public static void commonAssumptions() {
+	@Before
+	public void commonAssumptions() {
 		Assume.group(TestGroup.PERFORMANCE);
 		Assume.notLogging(factoryLog);
 	}
@@ -142,9 +143,7 @@ public class AnnotationProcessorPerformanceTests {
 	private static class ResourceAnnotatedTestBean extends TestBean {
 
 		@Override
-		@Resource
-		@SuppressWarnings("deprecation")
-		@org.springframework.beans.factory.annotation.Required
+		@Resource @Required
 		public void setSpouse(ITestBean spouse) {
 			super.setSpouse(spouse);
 		}
@@ -153,9 +152,7 @@ public class AnnotationProcessorPerformanceTests {
 	private static class AutowiredAnnotatedTestBean extends TestBean {
 
 		@Override
-		@Autowired
-		@SuppressWarnings("deprecation")
-		@org.springframework.beans.factory.annotation.Required
+		@Autowired @Required
 		public void setSpouse(ITestBean spouse) {
 			super.setSpouse(spouse);
 		}

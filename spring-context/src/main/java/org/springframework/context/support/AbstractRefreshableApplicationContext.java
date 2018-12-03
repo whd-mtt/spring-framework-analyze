@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,11 +70,11 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	@Nullable
 	private Boolean allowCircularReferences;
 
-	/** Bean factory for this context. */
+	/** Bean factory for this context */
 	@Nullable
 	private DefaultListableBeanFactory beanFactory;
 
-	/** Synchronization monitor for the internal BeanFactory. */
+	/** Synchronization monitor for the internal BeanFactory */
 	private final Object beanFactoryMonitor = new Object();
 
 
@@ -122,29 +122,24 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 */
 	@Override
 	protected final void refreshBeanFactory() throws BeansException {
-		//如果已经有容器，就摧毁容器的中bean，关闭容器
+		//如果已经有容器，销毁容器中的bean，关闭容器
 		if (hasBeanFactory()) {
-			//摧毁容器中的bean
 			destroyBeans();
-			//关闭容器
 			closeBeanFactory();
 		}
 		try {
 			//创建IOC容器
 			DefaultListableBeanFactory beanFactory = createBeanFactory();
 			beanFactory.setSerializationId(getId());
-			//对IOC容器进行定制化，如果设置了启动参数，开启注解的自动配置等
+			//对IOC容器进行定制化，如设置启动参数，开启注解的自动装配等
 			customizeBeanFactory(beanFactory);
-			//调用载入bean定义的方法，这里主要走使用了委派设计模式，在当前类中定义了一个抽象的loadBeanDefinitions()方法，让子类实现
+			//调用载入Bean定义的方法，主要这里又使用了一个委派模式，在当前类中只定义了抽象的loadBeanDefinitions方法，具体的实现调用子类容器
 			loadBeanDefinitions(beanFactory);
 			synchronized (this.beanFactoryMonitor) {
 				this.beanFactory = beanFactory;
 			}
 		}
 		catch (IOException ex) {
-			/***
-			 * 当解析出现错误的时候就会抛出异常
-			 */
 			throw new ApplicationContextException("I/O error parsing bean definition source for " + getDisplayName(), ex);
 		}
 	}
@@ -152,9 +147,8 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	@Override
 	protected void cancelRefresh(BeansException ex) {
 		synchronized (this.beanFactoryMonitor) {
-			if (this.beanFactory != null) {
+			if (this.beanFactory != null)
 				this.beanFactory.setSerializationId(null);
-			}
 		}
 		super.cancelRefresh(ex);
 	}

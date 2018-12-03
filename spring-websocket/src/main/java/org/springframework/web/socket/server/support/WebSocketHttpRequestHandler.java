@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -58,7 +59,7 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
  */
 public class WebSocketHttpRequestHandler implements HttpRequestHandler, Lifecycle, ServletContextAware {
 
-	private static final Log logger = LogFactory.getLog(WebSocketHttpRequestHandler.class);
+	private final Log logger = LogFactory.getLog(WebSocketHttpRequestHandler.class);
 
 	private final WebSocketHandler wsHandler;
 
@@ -119,6 +120,10 @@ public class WebSocketHttpRequestHandler implements HttpRequestHandler, Lifecycl
 		}
 	}
 
+	@Override
+	public boolean isRunning() {
+		return this.running;
+	}
 
 	@Override
 	public void start() {
@@ -138,11 +143,6 @@ public class WebSocketHttpRequestHandler implements HttpRequestHandler, Lifecycl
 				((Lifecycle) this.handshakeHandler).stop();
 			}
 		}
-	}
-
-	@Override
-	public boolean isRunning() {
-		return this.running;
 	}
 
 

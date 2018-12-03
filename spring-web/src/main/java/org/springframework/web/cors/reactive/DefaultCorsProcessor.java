@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.springframework.web.cors.reactive;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -63,12 +62,12 @@ public class DefaultCorsProcessor implements CorsProcessor {
 		}
 
 		if (responseHasCors(response)) {
-			logger.trace("Skip: response already contains \"Access-Control-Allow-Origin\"");
+			logger.debug("Skip CORS: response already contains \"Access-Control-Allow-Origin\" header");
 			return true;
 		}
 
 		if (CorsUtils.isSameOrigin(request)) {
-			logger.trace("Skip: request is from same origin");
+			logger.debug("Skip CORS: request is from same origin");
 			return true;
 		}
 
@@ -87,7 +86,7 @@ public class DefaultCorsProcessor implements CorsProcessor {
 	}
 
 	private boolean responseHasCors(ServerHttpResponse response) {
-		return response.getHeaders().getFirst(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN) != null;
+		return (response.getHeaders().getAccessControlAllowOrigin() != null);
 	}
 
 	/**
@@ -95,6 +94,7 @@ public class DefaultCorsProcessor implements CorsProcessor {
 	 */
 	protected void rejectRequest(ServerHttpResponse response) {
 		response.setStatusCode(HttpStatus.FORBIDDEN);
+		logger.debug("Invalid CORS request");
 	}
 
 	/**
@@ -107,13 +107,12 @@ public class DefaultCorsProcessor implements CorsProcessor {
 		ServerHttpResponse response = exchange.getResponse();
 		HttpHeaders responseHeaders = response.getHeaders();
 
-		response.getHeaders().addAll(HttpHeaders.VARY, Arrays.asList(HttpHeaders.ORIGIN,
-				HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS));
+		response.getHeaders().add(HttpHeaders.VARY, HttpHeaders.ORIGIN);
 
 		String requestOrigin = request.getHeaders().getOrigin();
 		String allowOrigin = checkOrigin(config, requestOrigin);
 		if (allowOrigin == null) {
-			logger.debug("Reject: '" + requestOrigin + "' origin is not allowed");
+			logger.debug("Rejecting CORS request because '" + requestOrigin + "' origin is not allowed");
 			rejectRequest(response);
 			return false;
 		}
@@ -121,7 +120,7 @@ public class DefaultCorsProcessor implements CorsProcessor {
 		HttpMethod requestMethod = getMethodToUse(request, preFlightRequest);
 		List<HttpMethod> allowMethods = checkMethods(config, requestMethod);
 		if (allowMethods == null) {
-			logger.debug("Reject: HTTP '" + requestMethod + "' is not allowed");
+			logger.debug("Rejecting CORS request because '" + requestMethod + "' request method is not allowed");
 			rejectRequest(response);
 			return false;
 		}
@@ -129,7 +128,7 @@ public class DefaultCorsProcessor implements CorsProcessor {
 		List<String> requestHeaders = getHeadersToUse(request, preFlightRequest);
 		List<String> allowHeaders = checkHeaders(config, requestHeaders);
 		if (preFlightRequest && allowHeaders == null) {
-			logger.debug("Reject: headers '" + requestHeaders + "' are not allowed");
+			logger.debug("Rejecting CORS request because '" + requestHeaders + "' request headers are not allowed");
 			rejectRequest(response);
 			return false;
 		}

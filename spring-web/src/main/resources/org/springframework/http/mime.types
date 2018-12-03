@@ -3,7 +3,7 @@
 # and has been placed in the public domain for unlimited redistribution.
 #
 # The table below contains both registered and (common) unregistered types.
-# A type that has no unique extension can be ignored -- they are listed
+# AppConfig type that has no unique extension can be ignored -- they are listed
 # here to guide configurations toward known types and to make it easier to
 # identify "new" types.  File extensions are also commonly used to indicate
 # content languages and encodings, so choose them carefully.

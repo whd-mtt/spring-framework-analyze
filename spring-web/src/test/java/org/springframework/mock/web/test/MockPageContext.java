@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import javax.servlet.http.HttpSession;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.PageContext;
 
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -62,7 +61,6 @@ public class MockPageContext extends PageContext {
 
 	private final Map<String, Object> attributes = new LinkedHashMap<>();
 
-	@Nullable
 	private JspWriter out;
 
 
@@ -81,7 +79,7 @@ public class MockPageContext extends PageContext {
 	 * @param servletContext the ServletContext that the JSP page runs in
 	 * (only necessary when actually accessing the ServletContext)
 	 */
-	public MockPageContext(@Nullable ServletContext servletContext) {
+	public MockPageContext(ServletContext servletContext) {
 		this(servletContext, null, null, null);
 	}
 
@@ -92,7 +90,7 @@ public class MockPageContext extends PageContext {
 	 * @param request the current HttpServletRequest
 	 * (only necessary when actually accessing the request)
 	 */
-	public MockPageContext(@Nullable ServletContext servletContext, @Nullable HttpServletRequest request) {
+	public MockPageContext(ServletContext servletContext, HttpServletRequest request) {
 		this(servletContext, request, null, null);
 	}
 
@@ -103,9 +101,7 @@ public class MockPageContext extends PageContext {
 	 * @param response the current HttpServletResponse
 	 * (only necessary when actually writing to the response)
 	 */
-	public MockPageContext(@Nullable ServletContext servletContext, @Nullable HttpServletRequest request,
-			@Nullable HttpServletResponse response) {
-
+	public MockPageContext(ServletContext servletContext, HttpServletRequest request, HttpServletResponse response) {
 		this(servletContext, request, response, null);
 	}
 
@@ -116,8 +112,8 @@ public class MockPageContext extends PageContext {
 	 * @param response the current HttpServletResponse
 	 * @param servletConfig the ServletConfig (hardly ever accessed from within a tag)
 	 */
-	public MockPageContext(@Nullable ServletContext servletContext, @Nullable HttpServletRequest request,
-			@Nullable HttpServletResponse response, @Nullable ServletConfig servletConfig) {
+	public MockPageContext(ServletContext servletContext, HttpServletRequest request,
+			HttpServletResponse response, ServletConfig servletConfig) {
 
 		this.servletContext = (servletContext != null ? servletContext : new MockServletContext());
 		this.request = (request != null ? request : new MockHttpServletRequest(servletContext));
@@ -139,7 +135,7 @@ public class MockPageContext extends PageContext {
 	}
 
 	@Override
-	public void setAttribute(String name, @Nullable Object value) {
+	public void setAttribute(String name, Object value) {
 		Assert.notNull(name, "Attribute name must not be null");
 		if (value != null) {
 			this.attributes.put(name, value);
@@ -150,7 +146,7 @@ public class MockPageContext extends PageContext {
 	}
 
 	@Override
-	public void setAttribute(String name, @Nullable Object value, int scope) {
+	public void setAttribute(String name, Object value, int scope) {
 		Assert.notNull(name, "Attribute name must not be null");
 		switch (scope) {
 			case PAGE_SCOPE:
@@ -171,14 +167,12 @@ public class MockPageContext extends PageContext {
 	}
 
 	@Override
-	@Nullable
 	public Object getAttribute(String name) {
 		Assert.notNull(name, "Attribute name must not be null");
 		return this.attributes.get(name);
 	}
 
 	@Override
-	@Nullable
 	public Object getAttribute(String name, int scope) {
 		Assert.notNull(name, "Attribute name must not be null");
 		switch (scope) {
@@ -197,7 +191,6 @@ public class MockPageContext extends PageContext {
 	}
 
 	@Override
-	@Nullable
 	public Object findAttribute(String name) {
 		Object value = getAttribute(name);
 		if (value == null) {
@@ -297,14 +290,12 @@ public class MockPageContext extends PageContext {
 	}
 
 	@Override
-	@Nullable
 	public ELContext getELContext() {
 		return null;
 	}
 
 	@Override
 	@Deprecated
-	@Nullable
 	public javax.servlet.jsp.el.VariableResolver getVariableResolver() {
 		return null;
 	}
@@ -330,7 +321,6 @@ public class MockPageContext extends PageContext {
 	}
 
 	@Override
-	@Nullable
 	public Exception getException() {
 		return null;
 	}

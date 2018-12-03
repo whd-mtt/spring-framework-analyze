@@ -23,7 +23,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * A {@link JmsListenerEndpoint} simply providing the {@link MessageListener} to
+ * AppConfig {@link JmsListenerEndpoint} simply providing the {@link MessageListener} to
  * invoke to process an incoming message for this endpoint.
  *
  * @author Stephane Nicoll

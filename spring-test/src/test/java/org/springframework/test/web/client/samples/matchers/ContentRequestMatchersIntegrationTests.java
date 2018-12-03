@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.springframework.test.web.client.samples.matchers;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,14 +66,15 @@ public class ContentRequestMatchersIntegrationTests {
 	@Test
 	public void contentType() throws Exception {
 		this.mockServer.expect(content().contentType("application/json;charset=UTF-8")).andRespond(withSuccess());
-		executeAndVerify(new Person());
+		this.restTemplate.put(new URI("/foo"), new Person());
+		this.mockServer.verify();
 	}
 
 	@Test
 	public void contentTypeNoMatch() throws Exception {
 		this.mockServer.expect(content().contentType("application/json;charset=UTF-8")).andRespond(withSuccess());
 		try {
-			executeAndVerify("foo");
+			this.restTemplate.put(new URI("/foo"), "foo");
 		}
 		catch (AssertionError error) {
 			String message = error.getMessage();
@@ -85,23 +85,21 @@ public class ContentRequestMatchersIntegrationTests {
 	@Test
 	public void contentAsString() throws Exception {
 		this.mockServer.expect(content().string("foo")).andRespond(withSuccess());
-		executeAndVerify("foo");
+		this.restTemplate.put(new URI("/foo"), "foo");
+		this.mockServer.verify();
 	}
 
 	@Test
 	public void contentStringStartsWith() throws Exception {
 		this.mockServer.expect(content().string(startsWith("foo"))).andRespond(withSuccess());
-		executeAndVerify("foo123");
+		this.restTemplate.put(new URI("/foo"), "foo123");
+		this.mockServer.verify();
 	}
 
 	@Test
 	public void contentAsBytes() throws Exception {
 		this.mockServer.expect(content().bytes("foo".getBytes())).andRespond(withSuccess());
-		executeAndVerify("foo");
-	}
-
-	private void executeAndVerify(Object body) throws URISyntaxException {
-		this.restTemplate.put(new URI("/foo"), body);
+		this.restTemplate.put(new URI("/foo"), "foo");
 		this.mockServer.verify();
 	}
 

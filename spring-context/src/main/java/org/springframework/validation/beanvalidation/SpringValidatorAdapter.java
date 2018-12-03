@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package org.springframework.validation.beanvalidation;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +37,6 @@ import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
@@ -50,17 +49,13 @@ import org.springframework.validation.SmartValidator;
  * while also exposing the original JSR-303 Validator interface itself.
  *
  * <p>Can be used as a programmatic wrapper. Also serves as base class for
- * {@link CustomValidatorBean} and {@link LocalValidatorFactoryBean},
- * and as the primary implementation of the {@link SmartValidator} interface.
+ * {@link CustomValidatorBean} and {@link LocalValidatorFactoryBean}.
  *
  * <p>As of Spring Framework 5.0, this adapter is fully compatible with
  * Bean Validation 1.1 as well as 2.0.
  *
  * @author Juergen Hoeller
  * @since 3.0
- * @see SmartValidator
- * @see CustomValidatorBean
- * @see LocalValidatorFactoryBean
  */
 public class SpringValidatorAdapter implements SmartValidator, javax.validation.Validator {
 
@@ -103,43 +98,26 @@ public class SpringValidatorAdapter implements SmartValidator, javax.validation.
 	}
 
 	@Override
-	public void validate(Object target, Errors errors) {
+	public void validate(@Nullable Object target, Errors errors) {
 		if (this.targetValidator != null) {
 			processConstraintViolations(this.targetValidator.validate(target), errors);
 		}
 	}
 
 	@Override
-	public void validate(Object target, Errors errors, Object... validationHints) {
+	public void validate(@Nullable Object target, Errors errors, @Nullable Object... validationHints) {
 		if (this.targetValidator != null) {
-			processConstraintViolations(
-					this.targetValidator.validate(target, asValidationGroups(validationHints)), errors);
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public void validateValue(
-			Class<?> targetType, String fieldName, @Nullable Object value, Errors errors, Object... validationHints) {
-
-		if (this.targetValidator != null) {
-			processConstraintViolations(this.targetValidator.validateValue(
-					(Class) targetType, fieldName, value, asValidationGroups(validationHints)), errors);
-		}
-	}
-
-	/**
-	 * Turn the specified validation hints into JSR-303 validation groups.
-	 * @since 5.1
-	 */
-	private Class<?>[] asValidationGroups(Object... validationHints) {
-		Set<Class<?>> groups = new LinkedHashSet<>(4);
-		for (Object hint : validationHints) {
-			if (hint instanceof Class) {
-				groups.add((Class<?>) hint);
+			Set<Class<?>> groups = new LinkedHashSet<>();
+			if (validationHints != null) {
+				for (Object hint : validationHints) {
+					if (hint instanceof Class) {
+						groups.add((Class<?>) hint);
+					}
+				}
 			}
+			processConstraintViolations(
+					this.targetValidator.validate(target, groups.toArray(new Class<?>[groups.size()])), errors);
 		}
-		return ClassUtils.toClassArray(groups);
 	}
 
 	/**
@@ -162,20 +140,17 @@ public class SpringValidatorAdapter implements SmartValidator, javax.validation.
 						// as necessary for Hibernate Validator compatibility (non-indexed set path in field)
 						BindingResult bindingResult = (BindingResult) errors;
 						String nestedField = bindingResult.getNestedPath() + field;
-						if (nestedField.isEmpty()) {
+						if ("".equals(nestedField)) {
 							String[] errorCodes = bindingResult.resolveMessageCodes(errorCode);
-							ObjectError error = new ObjectError(
-									errors.getObjectName(), errorCodes, errorArgs, violation.getMessage());
-							error.wrap(violation);
-							bindingResult.addError(error);
+							bindingResult.addError(new ObjectError(
+									errors.getObjectName(), errorCodes, errorArgs, violation.getMessage()));
 						}
 						else {
 							Object rejectedValue = getRejectedValue(field, violation, bindingResult);
 							String[] errorCodes = bindingResult.resolveMessageCodes(errorCode, field);
-							FieldError error = new FieldError(errors.getObjectName(), nestedField,
-									rejectedValue, false, errorCodes, errorArgs, violation.getMessage());
-							error.wrap(violation);
-							bindingResult.addError(error);
+							bindingResult.addError(new FieldError(
+									errors.getObjectName(), nestedField, rejectedValue, false,
+									errorCodes, errorArgs, violation.getMessage()));
 						}
 					}
 					else {
@@ -263,7 +238,7 @@ public class SpringValidatorAdapter implements SmartValidator, javax.validation.
 	 * @see org.springframework.validation.DefaultBindingErrorProcessor#getArgumentsForBindError
 	 */
 	protected Object[] getArgumentsForConstraint(String objectName, String field, ConstraintDescriptor<?> descriptor) {
-		List<Object> arguments = new ArrayList<>();
+		List<Object> arguments = new LinkedList<>();
 		arguments.add(getResolvableField(objectName, field));
 		// Using a TreeMap for alphabetical ordering of attribute names
 		Map<String, Object> attributesToExpose = new TreeMap<>();
@@ -276,7 +251,7 @@ public class SpringValidatorAdapter implements SmartValidator, javax.validation.
 			}
 		});
 		arguments.addAll(attributesToExpose.values());
-		return arguments.toArray();
+		return arguments.toArray(new Object[arguments.size()]);
 	}
 
 	/**

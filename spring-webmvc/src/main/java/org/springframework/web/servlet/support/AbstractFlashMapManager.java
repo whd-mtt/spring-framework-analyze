@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -94,6 +95,9 @@ public abstract class AbstractFlashMapManager implements FlashMapManager {
 			return null;
 		}
 
+		if (logger.isDebugEnabled()) {
+			logger.debug("Retrieved FlashMap(s): " + allFlashMaps);
+		}
 		List<FlashMap> mapsToRemove = getExpiredFlashMaps(allFlashMaps);
 		FlashMap match = getMatchingFlashMap(allFlashMaps, request);
 		if (match != null) {
@@ -101,6 +105,9 @@ public abstract class AbstractFlashMapManager implements FlashMapManager {
 		}
 
 		if (!mapsToRemove.isEmpty()) {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Removing FlashMap(s): " + mapsToRemove);
+			}
 			Object mutex = getFlashMapsMutex(request);
 			if (mutex != null) {
 				synchronized (mutex) {
@@ -147,8 +154,8 @@ public abstract class AbstractFlashMapManager implements FlashMapManager {
 		}
 		if (!result.isEmpty()) {
 			Collections.sort(result);
-			if (logger.isTraceEnabled()) {
-				logger.trace("Found " + result.get(0));
+			if (logger.isDebugEnabled()) {
+				logger.debug("Found matching FlashMap(s): " + result);
 			}
 			return result.get(0);
 		}
@@ -197,6 +204,9 @@ public abstract class AbstractFlashMapManager implements FlashMapManager {
 		String path = decodeAndNormalizePath(flashMap.getTargetRequestPath(), request);
 		flashMap.setTargetRequestPath(path);
 
+		if (logger.isDebugEnabled()) {
+			logger.debug("Saving FlashMap=" + flashMap);
+		}
 		flashMap.startExpirationPeriod(getFlashMapTimeout());
 
 		Object mutex = getFlashMapsMutex(request);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,30 +45,30 @@ public abstract class ValidationUtils {
 	/**
 	 * Invoke the given {@link Validator} for the supplied object and
 	 * {@link Errors} instance.
-	 * @param validator the {@code Validator} to be invoked
-	 * @param target the object to bind the parameters to
-	 * @param errors the {@link Errors} instance that should store the errors
-	 * @throws IllegalArgumentException if either of the {@code Validator} or {@code Errors}
-	 * arguments is {@code null}, or if the supplied {@code Validator} does not
-	 * {@link Validator#supports(Class) support} the validation of the supplied object's type
+	 * @param validator the {@code Validator} to be invoked (must not be {@code null})
+	 * @param obj the object to bind the parameters to
+	 * @param errors the {@link Errors} instance that should store the errors (must not be {@code null})
+	 * @throws IllegalArgumentException if either of the {@code Validator} or {@code Errors} arguments is
+	 * {@code null}, or if the supplied {@code Validator} does not {@link Validator#supports(Class) support}
+	 * the validation of the supplied object's type
 	 */
-	public static void invokeValidator(Validator validator, Object target, Errors errors) {
-		invokeValidator(validator, target, errors, (Object[]) null);
+	public static void invokeValidator(Validator validator, Object obj, Errors errors) {
+		invokeValidator(validator, obj, errors, (Object[]) null);
 	}
 
 	/**
 	 * Invoke the given {@link Validator}/{@link SmartValidator} for the supplied object and
 	 * {@link Errors} instance.
-	 * @param validator the {@code Validator} to be invoked
-	 * @param target the object to bind the parameters to
-	 * @param errors the {@link Errors} instance that should store the errors
+	 * @param validator the {@code Validator} to be invoked (must not be {@code null})
+	 * @param obj the object to bind the parameters to
+	 * @param errors the {@link Errors} instance that should store the errors (must not be {@code null})
 	 * @param validationHints one or more hint objects to be passed to the validation engine
-	 * @throws IllegalArgumentException if either of the {@code Validator} or {@code Errors}
-	 * arguments is {@code null}, or if the supplied {@code Validator} does not
-	 * {@link Validator#supports(Class) support} the validation of the supplied object's type
+	 * @throws IllegalArgumentException if either of the {@code Validator} or {@code Errors} arguments is
+	 * {@code null}, or if the supplied {@code Validator} does not {@link Validator#supports(Class) support}
+	 * the validation of the supplied object's type
 	 */
 	public static void invokeValidator(
-			Validator validator, Object target, Errors errors, @Nullable Object... validationHints) {
+			Validator validator, @Nullable Object obj, Errors errors, @Nullable Object... validationHints) {
 
 		Assert.notNull(validator, "Validator must not be null");
 		Assert.notNull(errors, "Errors object must not be null");
@@ -76,16 +76,16 @@ public abstract class ValidationUtils {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Invoking validator [" + validator + "]");
 		}
-		if (!validator.supports(target.getClass())) {
+		if (obj != null && !validator.supports(obj.getClass())) {
 			throw new IllegalArgumentException(
-					"Validator [" + validator.getClass() + "] does not support [" + target.getClass() + "]");
+					"Validator [" + validator.getClass() + "] does not support [" + obj.getClass() + "]");
 		}
 
 		if (!ObjectUtils.isEmpty(validationHints) && validator instanceof SmartValidator) {
-			((SmartValidator) validator).validate(target, errors, validationHints);
+			((SmartValidator) validator).validate(obj, errors, validationHints);
 		}
 		else {
-			validator.validate(target, errors);
+			validator.validate(obj, errors);
 		}
 
 		if (logger.isDebugEnabled()) {

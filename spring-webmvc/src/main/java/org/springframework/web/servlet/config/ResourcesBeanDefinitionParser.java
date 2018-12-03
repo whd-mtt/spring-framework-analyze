@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,9 +58,9 @@ import org.springframework.web.servlet.resource.WebJarsResourceResolver;
 /**
  * {@link org.springframework.beans.factory.xml.BeanDefinitionParser} that parses a
  * {@code resources} element to register a {@link ResourceHttpRequestHandler} and
- * register a {@link SimpleUrlHandlerMapping} for mapping resource requests, and a
- * {@link HttpRequestHandlerAdapter}. Will also create a resource handling chain with
- * {@link ResourceResolver ResourceResolvers} and {@link ResourceTransformer ResourceTransformers}.
+ * register a {@link SimpleUrlHandlerMapping} for mapping resource requests,
+ * and a {@link HttpRequestHandlerAdapter}. Will also create a resource handling
+ * chain with {@link ResourceResolver}s and {@link ResourceTransformer}s.
  *
  * @author Keith Donald
  * @author Jeremy Grelle
@@ -201,7 +201,7 @@ class ResourcesBeanDefinitionParser implements BeanDefinitionParser {
 
 
 	private CacheControl parseCacheControl(Element element) {
-		CacheControl cacheControl;
+		CacheControl cacheControl = CacheControl.empty();
 		if ("true".equals(element.getAttribute("no-cache"))) {
 			cacheControl = CacheControl.noCache();
 		}
@@ -211,10 +211,6 @@ class ResourcesBeanDefinitionParser implements BeanDefinitionParser {
 		else if (element.hasAttribute("max-age")) {
 			cacheControl = CacheControl.maxAge(Long.parseLong(element.getAttribute("max-age")), TimeUnit.SECONDS);
 		}
-		else {
-			cacheControl = CacheControl.empty();
-		}
-
 		if ("true".equals(element.getAttribute("must-revalidate"))) {
 			cacheControl = cacheControl.mustRevalidate();
 		}
@@ -250,9 +246,9 @@ class ResourcesBeanDefinitionParser implements BeanDefinitionParser {
 		String autoRegistration = element.getAttribute("auto-registration");
 		boolean isAutoRegistration = !(StringUtils.hasText(autoRegistration) && "false".equals(autoRegistration));
 
-		ManagedList<Object> resourceResolvers = new ManagedList<>();
+		ManagedList<? super Object> resourceResolvers = new ManagedList<>();
 		resourceResolvers.setSource(source);
-		ManagedList<Object> resourceTransformers = new ManagedList<>();
+		ManagedList<? super Object> resourceTransformers = new ManagedList<>();
 		resourceTransformers.setSource(source);
 
 		parseResourceCache(resourceResolvers, resourceTransformers, element, source);
@@ -267,8 +263,8 @@ class ResourcesBeanDefinitionParser implements BeanDefinitionParser {
 		}
 	}
 
-	private void parseResourceCache(ManagedList<Object> resourceResolvers,
-			ManagedList<Object> resourceTransformers, Element element, @Nullable Object source) {
+	private void parseResourceCache(ManagedList<? super Object> resourceResolvers,
+			ManagedList<? super Object> resourceTransformers, Element element, @Nullable Object source) {
 
 		String resourceCache = element.getAttribute("resource-cache");
 		if ("true".equals(resourceCache)) {
@@ -306,7 +302,7 @@ class ResourcesBeanDefinitionParser implements BeanDefinitionParser {
 	}
 
 	private void parseResourceResolversTransformers(boolean isAutoRegistration,
-			ManagedList<Object> resourceResolvers, ManagedList<Object> resourceTransformers,
+			ManagedList<? super Object> resourceResolvers, ManagedList<? super Object> resourceTransformers,
 			ParserContext context, Element element, @Nullable Object source) {
 
 		Element resolversElement = DomUtils.getChildElementByTagName(element, "resolvers");
@@ -353,7 +349,7 @@ class ResourcesBeanDefinitionParser implements BeanDefinitionParser {
 	}
 
 	private RootBeanDefinition parseVersionResolver(ParserContext context, Element element, @Nullable Object source) {
-		ManagedMap<String, Object> strategyMap = new ManagedMap<>();
+		ManagedMap<String, ? super Object> strategyMap = new ManagedMap<>();
 		strategyMap.setSource(source);
 		RootBeanDefinition versionResolverDef = new RootBeanDefinition(VersionResourceResolver.class);
 		versionResolverDef.setSource(source);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
-import org.springframework.core.task.AsyncListenableTaskExecutor;
 import org.springframework.scheduling.Trigger;
 import org.springframework.scheduling.TriggerContext;
 import org.springframework.util.ErrorHandler;
@@ -35,30 +36,74 @@ import static org.junit.Assert.*;
 
 /**
  * @author Mark Fisher
- * @author Juergen Hoeller
  * @since 3.0
  */
-public class ThreadPoolTaskSchedulerTests extends AbstractSchedulingTaskExecutorTests {
+public class ThreadPoolTaskSchedulerTests {
+
+	private static final String THREAD_NAME_PREFIX = "test-";
 
 	private final ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 
 
-	@Override
-	protected AsyncListenableTaskExecutor buildExecutor() {
+	@Before
+	public void initScheduler() {
 		scheduler.setThreadNamePrefix(THREAD_NAME_PREFIX);
 		scheduler.afterPropertiesSet();
-		return scheduler;
+	}
+
+	@After
+	public void shutdownScheduler() {
+		scheduler.destroy();
 	}
 
 
+	// test methods
+
 	@Test
-	public void executeFailingRunnableWithErrorHandler() {
+	public void executeRunnable() {
+		TestTask task = new TestTask(1);
+		scheduler.execute(task);
+		await(task);
+		assertThreadNamePrefix(task);
+	}
+
+	@Test
+	public void executeFailingRunnableWithoutErrorHandler() {
+		TestTask task = new TestTask(0);
+		scheduler.execute(task);
+		// nothing to assert
+	}
+
+	@Test
+	public void executeFailingRunnnableWithErrorHandler() {
 		TestTask task = new TestTask(0);
 		TestErrorHandler errorHandler = new TestErrorHandler(1);
 		scheduler.setErrorHandler(errorHandler);
 		scheduler.execute(task);
 		await(errorHandler);
 		assertNotNull(errorHandler.lastError);
+	}
+
+	@Test
+	public void submitRunnable() throws Exception {
+		TestTask task = new TestTask(1);
+		Future<?> future = scheduler.submit(task);
+		Object result = future.get(1000, TimeUnit.MILLISECONDS);
+		assertNull(result);
+		assertThreadNamePrefix(task);
+	}
+
+	@Test(expected = ExecutionException.class)
+	public void submitFailingRunnableWithoutErrorHandler() throws Exception {
+		TestTask task = new TestTask(0);
+		Future<?> future = scheduler.submit(task);
+		try {
+			future.get(1000, TimeUnit.MILLISECONDS);
+		}
+		catch (ExecutionException e) {
+			assertTrue(future.isDone());
+			throw e;
+		}
 	}
 
 	@Test
@@ -71,6 +116,22 @@ public class ThreadPoolTaskSchedulerTests extends AbstractSchedulingTaskExecutor
 		assertTrue(future.isDone());
 		assertNull(result);
 		assertNotNull(errorHandler.lastError);
+	}
+
+	@Test
+	public void submitCallable() throws Exception {
+		TestCallable task = new TestCallable(1);
+		Future<String> future = scheduler.submit(task);
+		String result = future.get(1000, TimeUnit.MILLISECONDS);
+		assertEquals(THREAD_NAME_PREFIX, result.substring(0, THREAD_NAME_PREFIX.length()));
+	}
+
+	@Test(expected = ExecutionException.class)
+	public void submitFailingCallableWithoutErrorHandler() throws Exception {
+		TestCallable task = new TestCallable(0);
+		Future<String> future = scheduler.submit(task);
+		future.get(1000, TimeUnit.MILLISECONDS);
+		assertTrue(future.isDone());
 	}
 
 	@Test
@@ -102,9 +163,9 @@ public class ThreadPoolTaskSchedulerTests extends AbstractSchedulingTaskExecutor
 		try {
 			future.get(1000, TimeUnit.MILLISECONDS);
 		}
-		catch (ExecutionException ex) {
+		catch (ExecutionException e) {
 			assertTrue(future.isDone());
-			throw ex;
+			throw e;
 		}
 	}
 
@@ -133,33 +194,37 @@ public class ThreadPoolTaskSchedulerTests extends AbstractSchedulingTaskExecutor
 	@Test
 	public void scheduleMultipleTriggerTasks() throws Exception {
 		for (int i = 0; i < 1000; i++) {
-			scheduleTriggerTask();
+			this.scheduleTriggerTask();
 		}
 	}
 
+
+	// utility methods
 
 	private void assertThreadNamePrefix(TestTask task) {
 		assertEquals(THREAD_NAME_PREFIX, task.lastThread.getName().substring(0, THREAD_NAME_PREFIX.length()));
 	}
 
 	private void await(TestTask task) {
-		await(task.latch);
+		this.await(task.latch);
 	}
 
 	private void await(TestErrorHandler errorHandler) {
-		await(errorHandler.latch);
+		this.await(errorHandler.latch);
 	}
 
 	private void await(CountDownLatch latch) {
 		try {
 			latch.await(1000, TimeUnit.MILLISECONDS);
 		}
-		catch (InterruptedException ex) {
-			throw new IllegalStateException(ex);
+		catch (InterruptedException e) {
+			throw new RuntimeException(e);
 		}
 		assertEquals("latch did not count down,", 0, latch.getCount());
 	}
 
+
+	// helper classes
 
 	private static class TestTask implements Runnable {
 

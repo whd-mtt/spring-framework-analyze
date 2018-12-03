@@ -55,7 +55,7 @@ public class RmiSupportTests {
 		assertTrue(factory.getObject() instanceof IRemoteBean);
 		IRemoteBean proxy = (IRemoteBean) factory.getObject();
 		proxy.setName("myName");
-		assertEquals("myName", RemoteBean.name);
+		assertEquals(RemoteBean.name, "myName");
 		assertEquals(1, factory.counter);
 	}
 
@@ -179,7 +179,7 @@ public class RmiSupportTests {
 		IBusinessBean proxy = (IBusinessBean) factory.getObject();
 		assertFalse(proxy instanceof IRemoteBean);
 		proxy.setName("myName");
-		assertEquals("myName", RemoteBean.name);
+		assertEquals(RemoteBean.name, "myName");
 		assertEquals(1, factory.counter);
 	}
 

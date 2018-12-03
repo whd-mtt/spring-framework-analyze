@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,39 +16,12 @@
 
 package org.springframework.orm.jpa.support;
 
-import java.beans.PropertyDescriptor;
-import java.io.Serializable;
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.PersistenceContext;
-import javax.persistence.PersistenceContextType;
-import javax.persistence.PersistenceProperty;
-import javax.persistence.PersistenceUnit;
-import javax.persistence.SynchronizationType;
-
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValues;
-import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.ListableBeanFactory;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.*;
 import org.springframework.beans.factory.annotation.InjectionMetadata;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.config.DestructionAwareBeanPostProcessor;
-import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
-import org.springframework.beans.factory.config.NamedBeanHolder;
+import org.springframework.beans.factory.config.*;
 import org.springframework.beans.factory.support.MergedBeanDefinitionPostProcessor;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.core.BridgeMethodResolver;
@@ -57,16 +30,20 @@ import org.springframework.core.PriorityOrdered;
 import org.springframework.jndi.JndiLocatorDelegate;
 import org.springframework.jndi.JndiTemplate;
 import org.springframework.lang.Nullable;
-import org.springframework.orm.jpa.EntityManagerFactoryInfo;
-import org.springframework.orm.jpa.EntityManagerFactoryUtils;
-import org.springframework.orm.jpa.EntityManagerProxy;
-import org.springframework.orm.jpa.ExtendedEntityManagerCreator;
-import org.springframework.orm.jpa.SharedEntityManagerCreator;
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.ObjectUtils;
-import org.springframework.util.ReflectionUtils;
-import org.springframework.util.StringUtils;
+import org.springframework.orm.jpa.*;
+import org.springframework.util.*;
+
+import javax.persistence.*;
+import java.beans.PropertyDescriptor;
+import java.io.Serializable;
+import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Member;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * BeanPostProcessor that processes {@link javax.persistence.PersistenceUnit}
@@ -192,7 +169,7 @@ public class PersistenceAnnotationBeanPostProcessor
 	@Nullable
 	private transient ListableBeanFactory beanFactory;
 
-	private final transient Map<String, InjectionMetadata> injectionMetadataCache = new ConcurrentHashMap<>(256);
+	private transient final Map<String, InjectionMetadata> injectionMetadataCache = new ConcurrentHashMap<>(256);
 
 	private final Map<Object, EntityManager> extendedEntityManagersToClose = new ConcurrentHashMap<>(16);
 
@@ -312,12 +289,12 @@ public class PersistenceAnnotationBeanPostProcessor
 	}
 
 	public void setOrder(int order) {
-		this.order = order;
+	  this.order = order;
 	}
 
 	@Override
 	public int getOrder() {
-		return this.order;
+	  return this.order;
 	}
 
 	@Override
@@ -335,24 +312,24 @@ public class PersistenceAnnotationBeanPostProcessor
 	}
 
 	@Override
-	public void resetBeanDefinition(String beanName) {
-		this.injectionMetadataCache.remove(beanName);
-	}
-
-	@Override
-	public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) {
+	public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) throws BeansException {
 		return null;
 	}
 
 	@Override
-	public boolean postProcessAfterInstantiation(Object bean, String beanName) {
+	public boolean postProcessAfterInstantiation(Object bean, String beanName) throws BeansException {
 		return true;
 	}
 
+	//处理持久化相关属性
 	@Override
-	public PropertyValues postProcessProperties(PropertyValues pvs, Object bean, String beanName) {
+	public PropertyValues postProcessPropertyValues(
+			PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) throws BeansException {
+
+		//查找给定类中持久化元信息
 		InjectionMetadata metadata = findPersistenceMetadata(beanName, bean.getClass(), pvs);
 		try {
+			//为Bean注入持久化属性
 			metadata.inject(bean, beanName, pvs);
 		}
 		catch (Throwable ex) {
@@ -361,26 +338,18 @@ public class PersistenceAnnotationBeanPostProcessor
 		return pvs;
 	}
 
-	@Deprecated
 	@Override
-	public PropertyValues postProcessPropertyValues(
-			PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) {
-
-		return postProcessProperties(pvs, bean, beanName);
-	}
-
-	@Override
-	public Object postProcessBeforeInitialization(Object bean, String beanName) {
+	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
 		return bean;
 	}
 
 	@Override
-	public Object postProcessAfterInitialization(Object bean, String beanName) {
+	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 		return bean;
 	}
 
 	@Override
-	public void postProcessBeforeDestruction(Object bean, String beanName) {
+	public void postProcessBeforeDestruction(Object bean, String beanName) throws BeansException {
 		EntityManager emToClose = this.extendedEntityManagersToClose.remove(bean);
 		EntityManagerFactoryUtils.closeEntityManager(emToClose);
 	}
@@ -391,10 +360,12 @@ public class PersistenceAnnotationBeanPostProcessor
 	}
 
 
+	//查找给定类中的持久化元信息
 	private InjectionMetadata findPersistenceMetadata(String beanName, final Class<?> clazz, @Nullable PropertyValues pvs) {
 		// Fall back to class name as cache key, for backwards compatibility with custom callers.
 		String cacheKey = (StringUtils.hasLength(beanName) ? beanName : clazz.getName());
 		// Quick check on the concurrent map first, with minimal locking.
+		//首先从容器缓存中查找给定类的元信息
 		InjectionMetadata metadata = this.injectionMetadataCache.get(cacheKey);
 		if (InjectionMetadata.needsRefresh(metadata, clazz)) {
 			synchronized (this.injectionMetadataCache) {
@@ -412,7 +383,7 @@ public class PersistenceAnnotationBeanPostProcessor
 	}
 
 	private InjectionMetadata buildPersistenceMetadata(final Class<?> clazz) {
-		List<InjectionMetadata.InjectedElement> elements = new ArrayList<>();
+		LinkedList<InjectionMetadata.InjectedElement> elements = new LinkedList<>();
 		Class<?> targetClass = clazz;
 
 		do {
@@ -464,19 +435,27 @@ public class PersistenceAnnotationBeanPostProcessor
 	 * or {@code null} if none found
 	 * @see #setPersistenceUnits
 	 */
+	//根据持久化单元名称获取实体管理器工厂
 	@Nullable
 	protected EntityManagerFactory getPersistenceUnit(@Nullable String unitName) {
+		//如果持久化单元不为null
 		if (this.persistenceUnits != null) {
+			//获取持久化单元名称
 			String unitNameForLookup = (unitName != null ? unitName : "");
-			if (unitNameForLookup.isEmpty()) {
+			//如果持久化单元名称为空字符串
+			if ("".equals(unitNameForLookup)) {
+				//将默认的持久化单元名称作为持久化单元名称
 				unitNameForLookup = this.defaultPersistenceUnitName;
 			}
+			//获取持久化单元的JNDI名称
 			String jndiName = this.persistenceUnits.get(unitNameForLookup);
 			if (jndiName == null && "".equals(unitNameForLookup) && this.persistenceUnits.size() == 1) {
+				//从持久化单元中获取JNDI名称
 				jndiName = this.persistenceUnits.values().iterator().next();
 			}
 			if (jndiName != null) {
 				try {
+					//查找指定JNDI名称的实体管理器工厂
 					return lookup(jndiName, EntityManagerFactory.class);
 				}
 				catch (Exception ex) {
@@ -496,20 +475,25 @@ public class PersistenceAnnotationBeanPostProcessor
 	 * @see #setPersistenceContexts
 	 * @see #setExtendedPersistenceContexts
 	 */
+	//查找给定持久化单元名称的实体管理器
 	@Nullable
 	protected EntityManager getPersistenceContext(@Nullable String unitName, boolean extended) {
+		//获取持久化上下文
 		Map<String, String> contexts = (extended ? this.extendedPersistenceContexts : this.persistenceContexts);
+		//持久化上下文不为null
 		if (contexts != null) {
 			String unitNameForLookup = (unitName != null ? unitName : "");
-			if (unitNameForLookup.isEmpty()) {
+			if ("".equals(unitNameForLookup)) {
 				unitNameForLookup = this.defaultPersistenceUnitName;
 			}
+			//从持久化上下文中获取给定持久化单元名称的JNDI
 			String jndiName = contexts.get(unitNameForLookup);
 			if (jndiName == null && "".equals(unitNameForLookup) && contexts.size() == 1) {
 				jndiName = contexts.values().iterator().next();
 			}
 			if (jndiName != null) {
 				try {
+					//查找指定JNDI名称的实体管理器
 					return lookup(jndiName, EntityManager.class);
 				}
 				catch (Exception ex) {
@@ -529,16 +513,21 @@ public class PersistenceAnnotationBeanPostProcessor
 	 * @return the EntityManagerFactory
 	 * @throws NoSuchBeanDefinitionException if there is no such EntityManagerFactory in the context
 	 */
+	//从Spring容器中查找给定名称的实体管理器工厂
 	protected EntityManagerFactory findEntityManagerFactory(@Nullable String unitName, @Nullable String requestingBeanName)
 			throws NoSuchBeanDefinitionException {
 
+		//获取持久化单元名称
 		String unitNameForLookup = (unitName != null ? unitName : "");
-		if (unitNameForLookup.isEmpty()) {
+		//如果持久化单元名称为空，则将容器默认持久化单元名称作用持久化单元名称
+		if ("".equals(unitNameForLookup)) {
 			unitNameForLookup = this.defaultPersistenceUnitName;
 		}
-		if (!unitNameForLookup.isEmpty()) {
+		//如果持久化单元名称不为空，查找给定持久化单元名称的实体管理器工厂
+		if (!"".equals(unitNameForLookup)) {
 			return findNamedEntityManagerFactory(unitNameForLookup, requestingBeanName);
 		}
+		//如果持久化单元名称为空，获取容器中默认的实体管理器工厂
 		else {
 			return findDefaultEntityManagerFactory(requestingBeanName);
 		}
@@ -552,12 +541,15 @@ public class PersistenceAnnotationBeanPostProcessor
 	 * @return the EntityManagerFactory
 	 * @throws NoSuchBeanDefinitionException if there is no such EntityManagerFactory in the context
 	 */
+	//查找给定持久化单元名称的实体管理器工厂
 	protected EntityManagerFactory findNamedEntityManagerFactory(String unitName, @Nullable String requestingBeanName)
 			throws NoSuchBeanDefinitionException {
 
 		Assert.state(this.beanFactory != null, "ListableBeanFactory required for EntityManagerFactory bean lookup");
 
+		//从Spring所有容器中查找给定名称的实体管理器工厂对象
 		EntityManagerFactory emf = EntityManagerFactoryUtils.findEntityManagerFactory(this.beanFactory, unitName);
+		//将持久化单元名称和查找到的实体管理器工厂对象向Spring容器注册
 		if (requestingBeanName != null && this.beanFactory instanceof ConfigurableBeanFactory) {
 			((ConfigurableBeanFactory) this.beanFactory).registerDependentBean(unitName, requestingBeanName);
 		}
@@ -569,11 +561,13 @@ public class PersistenceAnnotationBeanPostProcessor
 	 * @return the default EntityManagerFactory
 	 * @throws NoSuchBeanDefinitionException if there is no single EntityManagerFactory in the context
 	 */
+	//获取容器默认的实体管理器工厂
 	protected EntityManagerFactory findDefaultEntityManagerFactory(@Nullable String requestingBeanName)
 			throws NoSuchBeanDefinitionException {
 
 		Assert.state(this.beanFactory != null, "ListableBeanFactory required for EntityManagerFactory bean lookup");
 
+		//将查找到的实体管理器工厂Bean和持久化单元名称向Spring容器注册
 		if (this.beanFactory instanceof ConfigurableListableBeanFactory) {
 			// Fancy variant with dependency registration
 			ConfigurableListableBeanFactory clbf = (ConfigurableListableBeanFactory) this.beanFactory;
@@ -642,84 +636,114 @@ public class PersistenceAnnotationBeanPostProcessor
 		@Nullable
 		private Properties properties;
 
+		//解析持久化注解
 		public PersistenceElement(Member member, AnnotatedElement ae, @Nullable PropertyDescriptor pd) {
 			super(member, pd);
+			//获取当前元素对象的@PersistenceContext注解
 			PersistenceContext pc = ae.getAnnotation(PersistenceContext.class);
+			//获取当前元素对象的@PersistenceUnit注解
 			PersistenceUnit pu = ae.getAnnotation(PersistenceUnit.class);
+			//资源类型为实体管理器
 			Class<?> resourceType = EntityManager.class;
+			//如果元素配置的持久化上下文不为null
 			if (pc != null) {
+				//如果元素配置的持久化单元也不为null
 				if (pu != null) {
+					//持久化上下文和持久化单元只能二选一，不能同时配置
 					throw new IllegalStateException("Member may only be annotated with either " +
 							"@PersistenceContext or @PersistenceUnit, not both: " + member);
 				}
 				Properties properties = null;
+				//获取持久化上下文的属性
 				PersistenceProperty[] pps = pc.properties();
+				//如果持久化上下文属性不为空
 				if (!ObjectUtils.isEmpty(pps)) {
 					properties = new Properties();
+					//将持久化上下文的属性名称和属性值保存到属性集合中
 					for (PersistenceProperty pp : pps) {
 						properties.setProperty(pp.name(), pp.value());
 					}
 				}
+				//设置元素的持久化单元名称
 				this.unitName = pc.unitName();
+				//设置元素的持久化类型为实体管理器(EntityManager)
 				this.type = pc.type();
 				this.synchronizedWithTransaction = SynchronizationType.SYNCHRONIZED.equals(pc.synchronization());
+				//设置元素的持久化属性
 				this.properties = properties;
 			}
+			//如果持久化上下文为null
 			else {
+				//持久化资源类型为实体管理器工厂
 				resourceType = EntityManagerFactory.class;
 				this.unitName = pu.unitName();
 			}
+			//检查给定的持久化资源类型是字段还是方法类型
 			checkResourceType(resourceType);
 		}
 
 		/**
 		 * Resolve the object against the application context.
 		 */
+		//获取并注入持久化资源
 		@Override
 		protected Object getResourceToInject(Object target, @Nullable String requestingBeanName) {
 			// Resolves to EntityManagerFactory or EntityManager.
+			//持久化资源类型不为null，创建实体管理器
 			if (this.type != null) {
 				return (this.type == PersistenceContextType.EXTENDED ?
 						resolveExtendedEntityManager(target, requestingBeanName) :
 						resolveEntityManager(requestingBeanName));
 			}
+			//持久化资源类型为null，创建实体管理器工厂
 			else {
 				// OK, so we need an EntityManagerFactory...
 				return resolveEntityManagerFactory(requestingBeanName);
 			}
 		}
 
+		//创建实体管理器工厂
 		private EntityManagerFactory resolveEntityManagerFactory(@Nullable String requestingBeanName) {
 			// Obtain EntityManagerFactory from JNDI?
+			//以持久化单元名称作为JNDI名称获取实体管理器工厂
 			EntityManagerFactory emf = getPersistenceUnit(this.unitName);
 			if (emf == null) {
 				// Need to search for EntityManagerFactory beans.
+				//根据持久化单元名称向Spring容器查找指定名称的实体管理器工厂
 				emf = findEntityManagerFactory(this.unitName, requestingBeanName);
 			}
 			return emf;
 		}
 
+		//创建实体管理器
 		private EntityManager resolveEntityManager(@Nullable String requestingBeanName) {
 			// Obtain EntityManager reference from JNDI?
+			//以持久化单元名称作为JNDI名称获取持久化上下文作为实体管理
 			EntityManager em = getPersistenceContext(this.unitName, false);
 			if (em == null) {
 				// No pre-built EntityManager found -> build one based on factory.
 				// Obtain EntityManagerFactory from JNDI?
+				//以持久化单元名称作为JNDI名称获取实体管理器工厂
 				EntityManagerFactory emf = getPersistenceUnit(this.unitName);
+				//没有获取到指定JNDI名称的实体管理器工厂
 				if (emf == null) {
 					// Need to search for EntityManagerFactory beans.
+					//根据持久化单元名称向Spring容器查找指定名称的实体管理器工厂
 					emf = findEntityManagerFactory(this.unitName, requestingBeanName);
 				}
 				// Inject a shared transactional EntityManager proxy.
+				//创建一个共享事务管理的实体管理器代理
 				if (emf instanceof EntityManagerFactoryInfo &&
 						((EntityManagerFactoryInfo) emf).getEntityManagerInterface() != null) {
 					// Create EntityManager based on the info's vendor-specific type
 					// (which might be more specific than the field's type).
+					//根据JPA实现提供商类型创建相应的实体管理器
 					em = SharedEntityManagerCreator.createSharedEntityManager(
 							emf, this.properties, this.synchronizedWithTransaction);
 				}
 				else {
 					// Create EntityManager based on the field's type.
+					//根据持久化注解配置的持久化资源类型创建实体管理器
 					em = SharedEntityManagerCreator.createSharedEntityManager(
 							emf, this.properties, this.synchronizedWithTransaction, getResourceType());
 				}
@@ -727,21 +751,29 @@ public class PersistenceAnnotationBeanPostProcessor
 			return em;
 		}
 
+		//创建扩展的实体管理器
 		private EntityManager resolveExtendedEntityManager(Object target, @Nullable String requestingBeanName) {
 			// Obtain EntityManager reference from JNDI?
+			//以持久化单元名称作为JNDI名称获取持久化上下文作为实体管理器
 			EntityManager em = getPersistenceContext(this.unitName, true);
+			//如果根据JNDI获取到的持久化上下文为null
 			if (em == null) {
 				// No pre-built EntityManager found -> build one based on factory.
 				// Obtain EntityManagerFactory from JNDI?
+				//以持久化单元名称作为JNDI名称获取实体管理器工厂
 				EntityManagerFactory emf = getPersistenceUnit(this.unitName);
+				//没有获取到指定JNDI名称的实体管理器工厂
 				if (emf == null) {
 					// Need to search for EntityManagerFactory beans.
+					//根据持久化单元名称向Spring容器查找指定名称的实体管理器工厂
 					emf = findEntityManagerFactory(this.unitName, requestingBeanName);
 				}
 				// Inject a container-managed extended EntityManager.
+				//根据实体管理器工厂和持久化属性创建一个容器管理的实体管理器
 				em = ExtendedEntityManagerCreator.createContainerManagedEntityManager(
 						emf, this.properties, this.synchronizedWithTransaction);
 			}
+			//创建实体管理器代理委派调用的实体管理器
 			if (em instanceof EntityManagerProxy && beanFactory != null && requestingBeanName != null &&
 					beanFactory.containsBean(requestingBeanName) && !beanFactory.isPrototype(requestingBeanName)) {
 				extendedEntityManagersToClose.put(target, ((EntityManagerProxy) em).getTargetEntityManager());

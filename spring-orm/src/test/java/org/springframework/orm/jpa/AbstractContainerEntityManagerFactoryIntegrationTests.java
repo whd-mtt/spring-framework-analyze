@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.springframework.orm.jpa;
 import java.lang.reflect.Proxy;
 import java.util.List;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityNotFoundException;
 import javax.persistence.FlushModeType;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
@@ -38,14 +39,14 @@ import static org.junit.Assert.*;
  * @author Rod Johnson
  * @author Juergen Hoeller
  */
-public abstract class AbstractContainerEntityManagerFactoryIntegrationTests
-		extends AbstractEntityManagerFactoryIntegrationTests {
+public abstract class AbstractContainerEntityManagerFactoryIntegrationTests extends AbstractEntityManagerFactoryIntegrationTests {
 
 	@Test
 	public void testEntityManagerFactoryImplementsEntityManagerFactoryInfo() {
+		assertTrue(Proxy.isProxyClass(entityManagerFactory.getClass()));
 		assertTrue("Must have introduced config interface", entityManagerFactory instanceof EntityManagerFactoryInfo);
 		EntityManagerFactoryInfo emfi = (EntityManagerFactoryInfo) entityManagerFactory;
-		assertEquals("Person", emfi.getPersistenceUnitName());
+		// assertEquals("Person", emfi.getPersistenceUnitName());
 		assertNotNull("PersistenceUnitInfo must be available", emfi.getPersistenceUnitInfo());
 		assertNotNull("Raw EntityManagerFactory must be available", emfi.getNativeEntityManagerFactory());
 	}
@@ -77,11 +78,11 @@ public abstract class AbstractContainerEntityManagerFactoryIntegrationTests
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unused", "unchecked" })
 	public void testEntityManagerProxyIsProxy() {
 		assertTrue(Proxy.isProxyClass(sharedEntityManager.getClass()));
 		Query q = sharedEntityManager.createQuery("select p from Person as p");
-		q.getResultList();
+		List<Person> people = q.getResultList();
 
 		assertTrue("Should be open to start with", sharedEntityManager.isOpen());
 		sharedEntityManager.close();
@@ -106,13 +107,14 @@ public abstract class AbstractContainerEntityManagerFactoryIntegrationTests
 		try {
 			Person notThere = sharedEntityManager.getReference(Person.class, 666);
 
-			// We may get here (as with Hibernate). Either behaviour is valid:
-			// throw exception on first access or on getReference itself.
+			// We may get here (as with Hibernate).
+			// Either behaviour is valid: throw exception on first access
+			// or on getReference itself.
 			notThere.getFirstName();
-			fail("Should have thrown an EntityNotFoundException or ObjectNotFoundException");
+			fail("Should have thrown an EntityNotFoundException");
 		}
-		catch (Exception ex) {
-			assertTrue(ex.getClass().getName().endsWith("NotFoundException"));
+		catch (EntityNotFoundException ex) {
+			// expected
 		}
 	}
 
@@ -207,8 +209,6 @@ public abstract class AbstractContainerEntityManagerFactoryIntegrationTests
 	@Test
 	@SuppressWarnings("unchecked")
 	public void testQueryNoPersonsNotTransactional() {
-		endTransaction();
-
 		EntityManager em = entityManagerFactory.createEntityManager();
 		Query q = em.createQuery("select p from Person as p");
 		List<Person> people = q.getResultList();
@@ -223,12 +223,12 @@ public abstract class AbstractContainerEntityManagerFactoryIntegrationTests
 	}
 
 	@Test
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unused", "unchecked" })
 	public void testQueryNoPersonsShared() {
-		Query q = this.sharedEntityManager.createQuery("select p from Person as p");
+		EntityManager em = SharedEntityManagerCreator.createSharedEntityManager(entityManagerFactory);
+		Query q = em.createQuery("select p from Person as p");
 		q.setFlushMode(FlushModeType.AUTO);
 		List<Person> people = q.getResultList();
-		assertEquals(0, people.size());
 		try {
 			assertNull(q.getSingleResult());
 			fail("Should have thrown NoResultException");
@@ -243,7 +243,7 @@ public abstract class AbstractContainerEntityManagerFactoryIntegrationTests
 	public void testQueryNoPersonsSharedNotTransactional() {
 		endTransaction();
 
-		EntityManager em = this.sharedEntityManager;
+		EntityManager em = SharedEntityManagerCreator.createSharedEntityManager(entityManagerFactory);
 		Query q = em.createQuery("select p from Person as p");
 		q.setFlushMode(FlushModeType.AUTO);
 		List<Person> people = q.getResultList();

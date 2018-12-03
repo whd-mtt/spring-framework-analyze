@@ -197,8 +197,7 @@ public class StompHeaderAccessor extends SimpMessageHeaderAccessor {
 		}
 		StompCommand command = getCommand();
 		if (command == null) {
-			command = StompCommand.SEND;
-			setHeader(COMMAND_HEADER, command);
+			setHeader(COMMAND_HEADER, StompCommand.SEND);
 		}
 		else if (!command.equals(StompCommand.SEND)) {
 			throw new IllegalStateException("Unexpected STOMP command " + command);

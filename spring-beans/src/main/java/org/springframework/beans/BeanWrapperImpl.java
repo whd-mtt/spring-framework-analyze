@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class BeanWrapperImpl extends AbstractNestablePropertyAccessor implements
 	private CachedIntrospectionResults cachedIntrospectionResults;
 
 	/**
-	 * The security context used for invoking the property methods.
+	 * The security context used for invoking the property methods
 	 */
 	@Nullable
 	private AccessControlContext acc;
@@ -228,7 +228,10 @@ public class BeanWrapperImpl extends AbstractNestablePropertyAccessor implements
 	@Nullable
 	protected BeanPropertyHandler getLocalPropertyHandler(String propertyName) {
 		PropertyDescriptor pd = getCachedIntrospectionResults().getPropertyDescriptor(propertyName);
-		return (pd != null ? new BeanPropertyHandler(pd) : null);
+		if (pd != null) {
+			return new BeanPropertyHandler(pd);
+		}
+		return null;
 	}
 
 	@Override
@@ -239,7 +242,8 @@ public class BeanWrapperImpl extends AbstractNestablePropertyAccessor implements
 	@Override
 	protected NotWritablePropertyException createNotWritablePropertyException(String propertyName) {
 		PropertyMatches matches = PropertyMatches.forProperty(propertyName, getRootClass());
-		throw new NotWritablePropertyException(getRootClass(), getNestedPath() + propertyName,
+		throw new NotWritablePropertyException(
+				getRootClass(), getNestedPath() + propertyName,
 				matches.buildErrorMessage(), matches.getPossibleMatches());
 	}
 
@@ -283,7 +287,7 @@ public class BeanWrapperImpl extends AbstractNestablePropertyAccessor implements
 		@Override
 		@Nullable
 		public TypeDescriptor nested(int level) {
-			return TypeDescriptor.nested(property(this.pd), level);
+			return TypeDescriptor.nested(property(pd), level);
 		}
 
 		@Override

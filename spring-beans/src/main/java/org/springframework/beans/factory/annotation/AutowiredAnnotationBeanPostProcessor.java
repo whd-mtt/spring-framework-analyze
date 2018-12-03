@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,37 +16,13 @@
 
 package org.springframework.beans.factory.annotation;
 
-import java.beans.PropertyDescriptor;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.AccessibleObject;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValues;
 import org.springframework.beans.TypeConverter;
-import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.BeanFactoryUtils;
-import org.springframework.beans.factory.InjectionPoint;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.UnsatisfiedDependencyException;
+import org.springframework.beans.factory.*;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessorAdapter;
@@ -65,6 +41,12 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.beans.PropertyDescriptor;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * {@link org.springframework.beans.factory.config.BeanPostProcessor} implementation
  * that autowires annotated fields, setter methods and arbitrary config methods.
@@ -74,15 +56,15 @@ import org.springframework.util.StringUtils;
  * <p>Also supports JSR-330's {@link javax.inject.Inject @Inject} annotation,
  * if available, as a direct alternative to Spring's own {@code @Autowired}.
  *
- * <p>Only one constructor (at max) of any given bean class may declare this annotation
- * with the 'required' parameter set to {@code true}, indicating <i>the</i> constructor
- * to autowire when used as a Spring bean. If multiple <i>non-required</i> constructors
- * declare the annotation, they will be considered as candidates for autowiring.
- * The constructor with the greatest number of dependencies that can be satisfied by
- * matching beans in the Spring container will be chosen. If none of the candidates
- * can be satisfied, then a primary/default constructor (if present) will be used.
- * If a class only declares a single constructor to begin with, it will always be used,
- * even if not annotated. An annotated constructor does not have to be public.
+ * <p>Only one constructor (at max) of any given bean class may carry this
+ * annotation with the 'required' parameter set to {@code true},
+ * indicating <i>the</i> constructor to autowire when used as a Spring bean.
+ * If multiple <i>non-required</i> constructors carry the annotation, they
+ * will be considered as candidates for autowiring. The constructor with
+ * the greatest number of dependencies that can be satisfied by matching
+ * beans in the Spring container will be chosen. If none of the candidates
+ * can be satisfied, then a default constructor (if present) will be used.
+ * An annotated constructor does not have to be public.
  *
  * <p>Fields are injected right after construction of a bean, before any
  * config methods are invoked. Such a config field does not have to be public.
@@ -120,7 +102,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
-	private final Set<Class<? extends Annotation>> autowiredAnnotationTypes = new LinkedHashSet<>(4);
+	private final Set<Class<? extends Annotation>> autowiredAnnotationTypes = new LinkedHashSet<>();
 
 	private String requiredParameterName = "required";
 
@@ -145,12 +127,15 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 	 */
 	@SuppressWarnings("unchecked")
 	public AutowiredAnnotationBeanPostProcessor() {
+		//后置处理器将处理@Autowire注解
 		this.autowiredAnnotationTypes.add(Autowired.class);
+		//后置处理器将处理@Value注解
 		this.autowiredAnnotationTypes.add(Value.class);
 		try {
+			//后置处理器将处理javax.inject.Inject JSR-330注解
 			this.autowiredAnnotationTypes.add((Class<? extends Annotation>)
 					ClassUtils.forName("javax.inject.Inject", AutowiredAnnotationBeanPostProcessor.class.getClassLoader()));
-			logger.trace("JSR-330 'javax.inject.Inject' annotation found and supported for autowiring");
+			logger.info("JSR-330 'javax.inject.Inject' annotation found and supported for autowiring");
 		}
 		catch (ClassNotFoundException ex) {
 			// JSR-330 API not available - simply skip.
@@ -161,11 +146,11 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 	/**
 	 * Set the 'autowired' annotation type, to be used on constructors, fields,
 	 * setter methods and arbitrary config methods.
-	 * <p>The default autowired annotation type is the Spring-provided {@link Autowired}
-	 * annotation, as well as {@link Value}.
+	 * <p>The default autowired annotation type is the Spring-provided
+	 * {@link Autowired} annotation, as well as {@link Value}.
 	 * <p>This setter property exists so that developers can provide their own
-	 * (non-Spring-specific) annotation type to indicate that a member is supposed
-	 * to be autowired.
+	 * (non-Spring-specific) annotation type to indicate that a member is
+	 * supposed to be autowired.
 	 */
 	public void setAutowiredAnnotationType(Class<? extends Annotation> autowiredAnnotationType) {
 		Assert.notNull(autowiredAnnotationType, "'autowiredAnnotationType' must not be null");
@@ -176,11 +161,11 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 	/**
 	 * Set the 'autowired' annotation types, to be used on constructors, fields,
 	 * setter methods and arbitrary config methods.
-	 * <p>The default autowired annotation type is the Spring-provided {@link Autowired}
-	 * annotation, as well as {@link Value}.
+	 * <p>The default autowired annotation type is the Spring-provided
+	 * {@link Autowired} annotation, as well as {@link Value}.
 	 * <p>This setter property exists so that developers can provide their own
-	 * (non-Spring-specific) annotation types to indicate that a member is supposed
-	 * to be autowired.
+	 * (non-Spring-specific) annotation types to indicate that a member is
+	 * supposed to be autowired.
 	 */
 	public void setAutowiredAnnotationTypes(Set<Class<? extends Annotation>> autowiredAnnotationTypes) {
 		Assert.notEmpty(autowiredAnnotationTypes, "'autowiredAnnotationTypes' must not be empty");
@@ -189,7 +174,8 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 	}
 
 	/**
-	 * Set the name of a parameter of the annotation that specifies whether it is required.
+	 * Set the name of a parameter of the annotation that specifies
+	 * whether it is required.
 	 * @see #setRequiredParameterValue(boolean)
 	 */
 	public void setRequiredParameterName(String requiredParameterName) {
@@ -198,8 +184,9 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 
 	/**
 	 * Set the boolean value that marks a dependency as required
-	 * <p>For example if using 'required=true' (the default), this value should be
-	 * {@code true}; but if using 'optional=false', this value should be {@code false}.
+	 * <p>For example if using 'required=true' (the default),
+	 * this value should be {@code true}; but if using
+	 * 'optional=false', this value should be {@code false}.
 	 * @see #setRequiredParameterName(String)
 	 */
 	public void setRequiredParameterValue(boolean requiredParameterValue) {
@@ -231,12 +218,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 		metadata.checkConfigMembers(beanDefinition);
 	}
 
-	@Override
-	public void resetBeanDefinition(String beanName) {
-		this.lookupMethodsChecked.remove(beanName);
-		this.injectionMetadataCache.remove(beanName);
-	}
-
+	//为自动依赖注入装配Bean选择合适的构造方法
 	@Override
 	@Nullable
 	public Constructor<?>[] determineCandidateConstructors(Class<?> beanClass, final String beanName)
@@ -248,15 +230,15 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 				ReflectionUtils.doWithMethods(beanClass, method -> {
 					Lookup lookup = method.getAnnotation(Lookup.class);
 					if (lookup != null) {
-						Assert.state(this.beanFactory != null, "No BeanFactory available");
+						Assert.state(beanFactory != null, "No BeanFactory available");
 						LookupOverride override = new LookupOverride(method, lookup.value());
 						try {
-							RootBeanDefinition mbd = (RootBeanDefinition) this.beanFactory.getMergedBeanDefinition(beanName);
+							RootBeanDefinition mbd = (RootBeanDefinition) beanFactory.getMergedBeanDefinition(beanName);
 							mbd.getMethodOverrides().addOverride(override);
 						}
 						catch (NoSuchBeanDefinitionException ex) {
 							throw new BeanCreationException(beanName,
-									"Cannot apply @Lookup to beans without corresponding bean definition");
+								"Cannot apply @Lookup to beans without corresponding bean definition");
 						}
 					}
 				});
@@ -267,15 +249,18 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 			this.lookupMethodsChecked.add(beanName);
 		}
 
+		//首先从容器的缓存中查找是否有指定Bean的构造方法
 		// Quick check on the concurrent map first, with minimal locking.
 		Constructor<?>[] candidateConstructors = this.candidateConstructorsCache.get(beanClass);
 		if (candidateConstructors == null) {
 			// Fully synchronized resolution now...
+			//线程同步以确保容器中数据一致性
 			synchronized (this.candidateConstructorsCache) {
 				candidateConstructors = this.candidateConstructorsCache.get(beanClass);
 				if (candidateConstructors == null) {
 					Constructor<?>[] rawCandidates;
 					try {
+						//通过JDK反射机制，获取指定类的中所有声明的构造方法
 						rawCandidates = beanClass.getDeclaredConstructors();
 					}
 					catch (Throwable ex) {
@@ -283,11 +268,16 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 								"Resolution of declared constructors on bean Class [" + beanClass.getName() +
 								"] from ClassLoader [" + beanClass.getClassLoader() + "] failed", ex);
 					}
-					List<Constructor<?>> candidates = new ArrayList<>(rawCandidates.length);
+					//存放候选构造方法的集合
+					List<Constructor<?>> candidates = new ArrayList<Constructor<?>>(rawCandidates.length);
+					//autowire注解中required属性指定的构造方法
 					Constructor<?> requiredConstructor = null;
+					//默认的构造方法
 					Constructor<?> defaultConstructor = null;
+					//主构造方法
 					Constructor<?> primaryConstructor = BeanUtils.findPrimaryConstructor(beanClass);
 					int nonSyntheticConstructors = 0;
+					//遍历所有的构造方法，检查是否添加了autowire注解，以及是否指定了required属性
 					for (Constructor<?> candidate : rawCandidates) {
 						if (!candidate.isSynthetic()) {
 							nonSyntheticConstructors++;
@@ -295,7 +285,9 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 						else if (primaryConstructor != null) {
 							continue;
 						}
+						//获取指定类中所有关于autowire的注解(Annotation)
 						AnnotationAttributes ann = findAutowiredAnnotation(candidate);
+						//如果指定类中没有antowire的注解
 						if (ann == null) {
 							Class<?> userClass = ClassUtils.getUserClass(beanClass);
 							if (userClass != beanClass) {
@@ -309,68 +301,87 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 								}
 							}
 						}
+						//如果指定类中有关于antowire的注解
 						if (ann != null) {
+							//如果antowire注解中指定了required属性
 							if (requiredConstructor != null) {
 								throw new BeanCreationException(beanName,
 										"Invalid autowire-marked constructor: " + candidate +
 										". Found constructor with 'required' Autowired annotation already: " +
 										requiredConstructor);
 							}
+							//获取autowire注解中required属性值
 							boolean required = determineRequiredStatus(ann);
+							//如果获取到autowire注解中required的属性值
 							if (required) {
+								//如果候选构造方法集合不为空
 								if (!candidates.isEmpty()) {
 									throw new BeanCreationException(beanName,
 											"Invalid autowire-marked constructors: " + candidates +
 											". Found constructor with 'required' Autowired annotation: " +
 											candidate);
 								}
+								//当前的构造方法就是required属性所配置的构造方法
 								requiredConstructor = candidate;
 							}
+							//将当前的构造方法添加到哦啊候选构造方法集合中
 							candidates.add(candidate);
 						}
+						//如果autowire注解的参数列表为空
 						else if (candidate.getParameterCount() == 0) {
 							defaultConstructor = candidate;
 						}
 					}
+					//如果候选构造方法集合不为空
 					if (!candidates.isEmpty()) {
 						// Add default constructor to list of optional constructors, as fallback.
+						//如果所有的构造方法都没有配置required属性，且有默认构造方法
 						if (requiredConstructor == null) {
 							if (defaultConstructor != null) {
+								//将默认构造方法添加到候选构造方法列表
 								candidates.add(defaultConstructor);
 							}
-							else if (candidates.size() == 1 && logger.isInfoEnabled()) {
-								logger.info("Inconsistent constructor declaration on bean with name '" + beanName +
+							else if (candidates.size() == 1 && logger.isWarnEnabled()) {
+								logger.warn("Inconsistent constructor declaration on bean with name '" + beanName +
 										"': single autowire-marked constructor flagged as optional - " +
 										"this constructor is effectively required since there is no " +
 										"default constructor to fall back to: " + candidates.get(0));
 							}
 						}
-						candidateConstructors = candidates.toArray(new Constructor<?>[0]);
+						//将候选构造方法集合转换为数组
+						candidateConstructors = candidates.toArray(new Constructor<?>[candidates.size()]);
 					}
 					else if (rawCandidates.length == 1 && rawCandidates[0].getParameterCount() > 0) {
 						candidateConstructors = new Constructor<?>[] {rawCandidates[0]};
 					}
-					else if (nonSyntheticConstructors == 2 && primaryConstructor != null &&
-							defaultConstructor != null && !primaryConstructor.equals(defaultConstructor)) {
+					else if (nonSyntheticConstructors == 2 && primaryConstructor != null && defaultConstructor != null) {
 						candidateConstructors = new Constructor<?>[] {primaryConstructor, defaultConstructor};
 					}
 					else if (nonSyntheticConstructors == 1 && primaryConstructor != null) {
 						candidateConstructors = new Constructor<?>[] {primaryConstructor};
 					}
 					else {
+						//如果候选构造方法集合为空，则创建一个空的数组
 						candidateConstructors = new Constructor<?>[0];
 					}
+					//将类的候选构造方法集合存放到容器的缓存中
 					this.candidateConstructorsCache.put(beanClass, candidateConstructors);
 				}
 			}
 		}
+		//返回指定类的候选构造方法数组，如果没有返回null
 		return (candidateConstructors.length > 0 ? candidateConstructors : null);
 	}
 
+	//处理类中的属性
 	@Override
-	public PropertyValues postProcessProperties(PropertyValues pvs, Object bean, String beanName) {
+	public PropertyValues postProcessPropertyValues(
+			PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) throws BeanCreationException {
+
+		//获取指定类中autowire相关注解的元信息
 		InjectionMetadata metadata = findAutowiringMetadata(beanName, bean.getClass(), pvs);
 		try {
+			//对Bean的属性进行自动注入
 			metadata.inject(bean, beanName, pvs);
 		}
 		catch (BeanCreationException ex) {
@@ -382,24 +393,20 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 		return pvs;
 	}
 
-	@Deprecated
-	@Override
-	public PropertyValues postProcessPropertyValues(
-			PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) {
-
-		return postProcessProperties(pvs, bean, beanName);
-	}
-
 	/**
 	 * 'Native' processing method for direct calls with an arbitrary target instance,
 	 * resolving all of its fields and methods which are annotated with {@code @Autowired}.
 	 * @param bean the target instance to process
 	 * @throws BeanCreationException if autowiring failed
 	 */
+	//处理对象的注入
 	public void processInjection(Object bean) throws BeanCreationException {
+		//获取给定Bean的Class对象
 		Class<?> clazz = bean.getClass();
+		//获取给定类中autowire相关注解元信息
 		InjectionMetadata metadata = findAutowiringMetadata(clazz.getName(), clazz, null);
 		try {
+			//对Bean对象进行自动注入
 			metadata.inject(bean, null, null);
 		}
 		catch (BeanCreationException ex) {
@@ -412,19 +419,24 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 	}
 
 
+	//获取给定类的autowire相关注解元信息
 	private InjectionMetadata findAutowiringMetadata(String beanName, Class<?> clazz, @Nullable PropertyValues pvs) {
 		// Fall back to class name as cache key, for backwards compatibility with custom callers.
 		String cacheKey = (StringUtils.hasLength(beanName) ? beanName : clazz.getName());
 		// Quick check on the concurrent map first, with minimal locking.
+		//首先从容器中查找是否有给定类的autowire相关注解元信息
 		InjectionMetadata metadata = this.injectionMetadataCache.get(cacheKey);
 		if (InjectionMetadata.needsRefresh(metadata, clazz)) {
 			synchronized (this.injectionMetadataCache) {
 				metadata = this.injectionMetadataCache.get(cacheKey);
 				if (InjectionMetadata.needsRefresh(metadata, clazz)) {
 					if (metadata != null) {
+						//解析给定类autowire相关注解元信息
 						metadata.clear(pvs);
 					}
+					//解析给定类autowire相关注解元信息
 					metadata = buildAutowiringMetadata(clazz);
+					//将得到的给定类autowire相关注解元信息存储在容器缓存中
 					this.injectionMetadataCache.put(cacheKey, metadata);
 				}
 			}
@@ -432,64 +444,86 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 		return metadata;
 	}
 
+	//解析给定类autowire相关注解元信息
 	private InjectionMetadata buildAutowiringMetadata(final Class<?> clazz) {
-		List<InjectionMetadata.InjectedElement> elements = new ArrayList<>();
+		//创建一个存放注解元信息的集合
+		LinkedList<InjectionMetadata.InjectedElement> elements = new LinkedList<>();
 		Class<?> targetClass = clazz;
 
+		//递归遍历当前类及其所有基类，解析全部注解元信息
 		do {
-			final List<InjectionMetadata.InjectedElement> currElements = new ArrayList<>();
+			//创建一个存储当前正在处理类注解元信息的集合
+			final LinkedList<InjectionMetadata.InjectedElement> currElements = new LinkedList<>();
 
+			//利用JDK反射机制获取给定类中所有的声明字段，获取字段上的注解信息
 			ReflectionUtils.doWithLocalFields(targetClass, field -> {
+				//获取给定字段上的注解
 				AnnotationAttributes ann = findAutowiredAnnotation(field);
 				if (ann != null) {
+					//如果给定字段是静态的(static)，则直接遍历下一个字段
 					if (Modifier.isStatic(field.getModifiers())) {
-						if (logger.isInfoEnabled()) {
-							logger.info("Autowired annotation is not supported on static fields: " + field);
+						if (logger.isWarnEnabled()) {
+							logger.warn("Autowired annotation is not supported on static fields: " + field);
 						}
 						return;
 					}
+					//判断注解的required属性值是否有效
 					boolean required = determineRequiredStatus(ann);
+					//将当前字段元信息封装，添加在返回的集合中
 					currElements.add(new AutowiredFieldElement(field, required));
 				}
 			});
 
+			//利用JDK反射机制获取给定类中所有的声明方法，获取方法上的注解信息
 			ReflectionUtils.doWithLocalMethods(targetClass, method -> {
 				Method bridgedMethod = BridgeMethodResolver.findBridgedMethod(method);
 				if (!BridgeMethodResolver.isVisibilityBridgeMethodPair(method, bridgedMethod)) {
 					return;
 				}
+				//获取给定方法上的所有注解
 				AnnotationAttributes ann = findAutowiredAnnotation(bridgedMethod);
 				if (ann != null && method.equals(ClassUtils.getMostSpecificMethod(method, clazz))) {
+					//如果方法是静态的，则直接遍历下一个方法
 					if (Modifier.isStatic(method.getModifiers())) {
-						if (logger.isInfoEnabled()) {
-							logger.info("Autowired annotation is not supported on static methods: " + method);
+						if (logger.isWarnEnabled()) {
+							logger.warn("Autowired annotation is not supported on static methods: " + method);
 						}
 						return;
 					}
+					//如果方法的参数列表为空
 					if (method.getParameterCount() == 0) {
-						if (logger.isInfoEnabled()) {
-							logger.info("Autowired annotation should only be used on methods with parameters: " +
+						if (logger.isWarnEnabled()) {
+							logger.warn("Autowired annotation should only be used on methods with parameters: " +
 									method);
 						}
 					}
+					//判断注解的required属性值是否有效
 					boolean required = determineRequiredStatus(ann);
+					//获取当前方法的属性描述符，即方法是可读的(readable)getter方法，还是可写的(writeable)setter方法
 					PropertyDescriptor pd = BeanUtils.findPropertyForMethod(bridgedMethod, clazz);
+					//将方法元信息封装添加到返回的元信息集合中
 					currElements.add(new AutowiredMethodElement(method, required, pd));
 				}
 			});
 
+			//将当前类的注解元信息存放到注解元信息集合中
 			elements.addAll(0, currElements);
+			//获取给定类的父类
 			targetClass = targetClass.getSuperclass();
 		}
+		//如果给定类有基类，并且基类不是Object，则递归获取其基类的元信息
 		while (targetClass != null && targetClass != Object.class);
 
 		return new InjectionMetadata(clazz, elements);
 	}
 
+	//获取给定对象的autowire相关注解
 	@Nullable
 	private AnnotationAttributes findAutowiredAnnotation(AccessibleObject ao) {
-		if (ao.getAnnotations().length > 0) {  // autowiring annotations have to be local
+		if (ao.getAnnotations().length > 0) {
+			//遍历所有autowire相关的注解:@Autowire、@Value以及JSR-330等
 			for (Class<? extends Annotation> type : this.autowiredAnnotationTypes) {
+				//获取给定对象上的指定类型的注解
 				AnnotationAttributes attributes = AnnotatedElementUtils.getMergedAnnotationAttributes(ao, type);
 				if (attributes != null) {
 					return attributes;
@@ -535,8 +569,8 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 				if (this.beanFactory != null && this.beanFactory.containsBean(autowiredBeanName)) {
 					this.beanFactory.registerDependentBean(autowiredBeanName, beanName);
 				}
-				if (logger.isTraceEnabled()) {
-					logger.trace("Autowiring by type from bean name '" + beanName +
+				if (logger.isDebugEnabled()) {
+					logger.debug("Autowiring by type from bean name '" + beanName +
 							"' to bean named '" + autowiredBeanName + "'");
 				}
 			}
@@ -550,7 +584,7 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 	private Object resolvedCachedArgument(@Nullable String beanName, @Nullable Object cachedArgument) {
 		if (cachedArgument instanceof DependencyDescriptor) {
 			DependencyDescriptor descriptor = (DependencyDescriptor) cachedArgument;
-			Assert.state(this.beanFactory != null, "No BeanFactory available");
+			Assert.state(beanFactory != null, "No BeanFactory available");
 			return this.beanFactory.resolveDependency(descriptor, beanName, null, null);
 		}
 		else {
@@ -576,48 +610,70 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 			this.required = required;
 		}
 
+		//对字段进行注入
 		@Override
 		protected void inject(Object bean, @Nullable String beanName, @Nullable PropertyValues pvs) throws Throwable {
+			//获取注入元素对象
 			Field field = (Field) this.member;
 			Object value;
+			//如果当前对象在容器中被缓存
 			if (this.cached) {
+				//根据Bean名称解析缓存中的字段值
 				value = resolvedCachedArgument(beanName, this.cachedFieldValue);
 			}
+			//如果当前对象没有被容器缓存
 			else {
+				//创建一个字段依赖描述符
 				DependencyDescriptor desc = new DependencyDescriptor(field, this.required);
 				desc.setContainingClass(bean.getClass());
 				Set<String> autowiredBeanNames = new LinkedHashSet<>(1);
 				Assert.state(beanFactory != null, "No BeanFactory available");
+				//获取容器中的类型转换器
 				TypeConverter typeConverter = beanFactory.getTypeConverter();
 				try {
+					//根据容器中Bean定义，解析指定的依赖关系，获取依赖对象
 					value = beanFactory.resolveDependency(desc, beanName, autowiredBeanNames, typeConverter);
 				}
 				catch (BeansException ex) {
 					throw new UnsatisfiedDependencyException(null, beanName, new InjectionPoint(field), ex);
 				}
+				//线程同步，确保容器中数据一致性
 				synchronized (this) {
+					//如果当前对象没有被容器缓存
 					if (!this.cached) {
+						//获取到了当前对象的依赖对象，并且required属性为true
 						if (value != null || this.required) {
 							this.cachedFieldValue = desc;
+							//为指定Bean注册依赖Bean
 							registerDependentBeans(beanName, autowiredBeanNames);
 							if (autowiredBeanNames.size() == 1) {
 								String autowiredBeanName = autowiredBeanNames.iterator().next();
-								if (beanFactory.containsBean(autowiredBeanName) &&
-										beanFactory.isTypeMatch(autowiredBeanName, field.getType())) {
-									this.cachedFieldValue = new ShortcutDependencyDescriptor(
-											desc, autowiredBeanName, field.getType());
+								//如果容器中有指定名称的Bean对象
+								if (beanFactory.containsBean(autowiredBeanName)) {
+									//依赖对象类型和字段类型匹配，默认按类型注入
+									if (beanFactory.isTypeMatch(autowiredBeanName, field.getType())) {
+										//创建一个依赖对象的引用，同时缓存
+										this.cachedFieldValue = new ShortcutDependencyDescriptor(
+												desc, autowiredBeanName, field.getType());
+									}
 								}
 							}
 						}
+						//如果获取的依赖关系为null，且获取required属性为false
 						else {
+							//将字段值的缓存设置为null
 							this.cachedFieldValue = null;
 						}
+						//容器已经对当前字段的值缓存
 						this.cached = true;
 					}
 				}
 			}
+			//如果字段依赖值不为null
 			if (value != null) {
+				//显式使用JDK的反射机制，设置自动的访问控制权限为允许访问
 				ReflectionUtils.makeAccessible(field);
+				//为Bean对象的字段设置值
 				field.set(bean, value);
 			}
 		}
@@ -641,28 +697,39 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 			this.required = required;
 		}
 
+		//对方法进行注入
 		@Override
 		protected void inject(Object bean, @Nullable String beanName, @Nullable PropertyValues pvs) throws Throwable {
+			//如果属性被显式设置为skip，则不进行注入
 			if (checkPropertySkipping(pvs)) {
 				return;
 			}
+			//获取注入元素对象
 			Method method = (Method) this.member;
 			Object[] arguments;
+			//如果容器对当前方法缓存
 			if (this.cached) {
 				// Shortcut for avoiding synchronization...
+				//获取缓存中指定Bean名称的方法参数
 				arguments = resolveCachedArguments(beanName);
 			}
+			//如果没有缓存
 			else {
+				//获取方法的参数列表
 				Class<?>[] paramTypes = method.getParameterTypes();
+				//创建一个存放方法参数的数组
 				arguments = new Object[paramTypes.length];
 				DependencyDescriptor[] descriptors = new DependencyDescriptor[paramTypes.length];
 				Set<String> autowiredBeans = new LinkedHashSet<>(paramTypes.length);
 				Assert.state(beanFactory != null, "No BeanFactory available");
+				//获取容器的类型转换器
 				TypeConverter typeConverter = beanFactory.getTypeConverter();
 				for (int i = 0; i < arguments.length; i++) {
+					//创建方法参数对象
 					MethodParameter methodParam = new MethodParameter(method, i);
 					DependencyDescriptor currDesc = new DependencyDescriptor(methodParam, this.required);
 					currDesc.setContainingClass(bean.getClass());
+					//解析方法的输入参数，为方法参数创建依赖描述符
 					descriptors[i] = currDesc;
 					try {
 						Object arg = beanFactory.resolveDependency(currDesc, beanName, autowiredBeans, typeConverter);
@@ -670,44 +737,63 @@ public class AutowiredAnnotationBeanPostProcessor extends InstantiationAwareBean
 							arguments = null;
 							break;
 						}
+						//根据容器中Bean定义解析依赖关系，获取方法参数依赖对象
 						arguments[i] = arg;
 					}
 					catch (BeansException ex) {
 						throw new UnsatisfiedDependencyException(null, beanName, new InjectionPoint(methodParam), ex);
 					}
 				}
+				//线程同步，以确保容器中数据一致性
 				synchronized (this) {
+					//如果当前方法没有被容器缓存
 					if (!this.cached) {
+						//如果方法的参数列表不为空
 						if (arguments != null) {
+							//为容器中缓存方法参数的对象赋值
 							Object[] cachedMethodArguments = new Object[paramTypes.length];
-							System.arraycopy(descriptors, 0, cachedMethodArguments, 0, arguments.length);
+							for (int i = 0; i < arguments.length; i++) {
+								cachedMethodArguments[i] = descriptors[i];
+							}
+							//为指定Bean注册依赖Bean
 							registerDependentBeans(beanName, autowiredBeans);
+							//如果依赖对象集合大小等于方法参数个数
 							if (autowiredBeans.size() == paramTypes.length) {
 								Iterator<String> it = autowiredBeans.iterator();
+								//为方法参数设置依赖对象
 								for (int i = 0; i < paramTypes.length; i++) {
 									String autowiredBeanName = it.next();
-									if (beanFactory.containsBean(autowiredBeanName) &&
-											beanFactory.isTypeMatch(autowiredBeanName, paramTypes[i])) {
-										cachedMethodArguments[i] = new ShortcutDependencyDescriptor(
-												descriptors[i], autowiredBeanName, paramTypes[i]);
+									//如果容器中存在指定名称的Bean对象
+									if (beanFactory.containsBean(autowiredBeanName)) {
+										//如果参数类型和依赖对象类型匹配
+										if (beanFactory.isTypeMatch(autowiredBeanName, paramTypes[i])) {
+											//创建一个依赖对象的引用，复制给方法相应的参
+											cachedMethodArguments[i] = new ShortcutDependencyDescriptor(
+													descriptors[i], autowiredBeanName, paramTypes[i]);
+										}
 									}
 								}
 							}
 							this.cachedMethodArguments = cachedMethodArguments;
 						}
+						//如果方法参数列表为null，则设置容器对该方法参数的缓存为null
 						else {
 							this.cachedMethodArguments = null;
 						}
+						//设置容器已经对该方法缓存
 						this.cached = true;
 					}
 				}
 			}
+			//如果方法参数依赖对象不为null
 			if (arguments != null) {
 				try {
+					//使用JDK的反射机制，显式设置方法的访问控制权限为允许访问
 					ReflectionUtils.makeAccessible(method);
+					//调用Bean的指定方法
 					method.invoke(bean, arguments);
 				}
-				catch (InvocationTargetException ex) {
+				catch (InvocationTargetException ex){
 					throw ex.getTargetException();
 				}
 			}

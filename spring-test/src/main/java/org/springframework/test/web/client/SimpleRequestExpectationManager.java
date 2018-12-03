@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Iterator;
 
 import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -37,11 +38,9 @@ import org.springframework.util.Assert;
  */
 public class SimpleRequestExpectationManager extends AbstractRequestExpectationManager {
 
-	/** Expectations in the order of declaration (count may be > 1). */
 	@Nullable
 	private Iterator<RequestExpectation> expectationIterator;
 
-	/** Track expectations that have a remaining count. */
 	private final RequestExpectationGroup repeatExpectations = new RequestExpectationGroup();
 
 
@@ -52,7 +51,7 @@ public class SimpleRequestExpectationManager extends AbstractRequestExpectationM
 	}
 
 	@Override
-	protected RequestExpectation matchRequest(ClientHttpRequest request) throws IOException {
+	public ClientHttpResponse validateRequestInternal(ClientHttpRequest request) throws IOException {
 		RequestExpectation expectation = this.repeatExpectations.findExpectation(request);
 		if (expectation == null) {
 			if (this.expectationIterator == null || !this.expectationIterator.hasNext()) {
@@ -61,8 +60,9 @@ public class SimpleRequestExpectationManager extends AbstractRequestExpectationM
 			expectation = this.expectationIterator.next();
 			expectation.match(request);
 		}
+		ClientHttpResponse response = expectation.createResponse(request);
 		this.repeatExpectations.update(expectation);
-		return expectation;
+		return response;
 	}
 
 	@Override

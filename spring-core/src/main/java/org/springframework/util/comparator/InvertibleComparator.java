@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.springframework.util.Assert;
  * @author Keith Donald
  * @author Juergen Hoeller
  * @since 1.2.2
- * @param <T> the type of objects that may be compared by this comparator
  * @deprecated as of Spring Framework 5.0, in favor of the standard JDK 8
  * {@link Comparator#reversed()}
  */
@@ -108,15 +107,15 @@ public class InvertibleComparator<T> implements Comparator<T>, Serializable {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public boolean equals(Object other) {
-		if (this == other) {
+	public boolean equals(Object obj) {
+		if (this == obj) {
 			return true;
 		}
-		if (!(other instanceof InvertibleComparator)) {
+		if (!(obj instanceof InvertibleComparator)) {
 			return false;
 		}
-		InvertibleComparator<T> otherComp = (InvertibleComparator<T>) other;
-		return (this.comparator.equals(otherComp.comparator) && this.ascending == otherComp.ascending);
+		InvertibleComparator<T> other = (InvertibleComparator<T>) obj;
+		return (this.comparator.equals(other.comparator) && this.ascending == other.ascending);
 	}
 
 	@Override

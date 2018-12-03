@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,6 @@ package org.springframework.mock.web.test;
 
 import javax.servlet.SessionCookieConfig;
 
-import org.springframework.lang.Nullable;
-
 /**
  * Mock implementation of the {@link javax.servlet.SessionCookieConfig} interface.
  *
@@ -29,16 +27,12 @@ import org.springframework.lang.Nullable;
  */
 public class MockSessionCookieConfig implements SessionCookieConfig {
 
-	@Nullable
 	private String name;
 
-	@Nullable
 	private String domain;
 
-	@Nullable
 	private String path;
 
-	@Nullable
 	private String comment;
 
 	private boolean httpOnly;
@@ -49,45 +43,41 @@ public class MockSessionCookieConfig implements SessionCookieConfig {
 
 
 	@Override
-	public void setName(@Nullable String name) {
+	public void setName(String name) {
 		this.name = name;
 	}
 
 	@Override
-	@Nullable
 	public String getName() {
 		return this.name;
 	}
 
 	@Override
-	public void setDomain(@Nullable String domain) {
+	public void setDomain(String domain) {
 		this.domain = domain;
 	}
 
 	@Override
-	@Nullable
 	public String getDomain() {
 		return this.domain;
 	}
 
 	@Override
-	public void setPath(@Nullable String path) {
+	public void setPath(String path) {
 		this.path = path;
 	}
 
 	@Override
-	@Nullable
 	public String getPath() {
 		return this.path;
 	}
 
 	@Override
-	public void setComment(@Nullable String comment) {
+	public void setComment(String comment) {
 		this.comment = comment;
 	}
 
 	@Override
-	@Nullable
 	public String getComment() {
 		return this.comment;
 	}

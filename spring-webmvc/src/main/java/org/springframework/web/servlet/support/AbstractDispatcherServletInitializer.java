@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.springframework.web.servlet.support;
 
 import java.util.EnumSet;
+
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
@@ -39,7 +40,7 @@ import org.springframework.web.servlet.FrameworkServlet;
  * Base class for {@link org.springframework.web.WebApplicationInitializer}
  * implementations that register a {@link DispatcherServlet} in the servlet context.
  *
- * <p>Most applications should consider extending the Spring Java config subclass
+ * <p>Most applications should consider extending the Spring Java config, sub-class
  * {@link AbstractAnnotationConfigDispatcherServletInitializer}.
  *
  * @author Arjen Poutsma
@@ -76,20 +77,20 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 	 */
 	protected void registerDispatcherServlet(ServletContext servletContext) {
 		String servletName = getServletName();
-		Assert.hasLength(servletName, "getServletName() must not return null or empty");
+		Assert.hasLength(servletName, "getServletName() must not return empty or null");
 
 		WebApplicationContext servletAppContext = createServletApplicationContext();
-		Assert.notNull(servletAppContext, "createServletApplicationContext() must not return null");
+		Assert.notNull(servletAppContext,
+				"createServletApplicationContext() did not return an application " +
+				"context for servlet [" + servletName + "]");
 
 		FrameworkServlet dispatcherServlet = createDispatcherServlet(servletAppContext);
-		Assert.notNull(dispatcherServlet, "createDispatcherServlet(WebApplicationContext) must not return null");
 		dispatcherServlet.setContextInitializers(getServletApplicationContextInitializers());
 
 		ServletRegistration.Dynamic registration = servletContext.addServlet(servletName, dispatcherServlet);
-		if (registration == null) {
-			throw new IllegalStateException("Failed to register servlet with name '" + servletName + "'. " +
-					"Check if there is another servlet registered under the same name.");
-		}
+		Assert.notNull(registration,
+				"Failed to register servlet with name '" + servletName + "'." +
+				"Check if there is another servlet registered under the same name.");
 
 		registration.setLoadOnStartup(1);
 		registration.addMapping(getServletMappings());
@@ -184,19 +185,16 @@ public abstract class AbstractDispatcherServletInitializer extends AbstractConte
 	protected FilterRegistration.Dynamic registerServletFilter(ServletContext servletContext, Filter filter) {
 		String filterName = Conventions.getVariableName(filter);
 		Dynamic registration = servletContext.addFilter(filterName, filter);
-
 		if (registration == null) {
-			int counter = 0;
-			while (registration == null) {
-				if (counter == 100) {
-					throw new IllegalStateException("Failed to register filter with name '" + filterName + "'. " +
-							"Check if there is another filter registered under the same name.");
-				}
-				registration = servletContext.addFilter(filterName + "#" + counter, filter);
+			int counter = -1;
+			while (counter == -1 || registration == null) {
 				counter++;
+				registration = servletContext.addFilter(filterName + "#" + counter, filter);
+				Assert.isTrue(counter < 100,
+						"Failed to register filter '" + filter + "'." +
+						"Could the same Filter instance have been registered already?");
 			}
 		}
-
 		registration.setAsyncSupported(isAsyncSupported());
 		registration.addMappingForServletNames(getDispatcherTypes(), false, getServletName());
 		return registration;

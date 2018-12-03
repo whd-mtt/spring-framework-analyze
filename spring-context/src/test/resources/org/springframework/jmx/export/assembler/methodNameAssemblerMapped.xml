@@ -24,7 +24,7 @@
 						<entry key="bean:name=testBean4">
 							<bean class="org.springframework.jmx.export.metadata.ManagedNotification">
 								<property name="name" value="My Notification"/>
-								<property name="description" value="A Notification"/>
+								<property name="description" value="AppConfig Notification"/>
 								<property name="notificationTypes" value="type.foo,type.bar"/>
 							</bean>
 						</entry>

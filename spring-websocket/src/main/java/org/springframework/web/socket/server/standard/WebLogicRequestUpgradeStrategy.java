@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package org.springframework.web.socket.server.standard;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.List;
+import java.util.Map;
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -26,6 +28,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletRequestWrapper;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.websocket.CloseReason;
 
 import org.glassfish.tyrus.core.TyrusUpgradeResponse;
 import org.glassfish.tyrus.core.Utils;
@@ -53,7 +56,11 @@ public class WebLogicRequestUpgradeStrategy extends AbstractTyrusRequestUpgradeS
 
 	private static final WebLogicServletWriterHelper servletWriterHelper = new WebLogicServletWriterHelper();
 
-	private static final Connection.CloseListener noOpCloseListener = (reason -> {});
+	private static final Connection.CloseListener noOpCloseListener = new Connection.CloseListener() {
+		@Override
+		public void close(CloseReason reason) {
+		}
+	};
 
 
 	@Override
@@ -61,7 +68,9 @@ public class WebLogicRequestUpgradeStrategy extends AbstractTyrusRequestUpgradeS
 			UpgradeInfo upgradeInfo, TyrusUpgradeResponse upgradeResponse) throws IOException, ServletException {
 
 		response.setStatus(upgradeResponse.getStatus());
-		upgradeResponse.getHeaders().forEach((key, value) -> response.addHeader(key, Utils.getHeaderFromList(value)));
+		for (Map.Entry<String, List<String>> entry : upgradeResponse.getHeaders().entrySet()) {
+			response.addHeader(entry.getKey(), Utils.getHeaderFromList(entry.getValue()));
+		}
 
 		AsyncContext asyncContext = request.startAsync();
 		asyncContext.setTimeout(-1L);
@@ -177,16 +186,16 @@ public class WebLogicRequestUpgradeStrategy extends AbstractTyrusRequestUpgradeS
 		public SubjectHelper() {
 			try {
 				String className = "weblogic.servlet.internal.WebAppServletContext";
-				this.securityContextMethod = method(className, "getSecurityContext");
+				securityContextMethod = method(className, "getSecurityContext");
 
 				className = "weblogic.servlet.security.internal.SecurityModule";
-				this.currentUserMethod = method(className, "getCurrentUser",
+				currentUserMethod = method(className, "getCurrentUser",
 						type("weblogic.servlet.security.internal.ServletSecurityContext"),
 						HttpServletRequest.class);
 
 				className = "weblogic.servlet.security.internal.WebAppSecurity";
-				this.providerMethod = method(className, "getProvider");
-				this.anonymousSubjectMethod = this.providerMethod.getReturnType().getDeclaredMethod("getAnonymousSubject");
+				providerMethod = method(className, "getProvider");
+				anonymousSubjectMethod = providerMethod.getReturnType().getDeclaredMethod("getAnonymousSubject");
 			}
 			catch (Exception ex) {
 				throw new IllegalStateException("No compatible WebSocket version found", ex);
@@ -196,11 +205,11 @@ public class WebLogicRequestUpgradeStrategy extends AbstractTyrusRequestUpgradeS
 		public Object getSubject(HttpServletRequest request) {
 			try {
 				ServletContext servletContext = request.getServletContext();
-				Object securityContext = this.securityContextMethod.invoke(servletContext);
-				Object subject = this.currentUserMethod.invoke(null, securityContext, request);
+				Object securityContext = securityContextMethod.invoke(servletContext);
+				Object subject = currentUserMethod.invoke(null, securityContext, request);
 				if (subject == null) {
-					Object securityProvider = this.providerMethod.invoke(null);
-					subject = this.anonymousSubjectMethod.invoke(securityProvider);
+					Object securityProvider = providerMethod.invoke(null);
+					subject = anonymousSubjectMethod.invoke(securityProvider);
 				}
 				return subject;
 			}

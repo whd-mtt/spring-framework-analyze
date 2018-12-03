@@ -39,7 +39,7 @@ support for different application architectures, including messaging, transactio
 persistence, and web. It also includes the Servlet-based Spring MVC web framework and, in
 parallel, the Spring WebFlux reactive web framework.
 
-A note about modules: Spring's framework jars allow for deployment to JDK 9's module path
+AppConfig note about modules: Spring's framework jars allow for deployment to JDK 9's module path
 ("Jigsaw"). For use in Jigsaw-enabled applications, the Spring Framework 5 jars come with
 "Automatic-Module-Name" manifest entries which define stable language-level module names
 ("spring.core", "spring.context" etc) independent from jar artifact names (the jars follow
@@ -113,7 +113,7 @@ libraries that depend on Spring.
 * Care about API design. The Spring team puts a lot of thought and time into making APIs
 that are intuitive and that hold up across many versions and many years.
 * Set high standards for code quality. The Spring Framework puts a strong emphasis on
-meaningful, current, and accurate javadoc. It is one of very few projects that can claim
+meaningful, current, and accurate Javadoc. It is one of very few projects that can claim
 clean code structure with  no circular dependencies between packages.
 
 
@@ -133,7 +133,7 @@ that, for all but the most trivial issues, we expect a ticket to be filed in the
 tracker, where discussions take place and leave a record for future reference.
 
 For more details see the guidelines at the
-https://github.com/spring-projects/spring-framework/blob/master/CONTRIBUTING.md[CONTRIBUTING],
+https://github.com/spring-projects/spring-framework/blob/master/CONTRIBUTING.adoc[CONTRIBUTING],
 top-level project page.
 
 

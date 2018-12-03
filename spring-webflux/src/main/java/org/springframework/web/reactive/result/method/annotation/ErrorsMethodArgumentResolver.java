@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,11 +51,13 @@ public class ErrorsMethodArgumentResolver extends HandlerMethodArgumentResolverS
 		return checkParameterType(parameter, Errors.class::isAssignableFrom);
 	}
 
+
 	@Override
 	public Mono<Object> resolveArgument(
 			MethodParameter parameter, BindingContext context, ServerWebExchange exchange) {
 
 		Object errors = getErrors(parameter, context);
+
 		if (Mono.class.isAssignableFrom(errors.getClass())) {
 			return ((Mono<?>) errors).cast(Object.class);
 		}
@@ -63,32 +65,35 @@ public class ErrorsMethodArgumentResolver extends HandlerMethodArgumentResolverS
 			return Mono.just(errors);
 		}
 		else {
-			throw new IllegalStateException("Unexpected Errors/BindingResult type: " + errors.getClass().getName());
+			throw new IllegalStateException(
+					"Unexpected Errors/BindingResult type: " + errors.getClass().getName());
 		}
 	}
 
 	private Object getErrors(MethodParameter parameter, BindingContext context) {
+
 		Assert.isTrue(parameter.getParameterIndex() > 0,
-				"Errors argument must be declared immediately after a model attribute argument");
+				"Errors argument must be immediately after a model attribute argument");
 
 		int index = parameter.getParameterIndex() - 1;
 		MethodParameter attributeParam = MethodParameter.forExecutable(parameter.getExecutable(), index);
 		ReactiveAdapter adapter = getAdapterRegistry().getAdapter(attributeParam.getParameterType());
 
-		Assert.state(adapter == null, "An @ModelAttribute and an Errors/BindingResult argument " +
+		Assert.isNull(adapter, "An @ModelAttribute and an Errors/BindingResult) arguments " +
 				"cannot both be declared with an async type wrapper. " +
 				"Either declare the @ModelAttribute without an async wrapper type or " +
 				"handle a WebExchangeBindException error signal through the async type.");
 
-		ModelAttribute ann = parameter.getParameterAnnotation(ModelAttribute.class);
-		String name = (ann != null && StringUtils.hasText(ann.value()) ?
-				ann.value() : Conventions.getVariableNameForParameter(attributeParam));
+		ModelAttribute annot = parameter.getParameterAnnotation(ModelAttribute.class);
+		String name = (annot != null && StringUtils.hasText(annot.value()) ?
+				annot.value() : Conventions.getVariableNameForParameter(attributeParam));
+
 		Object errors = context.getModel().asMap().get(BindingResult.MODEL_KEY_PREFIX + name);
 
-		Assert.state(errors != null, () -> "An Errors/BindingResult argument is expected " +
+		Assert.notNull(errors, "An Errors/BindingResult argument is expected " +
 				"immediately after the @ModelAttribute argument to which it applies. " +
-				"For @RequestBody and @RequestPart arguments, please declare them with a reactive " +
-				"type wrapper and use its onError operators to handle WebExchangeBindException: " +
+				"For @RequestBody and @RequestPart arguments, please declare them with a reactive type wrapper " +
+				"and use its onError operators to handle WebExchangeBindException: " +
 				parameter.getMethod());
 
 		return errors;

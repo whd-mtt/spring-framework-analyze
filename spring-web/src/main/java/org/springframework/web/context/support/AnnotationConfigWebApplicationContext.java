@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,18 @@
 
 package org.springframework.web.context.support;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 import org.springframework.beans.factory.support.BeanNameGenerator;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.context.annotation.AnnotatedBeanDefinitionReader;
-import org.springframework.context.annotation.AnnotationConfigRegistry;
-import org.springframework.context.annotation.AnnotationConfigUtils;
-import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
-import org.springframework.context.annotation.ScopeMetadataResolver;
+import org.springframework.context.annotation.*;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.ContextLoader;
+
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * {@link org.springframework.web.context.WebApplicationContext WebApplicationContext}
@@ -149,7 +145,7 @@ public class AnnotationConfigWebApplicationContext extends AbstractRefreshableWe
 	 */
 	public void register(Class<?>... annotatedClasses) {
 		Assert.notEmpty(annotatedClasses, "At least one annotated class must be specified");
-		Collections.addAll(this.annotatedClasses, annotatedClasses);
+		this.annotatedClasses.addAll(Arrays.asList(annotatedClasses));
 	}
 
 	/**
@@ -164,7 +160,7 @@ public class AnnotationConfigWebApplicationContext extends AbstractRefreshableWe
 	 */
 	public void scan(String... basePackages) {
 		Assert.notEmpty(basePackages, "At least one base package must be specified");
-		Collections.addAll(this.basePackages, basePackages);
+		this.basePackages.addAll(Arrays.asList(basePackages));
 	}
 
 
@@ -190,58 +186,75 @@ public class AnnotationConfigWebApplicationContext extends AbstractRefreshableWe
 	 * @see AnnotatedBeanDefinitionReader
 	 * @see ClassPathBeanDefinitionScanner
 	 */
+	//载入注解Bean定义资源
 	@Override
 	protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) {
+		//为容器设置注解Bean定义读取器
 		AnnotatedBeanDefinitionReader reader = getAnnotatedBeanDefinitionReader(beanFactory);
+		//为容器设置类路径Bean定义扫描器
 		ClassPathBeanDefinitionScanner scanner = getClassPathBeanDefinitionScanner(beanFactory);
 
+		//获取容器的Bean名称生成器
 		BeanNameGenerator beanNameGenerator = getBeanNameGenerator();
+		//为注解Bean定义读取器和类路径扫描器设置Bean名称生成器
 		if (beanNameGenerator != null) {
 			reader.setBeanNameGenerator(beanNameGenerator);
 			scanner.setBeanNameGenerator(beanNameGenerator);
 			beanFactory.registerSingleton(AnnotationConfigUtils.CONFIGURATION_BEAN_NAME_GENERATOR, beanNameGenerator);
 		}
 
+		//获取容器的作用域元信息解析器
 		ScopeMetadataResolver scopeMetadataResolver = getScopeMetadataResolver();
+		//为注解Bean定义读取器和类路径扫描器设置作用域元信息解析器
 		if (scopeMetadataResolver != null) {
 			reader.setScopeMetadataResolver(scopeMetadataResolver);
 			scanner.setScopeMetadataResolver(scopeMetadataResolver);
 		}
 
 		if (!this.annotatedClasses.isEmpty()) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Registering annotated classes: [" +
+			if (logger.isInfoEnabled()) {
+				logger.info("Registering annotated classes: [" +
 						StringUtils.collectionToCommaDelimitedString(this.annotatedClasses) + "]");
 			}
-			reader.register(ClassUtils.toClassArray(this.annotatedClasses));
+			reader.register(this.annotatedClasses.toArray(new Class<?>[this.annotatedClasses.size()]));
 		}
 
 		if (!this.basePackages.isEmpty()) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Scanning base packages: [" +
+			if (logger.isInfoEnabled()) {
+				logger.info("Scanning base packages: [" +
 						StringUtils.collectionToCommaDelimitedString(this.basePackages) + "]");
 			}
-			scanner.scan(StringUtils.toStringArray(this.basePackages));
+			scanner.scan(this.basePackages.toArray(new String[this.basePackages.size()]));
 		}
 
+		//获取容器定义的Bean定义资源路径
 		String[] configLocations = getConfigLocations();
+		//如果定位的Bean定义资源路径不为空
 		if (configLocations != null) {
 			for (String configLocation : configLocations) {
 				try {
+					//使用当前容器的类加载器加载定位路径的字节码类文件
 					Class<?> clazz = ClassUtils.forName(configLocation, getClassLoader());
-					if (logger.isTraceEnabled()) {
-						logger.trace("Registering [" + configLocation + "]");
+					if (logger.isInfoEnabled()) {
+						logger.info("Successfully resolved class for [" + configLocation + "]");
 					}
 					reader.register(clazz);
 				}
 				catch (ClassNotFoundException ex) {
-					if (logger.isTraceEnabled()) {
-						logger.trace("Could not load class for config location [" + configLocation +
+					if (logger.isDebugEnabled()) {
+						logger.debug("Could not load class for config location [" + configLocation +
 								"] - trying package scan. " + ex);
 					}
+					//如果容器类加载器加载定义路径的Bean定义资源失败
+					//则启用容器类路径扫描器扫描给定路径包及其子包中的类
 					int count = scanner.scan(configLocation);
-					if (count == 0 && logger.isDebugEnabled()) {
-						logger.debug("No annotated classes found for specified class/package [" + configLocation + "]");
+					if (logger.isInfoEnabled()) {
+						if (count == 0) {
+							logger.info("No annotated classes found for specified class/package [" + configLocation + "]");
+						}
+						else {
+							logger.info("Found " + count + " annotated classes in package [" + configLocation + "]");
+						}
 					}
 				}
 			}

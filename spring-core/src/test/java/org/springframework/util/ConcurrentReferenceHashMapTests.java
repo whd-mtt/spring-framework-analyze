@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public class ConcurrentReferenceHashMapTests {
 
 
 	@Test
-	public void shouldCreateWithDefaults() {
+	public void shouldCreateWithDefaults() throws Exception {
 		ConcurrentReferenceHashMap<Integer, String> map = new ConcurrentReferenceHashMap<>();
 		assertThat(map.getSegmentsSize(), is(16));
 		assertThat(map.getSegment(0).getSize(), is(1));
@@ -69,7 +69,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldCreateWithInitialCapacity() {
+	public void shouldCreateWithInitialCapacity() throws Exception {
 		ConcurrentReferenceHashMap<Integer, String> map = new ConcurrentReferenceHashMap<>(32);
 		assertThat(map.getSegmentsSize(), is(16));
 		assertThat(map.getSegment(0).getSize(), is(2));
@@ -77,7 +77,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldCreateWithInitialCapacityAndLoadFactor() {
+	public void shouldCreateWithInitialCapacityAndLoadFactor() throws Exception {
 		ConcurrentReferenceHashMap<Integer, String> map = new ConcurrentReferenceHashMap<>(32, 0.5f);
 		assertThat(map.getSegmentsSize(), is(16));
 		assertThat(map.getSegment(0).getSize(), is(2));
@@ -85,7 +85,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldCreateWithInitialCapacityAndConcurrenyLevel() {
+	public void shouldCreateWithInitialCapacityAndConcurrenyLevel() throws Exception {
 		ConcurrentReferenceHashMap<Integer, String> map = new ConcurrentReferenceHashMap<>(16, 2);
 		assertThat(map.getSegmentsSize(), is(2));
 		assertThat(map.getSegment(0).getSize(), is(8));
@@ -93,7 +93,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldCreateFullyCustom() {
+	public void shouldCreateFullyCustom() throws Exception {
 		ConcurrentReferenceHashMap<Integer, String> map = new ConcurrentReferenceHashMap<>(5, 0.5f, 3);
 		// concurrencyLevel of 3 ends up as 4 (nearest power of 2)
 		assertThat(map.getSegmentsSize(), is(4));
@@ -103,7 +103,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldNeedNonNegativeInitialCapacity() {
+	public void shouldNeedNonNegativeInitialCapacity() throws Exception {
 		new ConcurrentReferenceHashMap<Integer, String>(0, 1);
 		this.thrown.expect(IllegalArgumentException.class);
 		this.thrown.expectMessage("Initial capacity must not be negative");
@@ -111,7 +111,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldNeedPositiveLoadFactor() {
+	public void shouldNeedPositiveLoadFactor() throws Exception {
 		new ConcurrentReferenceHashMap<Integer, String>(0, 0.1f, 1);
 		this.thrown.expect(IllegalArgumentException.class);
 		this.thrown.expectMessage("Load factor must be positive");
@@ -119,7 +119,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldNeedPositiveConcurrencyLevel() {
+	public void shouldNeedPositiveConcurrencyLevel() throws Exception {
 		new ConcurrentReferenceHashMap<Integer, String>(1, 1);
 		this.thrown.expect(IllegalArgumentException.class);
 		this.thrown.expectMessage("Concurrency level must be positive");
@@ -127,7 +127,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldPutAndGet() {
+	public void shouldPutAndGet() throws Exception {
 		// NOTE we are using mock references so we don't need to worry about GC
 		assertThat(this.map.size(), is(0));
 		this.map.put(123, "123");
@@ -140,40 +140,32 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldReplaceOnDoublePut() {
+	public void shouldReplaceOnDoublePut() throws Exception {
 		this.map.put(123, "321");
 		this.map.put(123, "123");
 		assertThat(this.map.get(123), is("123"));
 	}
 
 	@Test
-	public void shouldPutNullKey() {
-		assertThat(this.map.get(null), is(nullValue()));
-		assertThat(this.map.getOrDefault(null, "456"), is("456"));
+	public void shouldPutNullKey() throws Exception {
 		this.map.put(null, "123");
 		assertThat(this.map.get(null), is("123"));
-		assertThat(this.map.getOrDefault(null, "456"), is("123"));
 	}
 
 	@Test
-	public void shouldPutNullValue() {
-		assertThat(this.map.get(123), is(nullValue()));
-		assertThat(this.map.getOrDefault(123, "456"), is("456"));
+	public void shouldPutNullValue() throws Exception {
 		this.map.put(123, "321");
-		assertThat(this.map.get(123), is("321"));
-		assertThat(this.map.getOrDefault(123, "456"), is("321"));
 		this.map.put(123, null);
 		assertThat(this.map.get(123), is(nullValue()));
-		assertThat(this.map.getOrDefault(123, "456"), is(nullValue()));
 	}
 
 	@Test
-	public void shouldGetWithNoItems() {
+	public void shouldGetWithNoItems() throws Exception {
 		assertThat(this.map.get(123), is(nullValue()));
 	}
 
 	@Test
-	public void shouldApplySupplimentalHash() {
+	public void shouldApplySupplimentalHash() throws Exception {
 		Integer key = 123;
 		this.map.put(key, "123");
 		assertThat(this.map.getSupplimentalHash(), is(not(key.hashCode())));
@@ -181,7 +173,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldGetFollowingNexts() {
+	public void shouldGetFollowingNexts() throws Exception {
 		// Use loadFactor to disable resize
 		this.map = new TestWeakConcurrentCache<>(1, 10.0f, 1);
 		this.map.put(1, "1");
@@ -195,7 +187,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldResize() {
+	public void shouldResize() throws Exception {
 		this.map = new TestWeakConcurrentCache<>(1, 0.75f, 1);
 		this.map.put(1, "1");
 		assertThat(this.map.getSegment(0).getSize(), is(1));
@@ -225,7 +217,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldPurgeOnGet() {
+	public void shouldPurgeOnGet() throws Exception {
 		this.map = new TestWeakConcurrentCache<>(1, 0.75f, 1);
 		for (int i = 1; i <= 5; i++) {
 			this.map.put(i, String.valueOf(i));
@@ -240,7 +232,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldPergeOnPut() {
+	public void shouldPergeOnPut() throws Exception {
 		this.map = new TestWeakConcurrentCache<>(1, 0.75f, 1);
 		for (int i = 1; i <= 5; i++) {
 			this.map.put(i, String.valueOf(i));
@@ -256,28 +248,28 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldPutIfAbsent() {
+	public void shouldPutIfAbsent() throws Exception {
 		assertThat(this.map.putIfAbsent(123, "123"), is(nullValue()));
 		assertThat(this.map.putIfAbsent(123, "123b"), is("123"));
 		assertThat(this.map.get(123), is("123"));
 	}
 
 	@Test
-	public void shouldPutIfAbsentWithNullValue() {
+	public void shouldPutIfAbsentWithNullValue() throws Exception {
 		assertThat(this.map.putIfAbsent(123, null), is(nullValue()));
 		assertThat(this.map.putIfAbsent(123, "123"), is(nullValue()));
 		assertThat(this.map.get(123), is(nullValue()));
 	}
 
 	@Test
-	public void shouldPutIfAbsentWithNullKey() {
+	public void shouldPutIfAbsentWithNullKey() throws Exception {
 		assertThat(this.map.putIfAbsent(null, "123"), is(nullValue()));
 		assertThat(this.map.putIfAbsent(null, "123b"), is("123"));
 		assertThat(this.map.get(null), is("123"));
 	}
 
 	@Test
-	public void shouldRemoveKeyAndValue() {
+	public void shouldRemoveKeyAndValue() throws Exception {
 		this.map.put(123, "123");
 		assertThat(this.map.remove(123, "456"), is(false));
 		assertThat(this.map.get(123), is("123"));
@@ -287,7 +279,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldRemoveKeyAndValueWithExistingNull() {
+	public void shouldRemoveKeyAndValueWithExistingNull() throws Exception {
 		this.map.put(123, null);
 		assertThat(this.map.remove(123, "456"), is(false));
 		assertThat(this.map.get(123), is(nullValue()));
@@ -297,7 +289,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldReplaceOldValueWithNewValue() {
+	public void shouldReplaceOldValueWithNewValue() throws Exception {
 		this.map.put(123, "123");
 		assertThat(this.map.replace(123, "456", "789"), is(false));
 		assertThat(this.map.get(123), is("123"));
@@ -306,7 +298,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldReplaceOldNullValueWithNewValue() {
+	public void shouldReplaceOldNullValueWithNewValue() throws Exception {
 		this.map.put(123, null);
 		assertThat(this.map.replace(123, "456", "789"), is(false));
 		assertThat(this.map.get(123), is(nullValue()));
@@ -315,21 +307,21 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldReplaceValue() {
+	public void shouldReplaceValue() throws Exception {
 		this.map.put(123, "123");
 		assertThat(this.map.replace(123, "456"), is("123"));
 		assertThat(this.map.get(123), is("456"));
 	}
 
 	@Test
-	public void shouldReplaceNullValue() {
+	public void shouldReplaceNullValue() throws Exception {
 		this.map.put(123, null);
 		assertThat(this.map.replace(123, "456"), is(nullValue()));
 		assertThat(this.map.get(123), is("456"));
 	}
 
 	@Test
-	public void shouldGetSize() {
+	public void shouldGetSize() throws Exception {
 		assertThat(this.map.size(), is(0));
 		this.map.put(123, "123");
 		this.map.put(123, null);
@@ -338,7 +330,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldSupportIsEmpty() {
+	public void shouldSupportIsEmpty() throws Exception {
 		assertThat(this.map.isEmpty(), is(true));
 		this.map.put(123, "123");
 		this.map.put(123, null);
@@ -347,7 +339,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldContainKey() {
+	public void shouldContainKey() throws Exception {
 		assertThat(this.map.containsKey(123), is(false));
 		assertThat(this.map.containsKey(456), is(false));
 		this.map.put(123, "123");
@@ -357,7 +349,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldContainValue() {
+	public void shouldContainValue() throws Exception {
 		assertThat(this.map.containsValue("123"), is(false));
 		assertThat(this.map.containsValue(null), is(false));
 		this.map.put(123, "123");
@@ -367,7 +359,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldRemoveWhenKeyIsInMap() {
+	public void shouldRemoveWhenKeyIsInMap() throws Exception {
 		this.map.put(123, null);
 		this.map.put(456, "456");
 		this.map.put(null, "789");
@@ -378,14 +370,14 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldRemoveWhenKeyIsNotInMap() {
+	public void shouldRemoveWhenKeyIsNotInMap() throws Exception {
 		assertThat(this.map.remove(123), is(nullValue()));
 		assertThat(this.map.remove(null), is(nullValue()));
 		assertThat(this.map.isEmpty(), is(true));
 	}
 
 	@Test
-	public void shouldPutAll() {
+	public void shouldPutAll() throws Exception {
 		Map<Integer, String> m = new HashMap<>();
 		m.put(123, "123");
 		m.put(456, null);
@@ -398,7 +390,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldClear() {
+	public void shouldClear() throws Exception {
 		this.map.put(123, "123");
 		this.map.put(456, null);
 		this.map.put(null, "789");
@@ -410,7 +402,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldGetKeySet() {
+	public void shouldGetKeySet() throws Exception {
 		this.map.put(123, "123");
 		this.map.put(456, null);
 		this.map.put(null, "789");
@@ -422,7 +414,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldGetValues() {
+	public void shouldGetValues() throws Exception {
 		this.map.put(123, "123");
 		this.map.put(456, null);
 		this.map.put(null, "789");
@@ -431,13 +423,13 @@ public class ConcurrentReferenceHashMapTests {
 		expected.add("123");
 		expected.add(null);
 		expected.add("789");
-		actual.sort(NULL_SAFE_STRING_SORT);
-		expected.sort(NULL_SAFE_STRING_SORT);
+		Collections.sort(actual, NULL_SAFE_STRING_SORT);
+		Collections.sort(expected, NULL_SAFE_STRING_SORT);
 		assertThat(actual, is(expected));
 	}
 
 	@Test
-	public void shouldGetEntrySet() {
+	public void shouldGetEntrySet() throws Exception {
 		this.map.put(123, "123");
 		this.map.put(456, null);
 		this.map.put(null, "789");
@@ -449,7 +441,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldGetEntrySetFollowingNext() {
+	public void shouldGetEntrySetFollowingNext() throws Exception {
 		// Use loadFactor to disable resize
 		this.map = new TestWeakConcurrentCache<>(1, 10.0f, 1);
 		this.map.put(1, "1");
@@ -463,7 +455,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldRemoveViaEntrySet() {
+	public void shouldRemoveViaEntrySet() throws Exception {
 		this.map.put(1, "1");
 		this.map.put(2, "2");
 		this.map.put(3, "3");
@@ -478,7 +470,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 	@Test
-	public void shouldSetViaEntrySet() {
+	public void shouldSetViaEntrySet() throws Exception {
 		this.map.put(1, "1");
 		this.map.put(2, "2");
 		this.map.put(3, "3");
@@ -493,21 +485,36 @@ public class ConcurrentReferenceHashMapTests {
 
 	@Test
 	@Ignore("Intended for use during development only")
-	public void shouldBeFasterThanSynchronizedMap() throws InterruptedException {
+	public void shouldBeFasterThanSynchronizedMap() throws Exception {
 		Map<Integer, WeakReference<String>> synchronizedMap = Collections.synchronizedMap(new WeakHashMap<Integer, WeakReference<String>>());
-		StopWatch mapTime = timeMultiThreaded("SynchronizedMap", synchronizedMap, v -> new WeakReference<>(String.valueOf(v)));
+		StopWatch mapTime = timeMultiThreaded("SynchronizedMap", synchronizedMap,
+				new ValueFactory<WeakReference<String>>() {
+
+					@Override
+					public WeakReference<String> newValue(int v) {
+						return new WeakReference<>(String.valueOf(v));
+					}
+				});
 		System.out.println(mapTime.prettyPrint());
 
 		this.map.setDisableTestHooks(true);
-		StopWatch cacheTime = timeMultiThreaded("WeakConcurrentCache", this.map, String::valueOf);
+		StopWatch cacheTime = timeMultiThreaded("WeakConcurrentCache", this.map,
+				new ValueFactory<String>() {
+
+					@Override
+					public String newValue(int v) {
+						return String.valueOf(v);
+					}
+				});
 		System.out.println(cacheTime.prettyPrint());
 
 		// We should be at least 4 time faster
-		assertThat(cacheTime.getTotalTimeSeconds(), is(lessThan(mapTime.getTotalTimeSeconds() / 4.0)));
+		assertThat(cacheTime.getTotalTimeSeconds(),
+				is(lessThan(mapTime.getTotalTimeSeconds() / 4.0)));
 	}
 
 	@Test
-	public void shouldSupportNullReference() {
+	public void shouldSupportNullReference() throws Exception {
 		// GC could happen during restructure so we must be able to create a reference for a null entry
 		map.createReferenceManager().createReference(null, 1234, null);
 	}
@@ -551,7 +558,7 @@ public class ConcurrentReferenceHashMapTests {
 	}
 
 
-	private interface ValueFactory<V> {
+	private static interface ValueFactory<V> {
 
 		V newValue(int k);
 	}
@@ -599,7 +606,8 @@ public class ConcurrentReferenceHashMapTests {
 		protected ReferenceManager createReferenceManager() {
 			return new ReferenceManager() {
 				@Override
-				public Reference<K, V> createReference(Entry<K, V> entry, int hash, @Nullable Reference<K, V> next) {
+				public Reference<K, V> createReference(Entry<K, V> entry, int hash,
+						@Nullable Reference<K, V> next) {
 					if (TestWeakConcurrentCache.this.disableTestHooks) {
 						return super.createReference(entry, hash, next);
 					}

@@ -33,4 +33,4 @@ You'll notice these files are already intentionally in .gitignore. The same poli
 
 Q. What about IntelliJ IDEA's own [Gradle support](http://confluence.jetbrains.net/display/IDEADEV/Gradle+integration)?
 
-A. Keep an eye on http://youtrack.jetbrains.com/issue/IDEA-53476
+AppConfig. Keep an eye on http://youtrack.jetbrains.com/issue/IDEA-53476

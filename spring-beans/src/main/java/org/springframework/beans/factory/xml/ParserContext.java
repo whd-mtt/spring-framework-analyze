@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 
 package org.springframework.beans.factory.xml;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.Stack;
 
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.parsing.BeanComponentDefinition;
@@ -47,7 +46,7 @@ public final class ParserContext {
 	@Nullable
 	private BeanDefinition containingBeanDefinition;
 
-	private final Deque<CompositeComponentDefinition> containingComponents = new ArrayDeque<>();
+	private final Stack<ComponentDefinition> containingComponents = new Stack<>();
 
 
 	public ParserContext(XmlReaderContext readerContext, BeanDefinitionParserDelegate delegate) {
@@ -96,7 +95,8 @@ public final class ParserContext {
 
 	@Nullable
 	public CompositeComponentDefinition getContainingComponent() {
-		return this.containingComponents.peek();
+		return (!this.containingComponents.isEmpty() ?
+				(CompositeComponentDefinition) this.containingComponents.lastElement() : null);
 	}
 
 	public void pushContainingComponent(CompositeComponentDefinition containingComponent) {
@@ -104,7 +104,7 @@ public final class ParserContext {
 	}
 
 	public CompositeComponentDefinition popContainingComponent() {
-		return this.containingComponents.pop();
+		return (CompositeComponentDefinition) this.containingComponents.pop();
 	}
 
 	public void popAndRegisterContainingComponent() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,81 +37,81 @@ import org.springframework.context.NoSuchMessageException;
  * <caption>Attribute Summary</caption>
  * <thead>
  * <tr>
- * <th>Attribute</th>
- * <th>Required?</th>
- * <th>Runtime Expression?</th>
- * <th>Description</th>
+ * <th class="colFirst">Attribute</th>
+ * <th class="colOne">Required?</th>
+ * <th class="colOne">Runtime Expression?</th>
+ * <th class="colLast">Description</th>
  * </tr>
  * </thead>
  * <tbody>
- * <tr>
- * <td>arguments</td>
- * <td>false</td>
- * <td>true</td>
+ * <tr class="altColor">
+ * <td>arguments</p></td>
+ * <td>false</p></td>
+ * <td>true</p></td>
  * <td>Set optional message arguments for this tag, as a (comma-)delimited
  * String (each String argument can contain JSP EL), an Object array (used as
- * argument array), or a single Object (used as single argument).</td>
+ * argument array), or a single Object (used as single argument).</p></td>
  * </tr>
- * <tr>
- * <td>argumentSeparator</td>
- * <td>false</td>
- * <td>true</td>
+ * <tr class="rowColor">
+ * <td>argumentSeparator</p></td>
+ * <td>false</p></td>
+ * <td>true</p></td>
  * <td>The separator character to be used for splitting the arguments string
- * value; defaults to a 'comma' (',').</td>
+ * value; defaults to a 'comma' (',').</p></td>
  * </tr>
- * <tr>
- * <td>code</td>
- * <td>false</td>
- * <td>true</td>
+ * <tr class="altColor">
+ * <td>code</p></td>
+ * <td>false</p></td>
+ * <td>true</p></td>
  * <td>The code (key) to use when looking up the message. If code is not
- * provided, the text attribute will be used.</td>
+ * provided, the text attribute will be used.</p></td>
  * </tr>
- * <tr>
- * <td>htmlEscape</td>
- * <td>false</td>
- * <td>true</td>
+ * <tr class="rowColor">
+ * <td>htmlEscape</p></td>
+ * <td>false</p></td>
+ * <td>true</p></td>
  * <td>Set HTML escaping for this tag, as boolean value. Overrides the default
- * HTML escaping setting for the current page.</td>
+ * HTML escaping setting for the current page.</p></td>
  * </tr>
- * <tr>
- * <td>javaScriptEscape</td>
- * <td>false</td>
- * <td>true</td>
+ * <tr class="altColor">
+ * <td>javaScriptEscape</p></td>
+ * <td>false</p></td>
+ * <td>true</p></td>
  * <td>Set JavaScript escaping for this tag, as boolean value.
- * Default is false.</td>
+ * Default is false.</p></td>
  * </tr>
- * <tr>
- * <td>message</td>
- * <td>false</td>
- * <td>true</td>
- * <td>A MessageSourceResolvable argument (direct or through JSP EL).</td>
+ * <tr class="rowColor">
+ * <td>message</p></td>
+ * <td>false</p></td>
+ * <td>true</p></td>
+ * <td>A MessageSourceResolvable argument (direct or through JSP EL).</p></td>
  * </tr>
- * <tr>
- * <td>scope</td>
- * <td>false</td>
- * <td>true</td>
+ * <tr class="altColor">
+ * <td>scope</p></td>
+ * <td>false</p></td>
+ * <td>true</p></td>
  * <td>The scope to use when exporting the result to a variable. This attribute
  * is only used when var is also set. Possible values are page, request, session
- * and application.</td>
+ * and application.</p></td>
  * </tr>
- * <tr>
- * <td>text</td>
- * <td>false</td>
- * <td>true</td>
+ * <tr class="rowColor">
+ * <td>text</p></td>
+ * <td>false</p></td>
+ * <td>true</p></td>
  * <td>Default text to output when a message for the given code could not be
- * found. If both text and code are not set, the tag will output null.</td>
+ * found. If both text and code are not set, the tag will output null.</p></td>
  * </tr>
- * <tr>
- * <td>var</td>
- * <td>false</td>
- * <td>true</td>
+ * <tr class="altColor">
+ * <td>var</p></td>
+ * <td>false</p></td>
+ * <td>true</p></td>
  * <td>The string to use when binding the result to the page, request, session
  * or application scope. If not specified, the result gets outputted to the
- * writer (i.e. typically directly to the JSP).</td>
+ * writer (i.e. typically directly to the JSP).</p></td>
  * </tr>
  * </tbody>
  * </table>
- *
+ * 
  * @author Jean-Pierre Pawlak
  * @author Juergen Hoeller
  * @see org.springframework.ui.context.Theme

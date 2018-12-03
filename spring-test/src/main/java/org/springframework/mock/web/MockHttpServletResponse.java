@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ import org.springframework.web.util.WebUtils;
  * @author Juergen Hoeller
  * @author Rod Johnson
  * @author Brian Clozel
- * @author Vedran Pavic
  * @since 1.0.2
  */
 public class MockHttpServletResponse implements HttpServletResponse {
@@ -200,10 +199,12 @@ public class MockHttpServletResponse implements HttpServletResponse {
 	}
 
 	public byte[] getContentAsByteArray() {
+		flushBuffer();
 		return this.content.toByteArray();
 	}
 
 	public String getContentAsString() throws UnsupportedEncodingException {
+		flushBuffer();
 		return (this.characterEncoding != null ?
 				this.content.toString(this.characterEncoding) : this.content.toString());
 	}
@@ -310,7 +311,7 @@ public class MockHttpServletResponse implements HttpServletResponse {
 	@Override
 	public void setLocale(Locale locale) {
 		this.locale = locale;
-		doAddHeaderValue(HttpHeaders.CONTENT_LANGUAGE, locale.toLanguageTag(), true);
+		doAddHeaderValue(HttpHeaders.ACCEPT_LANGUAGE, locale.toLanguageTag(), true);
 	}
 
 	@Override
@@ -354,17 +355,11 @@ public class MockHttpServletResponse implements HttpServletResponse {
 		if (cookie.isHttpOnly()) {
 			buf.append("; HttpOnly");
 		}
-		if (cookie instanceof MockCookie) {
-			MockCookie mockCookie = (MockCookie) cookie;
-			if (StringUtils.hasText(mockCookie.getSameSite())) {
-				buf.append("; SameSite=").append(mockCookie.getSameSite());
-			}
-		}
 		return buf.toString();
 	}
 
 	public Cookie[] getCookies() {
-		return this.cookies.toArray(new Cookie[0]);
+		return this.cookies.toArray(new Cookie[this.cookies.size()]);
 	}
 
 	@Nullable
@@ -596,16 +591,11 @@ public class MockHttpServletResponse implements HttpServletResponse {
 					Integer.parseInt(value.toString()));
 			return true;
 		}
-		else if (HttpHeaders.CONTENT_LANGUAGE.equalsIgnoreCase(name)) {
+		else if (HttpHeaders.ACCEPT_LANGUAGE.equalsIgnoreCase(name)) {
 			HttpHeaders headers = new HttpHeaders();
-			headers.add(HttpHeaders.CONTENT_LANGUAGE, value.toString());
-			Locale language = headers.getContentLanguage();
-			setLocale(language != null ? language : Locale.getDefault());
-			return true;
-		}
-		else if (HttpHeaders.SET_COOKIE.equalsIgnoreCase(name)) {
-			MockCookie cookie = MockCookie.parse(value.toString());
-			addCookie(cookie);
+			headers.add(HttpHeaders.ACCEPT_LANGUAGE, value.toString());
+			List<Locale> locales = headers.getAcceptLanguageAsLocales();
+			this.locale = (!locales.isEmpty() ? locales.get(0) : Locale.getDefault());
 			return true;
 		}
 		else {
@@ -729,7 +719,7 @@ public class MockHttpServletResponse implements HttpServletResponse {
 		}
 
 		@Override
-		public void write(char[] buf, int off, int len) {
+		public void write(char buf[], int off, int len) {
 			super.write(buf, off, len);
 			super.flush();
 			setCommittedIfBufferSizeExceeded();
@@ -752,13 +742,6 @@ public class MockHttpServletResponse implements HttpServletResponse {
 		@Override
 		public void flush() {
 			super.flush();
-			setCommitted(true);
-		}
-
-		@Override
-		public void close() {
-			super.flush();
-			super.close();
 			setCommitted(true);
 		}
 	}

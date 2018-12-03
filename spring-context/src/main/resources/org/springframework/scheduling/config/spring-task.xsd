@@ -244,7 +244,7 @@
 		<xsd:attribute name="cron" type="xsd:string" use="optional">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
-	A cron-based trigger. See the org.springframework.scheduling.support.CronSequenceGenerator
+	AppConfig cron-based trigger. See the org.springframework.scheduling.support.CronSequenceGenerator
 	JavaDoc for example patterns.
 				]]></xsd:documentation>
 			</xsd:annotation>
@@ -268,7 +268,7 @@
 		<xsd:attribute name="trigger" type="xsd:string" use="optional">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
-	A reference to a bean that implements the Trigger interface.
+	AppConfig reference to a bean that implements the Trigger interface.
  				]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>

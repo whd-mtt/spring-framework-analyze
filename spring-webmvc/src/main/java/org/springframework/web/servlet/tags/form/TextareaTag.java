@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 package org.springframework.web.servlet.tags.form;
 
 import javax.servlet.jsp.JspException;
-
-import org.springframework.lang.Nullable;
 
 /**
  * The {@code <textarea>} tag renders an HTML 'textarea'.
@@ -227,14 +225,13 @@ public class TextareaTag extends AbstractHtmlInputElementTag {
 
 	public static final String ONSELECT_ATTRIBUTE = "onselect";
 
+	public static final String READONLY_ATTRIBUTE = "readonly";
 
-	@Nullable
+
 	private String rows;
 
-	@Nullable
 	private String cols;
 
-	@Nullable
 	private String onselect;
 
 
@@ -249,7 +246,6 @@ public class TextareaTag extends AbstractHtmlInputElementTag {
 	/**
 	 * Get the value of the '{@code rows}' attribute.
 	 */
-	@Nullable
 	protected String getRows() {
 		return this.rows;
 	}
@@ -265,7 +261,6 @@ public class TextareaTag extends AbstractHtmlInputElementTag {
 	/**
 	 * Get the value of the '{@code cols}' attribute.
 	 */
-	@Nullable
 	protected String getCols() {
 		return this.cols;
 	}
@@ -281,7 +276,6 @@ public class TextareaTag extends AbstractHtmlInputElementTag {
 	/**
 	 * Get the value of the '{@code onselect}' attribute.
 	 */
-	@Nullable
 	protected String getOnselect() {
 		return this.onselect;
 	}

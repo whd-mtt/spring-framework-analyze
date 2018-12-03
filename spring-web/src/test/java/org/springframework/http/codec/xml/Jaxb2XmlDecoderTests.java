@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import javax.xml.stream.events.XMLEvent;
 
 import org.junit.Test;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import org.springframework.core.ResolvableType;
@@ -38,7 +37,9 @@ import org.springframework.http.codec.xml.jaxb.XmlType;
 import org.springframework.http.codec.xml.jaxb.XmlTypeWithName;
 import org.springframework.http.codec.xml.jaxb.XmlTypeWithNameAndNamespace;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Sebastien Deleuze
@@ -158,7 +159,7 @@ public class Jaxb2XmlDecoderTests extends AbstractDataBufferAllocatingTestCase {
 	@Test
 	public void decodeSingleXmlRootElement() throws Exception {
 		Flux<DataBuffer> source = Flux.just(stringBuffer(POJO_ROOT));
-		Mono<Object> output = this.decoder.decodeToMono(source, ResolvableType.forClass(Pojo.class),
+		Flux<Object> output = this.decoder.decode(source, ResolvableType.forClass(Pojo.class),
 				null, Collections.emptyMap());
 
 		StepVerifier.create(output)
@@ -170,7 +171,7 @@ public class Jaxb2XmlDecoderTests extends AbstractDataBufferAllocatingTestCase {
 	@Test
 	public void decodeSingleXmlTypeElement() throws Exception {
 		Flux<DataBuffer> source = Flux.just(stringBuffer(POJO_ROOT));
-		Mono<Object> output = this.decoder.decodeToMono(source, ResolvableType.forClass(TypePojo.class),
+		Flux<Object> output = this.decoder.decode(source, ResolvableType.forClass(TypePojo.class),
 				null, Collections.emptyMap());
 
 		StepVerifier.create(output)
@@ -202,19 +203,6 @@ public class Jaxb2XmlDecoderTests extends AbstractDataBufferAllocatingTestCase {
 				.expectNext(new TypePojo("foo", "bar"))
 				.expectNext(new TypePojo("foofoo", "barbar"))
 				.expectComplete()
-				.verify();
-	}
-
-	@Test
-	public void decodeError() throws Exception {
-		Flux<DataBuffer> source = Flux.just(stringBuffer("<pojo>"))
-				.concatWith(Flux.error(new RuntimeException()));
-
-		Mono<Object> output = this.decoder.decodeToMono(source, ResolvableType.forClass(Pojo.class),
-				null, Collections.emptyMap());
-
-		StepVerifier.create(output)
-				.expectError(RuntimeException.class)
 				.verify();
 	}
 

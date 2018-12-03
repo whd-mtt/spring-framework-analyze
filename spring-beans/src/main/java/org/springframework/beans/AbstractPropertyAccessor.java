@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package org.springframework.beans;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -110,7 +110,7 @@ public abstract class AbstractPropertyAccessor extends TypeConverterSupport impl
 			}
 			catch (PropertyAccessException ex) {
 				if (propertyAccessExceptions == null) {
-					propertyAccessExceptions = new ArrayList<>();
+					propertyAccessExceptions = new LinkedList<>();
 				}
 				propertyAccessExceptions.add(ex);
 			}
@@ -118,7 +118,8 @@ public abstract class AbstractPropertyAccessor extends TypeConverterSupport impl
 
 		// If we encountered individual exceptions, throw the composite exception.
 		if (propertyAccessExceptions != null) {
-			PropertyAccessException[] paeArray = propertyAccessExceptions.toArray(new PropertyAccessException[0]);
+			PropertyAccessException[] paeArray =
+					propertyAccessExceptions.toArray(new PropertyAccessException[propertyAccessExceptions.size()]);
 			throw new PropertyBatchUpdateException(paeArray);
 		}
 	}

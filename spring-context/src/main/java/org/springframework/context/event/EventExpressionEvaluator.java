@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,14 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.expression.AnnotatedElementKey;
 import org.springframework.context.expression.BeanFactoryResolver;
 import org.springframework.context.expression.CachedExpressionEvaluator;
 import org.springframework.context.expression.MethodBasedEvaluationContext;
+import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
 import org.springframework.lang.Nullable;
 
@@ -41,22 +43,42 @@ class EventExpressionEvaluator extends CachedExpressionEvaluator {
 
 	private final Map<ExpressionKey, Expression> conditionCache = new ConcurrentHashMap<>(64);
 
+	private final Map<AnnotatedElementKey, Method> targetMethodCache = new ConcurrentHashMap<>(64);
+
 
 	/**
-	 * Specify if the condition defined by the specified expression matches.
+	 * Create the suitable {@link EvaluationContext} for the specified event handling
+	 * on the specified method.
 	 */
-	public boolean condition(String conditionExpression, ApplicationEvent event, Method targetMethod,
-			AnnotatedElementKey methodKey, Object[] args, @Nullable BeanFactory beanFactory) {
+	public EvaluationContext createEvaluationContext(ApplicationEvent event, Class<?> targetClass,
+			Method method, Object[] args, @Nullable BeanFactory beanFactory) {
 
+		Method targetMethod = getTargetMethod(targetClass, method);
 		EventExpressionRootObject root = new EventExpressionRootObject(event, args);
 		MethodBasedEvaluationContext evaluationContext = new MethodBasedEvaluationContext(
 				root, targetMethod, args, getParameterNameDiscoverer());
 		if (beanFactory != null) {
 			evaluationContext.setBeanResolver(new BeanFactoryResolver(beanFactory));
 		}
+		return evaluationContext;
+	}
 
-		return (Boolean.TRUE.equals(getExpression(this.conditionCache, methodKey, conditionExpression).getValue(
-				evaluationContext, Boolean.class)));
+	/**
+	 * Specify if the condition defined by the specified expression matches.
+	 */
+	public boolean condition(String conditionExpression, AnnotatedElementKey elementKey, EvaluationContext evalContext) {
+		return (Boolean.TRUE.equals(getExpression(this.conditionCache, elementKey, conditionExpression).getValue(
+				evalContext, Boolean.class)));
+	}
+
+	private Method getTargetMethod(Class<?> targetClass, Method method) {
+		AnnotatedElementKey methodKey = new AnnotatedElementKey(method, targetClass);
+		Method targetMethod = this.targetMethodCache.get(methodKey);
+		if (targetMethod == null) {
+			targetMethod = AopUtils.getMostSpecificMethod(method, targetClass);
+			this.targetMethodCache.put(methodKey, targetMethod);
+		}
+		return targetMethod;
 	}
 
 }

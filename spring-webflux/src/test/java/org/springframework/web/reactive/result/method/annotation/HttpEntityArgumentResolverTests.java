@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,12 @@ import org.springframework.web.reactive.BindingContext;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.ServerWebInputException;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.springframework.core.ResolvableType.forClassWithGenerics;
 import static org.springframework.http.MediaType.TEXT_PLAIN;
 import static org.springframework.mock.http.server.reactive.test.MockServerHttpRequest.post;
@@ -62,14 +67,14 @@ import static org.springframework.mock.http.server.reactive.test.MockServerHttpR
  */
 public class HttpEntityArgumentResolverTests {
 
-	private final HttpEntityArgumentResolver resolver = createResolver();
+	private HttpEntityArgumentResolver resolver = createResolver();
 
 	private final ResolvableMethod testMethod = ResolvableMethod.on(getClass()).named("handle").build();
 
 
 	private HttpEntityArgumentResolver createResolver() {
 		List<HttpMessageReader<?>> readers = new ArrayList<>();
-		readers.add(new DecoderHttpMessageReader<>(StringDecoder.allMimeTypes()));
+		readers.add(new DecoderHttpMessageReader<>(StringDecoder.allMimeTypes(true)));
 		return new HttpEntityArgumentResolver(readers, ReactiveAdapterRegistry.getSharedInstance());
 	}
 
@@ -277,9 +282,9 @@ public class HttpEntityArgumentResolverTests {
 
 		assertEquals(exchange.getRequest().getHeaders(), httpEntity.getHeaders());
 		StepVerifier.create(httpEntity.getBody())
-				.expectNext("line1")
-				.expectNext("line2")
-				.expectNext("line3")
+				.expectNext("line1\n")
+				.expectNext("line2\n")
+				.expectNext("line3\n")
 				.expectComplete()
 				.verify();
 	}

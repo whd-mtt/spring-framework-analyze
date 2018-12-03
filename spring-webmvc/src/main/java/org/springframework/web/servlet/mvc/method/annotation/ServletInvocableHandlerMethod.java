@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,6 @@
  */
 
 package org.springframework.web.servlet.mvc.method.annotation;
-
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
-import java.util.concurrent.Callable;
-import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
@@ -40,6 +33,13 @@ import org.springframework.web.method.support.InvocableHandlerMethod;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.View;
 import org.springframework.web.util.NestedServletException;
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.util.concurrent.Callable;
 
 /**
  * Extends {@link InvocableHandlerMethod} with the ability to handle return
@@ -91,7 +91,7 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 
 	/**
 	 * Invoke the method and handle the return value through one of the
-	 * configured {@link HandlerMethodReturnValueHandler HandlerMethodReturnValueHandlers}.
+	 * configured {@link HandlerMethodReturnValueHandler}s.
 	 * @param webRequest the current request
 	 * @param mavContainer the ModelAndViewContainer for this request
 	 * @param providedArgs "given" arguments matched by type (not resolved)
@@ -121,7 +121,7 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 		}
 		catch (Exception ex) {
 			if (logger.isTraceEnabled()) {
-				logger.trace(formatErrorForReturnValue(returnValue), ex);
+				logger.trace(getReturnValueHandlingErrorMessage("Error handling return value", returnValue), ex);
 			}
 			throw ex;
 		}
@@ -160,10 +160,13 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 		return webRequest.isNotModified();
 	}
 
-	private String formatErrorForReturnValue(@Nullable Object returnValue) {
-		return "Error handling return value=[" + returnValue + "]" +
-				(returnValue != null ? ", type=" + returnValue.getClass().getName() : "") +
-				" in " + toString();
+	private String getReturnValueHandlingErrorMessage(String message, @Nullable Object returnValue) {
+		StringBuilder sb = new StringBuilder(message);
+		if (returnValue != null) {
+			sb.append(" [type=").append(returnValue.getClass().getName()).append("]");
+		}
+		sb.append(" [value=").append(returnValue).append("]");
+		return getDetailedErrorMessage(sb.toString());
 	}
 
 	/**
@@ -256,7 +259,7 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 			this.returnValue = returnValue;
 			this.returnType = (returnValue instanceof ReactiveTypeHandler.CollectedValuesList ?
 					((ReactiveTypeHandler.CollectedValuesList) returnValue).getReturnType() :
-					ResolvableType.forType(super.getGenericParameterType()).getGeneric());
+					ResolvableType.forType(super.getGenericParameterType()).getGeneric(0));
 		}
 
 		public ConcurrentResultMethodParameter(ConcurrentResultMethodParameter original) {
@@ -271,7 +274,7 @@ public class ServletInvocableHandlerMethod extends InvocableHandlerMethod {
 				return this.returnValue.getClass();
 			}
 			if (!ResolvableType.NONE.equals(this.returnType)) {
-				return this.returnType.toClass();
+				return this.returnType.resolve(Object.class);
 			}
 			return super.getParameterType();
 		}

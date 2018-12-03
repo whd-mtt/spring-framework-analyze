@@ -55,7 +55,7 @@
 		<tag-class>org.springframework.web.servlet.tags.MessageTag</tag-class>
 		<body-content>JSP</body-content>
 		<attribute>
-			<description>A MessageSourceResolvable argument (direct or through JSP EL).
+			<description>AppConfig MessageSourceResolvable argument (direct or through JSP EL).
 			Fits nicely when used in conjunction with Spring's own validation error classes
 			which all implement the MessageSourceResolvable interface. For example, this
 			allows you to iterate over all of the errors in a form, passing each error
@@ -136,7 +136,7 @@
 		<tag-class>org.springframework.web.servlet.tags.ThemeTag</tag-class>
 		<body-content>JSP</body-content>
 		<attribute>
-			<description>A MessageSourceResolvable argument (direct or through JSP EL).</description>
+			<description>AppConfig MessageSourceResolvable argument (direct or through JSP EL).</description>
 			<name>message</name>
 			<required>false</required>
 			<rtexprvalue>true</rtexprvalue>

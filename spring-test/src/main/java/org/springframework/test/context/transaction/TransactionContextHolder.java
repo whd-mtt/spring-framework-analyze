@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,17 +25,13 @@ import org.springframework.lang.Nullable;
  * @author Sam Brannen
  * @since 4.1
  */
-final class TransactionContextHolder {
+class TransactionContextHolder {
 
 	private static final ThreadLocal<TransactionContext> currentTransactionContext =
 			new NamedInheritableThreadLocal<>("Test Transaction Context");
 
 
-	private TransactionContextHolder() {
-	}
-
-
-	static void setCurrentTransactionContext(TransactionContext transactionContext) {
+	static void setCurrentTransactionContext(@Nullable TransactionContext transactionContext) {
 		currentTransactionContext.set(transactionContext);
 	}
 
@@ -46,9 +42,11 @@ final class TransactionContextHolder {
 
 	@Nullable
 	static TransactionContext removeCurrentTransactionContext() {
-		TransactionContext transactionContext = currentTransactionContext.get();
-		currentTransactionContext.remove();
-		return transactionContext;
+		synchronized (currentTransactionContext) {
+			TransactionContext transactionContext = currentTransactionContext.get();
+			currentTransactionContext.remove();
+			return transactionContext;
+		}
 	}
 
 }

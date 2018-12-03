@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import java.util.function.Consumer;
 
 import reactor.core.publisher.Mono;
 
-import org.springframework.core.codec.Hints;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -51,9 +50,7 @@ import org.springframework.web.server.ServerWebExchange;
  * Default {@link EntityResponse.Builder} implementation.
  *
  * @author Arjen Poutsma
- * @author Juergen Hoeller
  * @since 5.0
- * @param <T> a self reference to the builder type
  */
 class DefaultEntityResponseBuilder<T> implements EntityResponse.Builder<T> {
 
@@ -61,7 +58,7 @@ class DefaultEntityResponseBuilder<T> implements EntityResponse.Builder<T> {
 
 	private final BodyInserter<T, ? super ServerHttpResponse> inserter;
 
-	private int status = HttpStatus.OK.value();
+	private HttpStatus status = HttpStatus.OK;
 
 	private final HttpHeaders headers = new HttpHeaders();
 
@@ -78,26 +75,22 @@ class DefaultEntityResponseBuilder<T> implements EntityResponse.Builder<T> {
 
 	@Override
 	public EntityResponse.Builder<T> status(HttpStatus status) {
-		Assert.notNull(status, "HttpStatus must not be null");
-		this.status = status.value();
-		return this;
-	}
-
-	@Override
-	public EntityResponse.Builder<T> status(int status) {
+		Assert.notNull(status, "'status' must not be null");
 		this.status = status;
 		return this;
 	}
 
 	@Override
 	public EntityResponse.Builder<T> cookie(ResponseCookie cookie) {
-		Assert.notNull(cookie, "ResponseCookie must not be null");
+		Assert.notNull(cookie, "'cookie' must not be null");
 		this.cookies.add(cookie.getName(), cookie);
 		return this;
 	}
 
 	@Override
-	public EntityResponse.Builder<T> cookies(Consumer<MultiValueMap<String, ResponseCookie>> cookiesConsumer) {
+	public EntityResponse.Builder<T> cookies(
+			Consumer<MultiValueMap<String, ResponseCookie>> cookiesConsumer) {
+		Assert.notNull(cookiesConsumer, "'cookiesConsumer' must not be null");
 		cookiesConsumer.accept(this.cookies);
 		return this;
 	}
@@ -189,12 +182,12 @@ class DefaultEntityResponseBuilder<T> implements EntityResponse.Builder<T> {
 
 	@Override
 	public Mono<EntityResponse<T>> build() {
-		return Mono.just(new DefaultEntityResponse<T>(
-				this.status, this.headers, this.cookies, this.entity, this.inserter, this.hints));
+		return Mono.just(new DefaultEntityResponse<T>(this.status, this.headers, this.cookies,
+				this.entity, this.inserter, this.hints));
 	}
 
 
-	private static final class DefaultEntityResponse<T>
+	private final static class DefaultEntityResponse<T>
 			extends DefaultServerResponseBuilder.AbstractServerResponse
 			implements EntityResponse<T> {
 
@@ -204,7 +197,8 @@ class DefaultEntityResponseBuilder<T> implements EntityResponse.Builder<T> {
 
 		private final Map<String, Object> hints;
 
-		public DefaultEntityResponse(int statusCode, HttpHeaders headers,
+
+		public DefaultEntityResponse(HttpStatus statusCode, HttpHeaders headers,
 				MultiValueMap<String, ResponseCookie> cookies, T entity,
 				BodyInserter<T, ? super ServerHttpResponse> inserter, Map<String, Object> hints) {
 
@@ -213,6 +207,7 @@ class DefaultEntityResponseBuilder<T> implements EntityResponse.Builder<T> {
 			this.inserter = inserter;
 			this.hints = hints;
 		}
+
 
 		@Override
 		public T entity() {
@@ -225,19 +220,22 @@ class DefaultEntityResponseBuilder<T> implements EntityResponse.Builder<T> {
 		}
 
 		@Override
-		protected Mono<Void> writeToInternal(ServerWebExchange exchange, Context context) {
-			return inserter().insert(exchange.getResponse(), new BodyInserter.Context() {
+		public Mono<Void> writeTo(ServerWebExchange exchange, Context context) {
+			ServerHttpResponse response = exchange.getResponse();
+			writeStatusAndHeaders(response);
+			return inserter().insert(response, new BodyInserter.Context() {
 				@Override
 				public List<HttpMessageWriter<?>> messageWriters() {
 					return context.messageWriters();
 				}
+
 				@Override
 				public Optional<ServerHttpRequest> serverRequest() {
 					return Optional.of(exchange.getRequest());
 				}
+
 				@Override
 				public Map<String, Object> hints() {
-					hints.put(Hints.LOG_PREFIX_HINT, exchange.getLogPrefix());
 					return hints;
 				}
 			});

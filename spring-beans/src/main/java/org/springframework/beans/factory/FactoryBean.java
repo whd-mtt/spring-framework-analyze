@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,11 +51,11 @@ import org.springframework.lang.Nullable;
  * @author Rod Johnson
  * @author Juergen Hoeller
  * @since 08.03.2003
- * @param <T> the bean type
  * @see org.springframework.beans.factory.BeanFactory
  * @see org.springframework.aop.framework.ProxyFactoryBean
  * @see org.springframework.jndi.JndiObjectFactoryBean
  */
+//工厂Bean，用于产生其他对象
 public interface FactoryBean<T> {
 
 	/**
@@ -75,6 +75,7 @@ public interface FactoryBean<T> {
 	 * @throws Exception in case of creation errors
 	 * @see FactoryBeanNotInitializedException
 	 */
+	//获取容器管理的对象实例
 	@Nullable
 	T getObject() throws Exception;
 
@@ -97,6 +98,7 @@ public interface FactoryBean<T> {
 	 * or {@code null} if not known at the time of the call
 	 * @see ListableBeanFactory#getBeansOfType
 	 */
+	//获取Bean工厂创建的对象的类型
 	@Nullable
 	Class<?> getObjectType();
 
@@ -125,6 +127,8 @@ public interface FactoryBean<T> {
 	 * @see #getObject()
 	 * @see SmartFactoryBean#isPrototype()
 	 */
+	//Bean工厂创建的对象是否是单态模式，如果是单态模式，则整个容器中只有一个实例
+	//对象，每次请求都返回同一个实例对象
 	default boolean isSingleton() {
 		return true;
 	}

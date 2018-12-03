@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,29 +27,24 @@ import org.springframework.lang.Nullable;
  * Mainly for internal use within the framework.
  *
  * @author Thomas Risberg
- * @author Juergen Hoeller
  * @since 3.0
  */
 public abstract class BatchUpdateUtils {
 
 	public static int[] executeBatchUpdate(
-			String sql, final List<Object[]> batchArgs, final int[] columnTypes, JdbcOperations jdbcOperations) {
-
-		if (batchArgs.isEmpty()) {
-			return new int[0];
-		}
+			String sql, final List<Object[]> batchValues, final int[] columnTypes, JdbcOperations jdbcOperations) {
 
 		return jdbcOperations.batchUpdate(
 				sql,
 				new BatchPreparedStatementSetter() {
 					@Override
 					public void setValues(PreparedStatement ps, int i) throws SQLException {
-						Object[] values = batchArgs.get(i);
+						Object[] values = batchValues.get(i);
 						setStatementParameters(values, ps, columnTypes);
 					}
 					@Override
 					public int getBatchSize() {
-						return batchArgs.size();
+						return batchValues.size();
 					}
 				});
 	}

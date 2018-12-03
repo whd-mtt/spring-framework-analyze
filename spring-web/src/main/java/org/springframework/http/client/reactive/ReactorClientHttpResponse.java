@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,15 @@
 package org.springframework.http.client.reactive;
 
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import io.netty.buffer.ByteBufAllocator;
 import reactor.core.publisher.Flux;
-import reactor.netty.NettyInbound;
-import reactor.netty.http.client.HttpClientResponse;
+import reactor.ipc.netty.http.client.HttpClientResponse;
 
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.NettyDataBufferFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
-import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -39,68 +35,57 @@ import org.springframework.util.MultiValueMap;
  *
  * @author Brian Clozel
  * @since 5.0
- * @see reactor.netty.http.client.HttpClient
+ * @see reactor.ipc.netty.http.client.HttpClient
  */
 class ReactorClientHttpResponse implements ClientHttpResponse {
 
-	private final NettyDataBufferFactory bufferFactory;
+	private final NettyDataBufferFactory dataBufferFactory;
 
 	private final HttpClientResponse response;
 
-	private final NettyInbound inbound;
 
-	private final AtomicBoolean bodyConsumed = new AtomicBoolean();
-
-
-	public ReactorClientHttpResponse(HttpClientResponse response, NettyInbound inbound, ByteBufAllocator alloc) {
+	public ReactorClientHttpResponse(HttpClientResponse response) {
 		this.response = response;
-		this.inbound = inbound;
-		this.bufferFactory = new NettyDataBufferFactory(alloc);
+		this.dataBufferFactory = new NettyDataBufferFactory(response.channel().alloc());
 	}
 
 
 	@Override
 	public Flux<DataBuffer> getBody() {
-		return this.inbound.receive()
-				.doOnSubscribe(s ->
-						// See https://github.com/reactor/reactor-netty/issues/503
-						Assert.state(this.bodyConsumed.compareAndSet(false, true),
-								"The client response body can only be consumed once."))
-				.map(byteBuf -> {
-					byteBuf.retain();
-					return this.bufferFactory.wrap(byteBuf);
+		return response.receive()
+				.map(buf -> {
+					buf.retain();
+					return dataBufferFactory.wrap(buf);
 				});
 	}
 
 	@Override
 	public HttpHeaders getHeaders() {
 		HttpHeaders headers = new HttpHeaders();
-		this.response.responseHeaders().entries().forEach(e -> headers.add(e.getKey(), e.getValue()));
+		this.response.responseHeaders().entries()
+		             .forEach(e -> headers.add(e.getKey(), e.getValue()));
 		return headers;
 	}
 
 	@Override
 	public HttpStatus getStatusCode() {
-		return HttpStatus.valueOf(getRawStatusCode());
-	}
-
-	@Override
-	public int getRawStatusCode() {
-		return this.response.status().code();
+		return HttpStatus.valueOf(this.response.status().code());
 	}
 
 	@Override
 	public MultiValueMap<String, ResponseCookie> getCookies() {
 		MultiValueMap<String, ResponseCookie> result = new LinkedMultiValueMap<>();
 		this.response.cookies().values().stream().flatMap(Collection::stream)
-				.forEach(cookie ->
-					result.add(cookie.name(), ResponseCookie.from(cookie.name(), cookie.value())
+				.forEach(cookie -> {
+					ResponseCookie responseCookie = ResponseCookie.from(cookie.name(), cookie.value())
 							.domain(cookie.domain())
 							.path(cookie.path())
 							.maxAge(cookie.maxAge())
 							.secure(cookie.isSecure())
 							.httpOnly(cookie.isHttpOnly())
-							.build()));
+							.build();
+					result.add(cookie.name(), responseCookie);
+				});
 		return CollectionUtils.unmodifiableMultiValueMap(result);
 	}
 
@@ -108,7 +93,7 @@ class ReactorClientHttpResponse implements ClientHttpResponse {
 	public String toString() {
 		return "ReactorClientHttpResponse{" +
 				"request=[" + this.response.method().name() + " " + this.response.uri() + "]," +
-				"status=" + getRawStatusCode() + '}';
+				"status=" + getStatusCode() + '}';
 	}
 
 }

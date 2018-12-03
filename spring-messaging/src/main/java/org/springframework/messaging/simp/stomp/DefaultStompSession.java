@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.springframework.core.ResolvableType;
 import org.springframework.lang.Nullable;
@@ -37,7 +37,6 @@ import org.springframework.messaging.MessageDeliveryException;
 import org.springframework.messaging.converter.MessageConversionException;
 import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.converter.SimpleMessageConverter;
-import org.springframework.messaging.simp.SimpLogging;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.messaging.tcp.TcpConnection;
@@ -58,13 +57,10 @@ import org.springframework.util.concurrent.SettableListenableFuture;
  */
 public class DefaultStompSession implements ConnectionHandlingStompSession {
 
-	private static final Log logger = SimpLogging.forLogName(DefaultStompSession.class);
+	private static final Log logger = LogFactory.getLog(DefaultStompSession.class);
 
 	private static final IdGenerator idGenerator = new AlternativeJdkIdGenerator();
 
-	/**
-	 * An empty payload.
-	 */
 	public static final byte[] EMPTY_PAYLOAD = new byte[0];
 
 	/* STOMP spec: receiver SHOULD take into account an error margin */
@@ -91,7 +87,7 @@ public class DefaultStompSession implements ConnectionHandlingStompSession {
 	@Nullable
 	private TaskScheduler taskScheduler;
 
-	private long receiptTimeLimit = TimeUnit.SECONDS.toMillis(15);
+	private long receiptTimeLimit = 15 * 1000;
 
 	private volatile boolean autoReceiptEnabled;
 
@@ -215,20 +211,20 @@ public class DefaultStompSession implements ConnectionHandlingStompSession {
 
 	@Override
 	public Receiptable send(String destination, Object payload) {
-		StompHeaders headers = new StompHeaders();
-		headers.setDestination(destination);
-		return send(headers, payload);
+		StompHeaders stompHeaders = new StompHeaders();
+		stompHeaders.setDestination(destination);
+		return send(stompHeaders, payload);
 	}
 
 	@Override
-	public Receiptable send(StompHeaders headers, Object payload) {
-		Assert.hasText(headers.getDestination(), "Destination header is required");
+	public Receiptable send(StompHeaders stompHeaders, Object payload) {
+		Assert.hasText(stompHeaders.getDestination(), "Destination header is required");
 
-		String receiptId = checkOrAddReceipt(headers);
+		String receiptId = checkOrAddReceipt(stompHeaders);
 		Receiptable receiptable = new ReceiptHandler(receiptId);
 
 		StompHeaderAccessor accessor = createHeaderAccessor(StompCommand.SEND);
-		accessor.addNativeHeaders(headers);
+		accessor.addNativeHeaders(stompHeaders);
 		Message<byte[]> message = createMessage(accessor, payload);
 		execute(message);
 
@@ -236,11 +232,11 @@ public class DefaultStompSession implements ConnectionHandlingStompSession {
 	}
 
 	@Nullable
-	private String checkOrAddReceipt(StompHeaders headers) {
-		String receiptId = headers.getReceipt();
+	private String checkOrAddReceipt(StompHeaders stompHeaders) {
+		String receiptId = stompHeaders.getReceipt();
 		if (isAutoReceiptEnabled() && receiptId == null) {
 			receiptId = String.valueOf(DefaultStompSession.this.receiptIndex.getAndIncrement());
-			headers.setReceipt(receiptId);
+			stompHeaders.setReceipt(receiptId);
 		}
 		return receiptId;
 	}
@@ -296,26 +292,26 @@ public class DefaultStompSession implements ConnectionHandlingStompSession {
 
 	@Override
 	public Subscription subscribe(String destination, StompFrameHandler handler) {
-		StompHeaders headers = new StompHeaders();
-		headers.setDestination(destination);
-		return subscribe(headers, handler);
+		StompHeaders stompHeaders = new StompHeaders();
+		stompHeaders.setDestination(destination);
+		return subscribe(stompHeaders, handler);
 	}
 
 	@Override
-	public Subscription subscribe(StompHeaders headers, StompFrameHandler handler) {
-		Assert.hasText(headers.getDestination(), "Destination header is required");
+	public Subscription subscribe(StompHeaders stompHeaders, StompFrameHandler handler) {
+		Assert.hasText(stompHeaders.getDestination(), "Destination header is required");
 		Assert.notNull(handler, "StompFrameHandler must not be null");
 
-		String subscriptionId = headers.getId();
+		String subscriptionId = stompHeaders.getId();
 		if (!StringUtils.hasText(subscriptionId)) {
 			subscriptionId = String.valueOf(DefaultStompSession.this.subscriptionIndex.getAndIncrement());
-			headers.setId(subscriptionId);
+			stompHeaders.setId(subscriptionId);
 		}
-		checkOrAddReceipt(headers);
-		Subscription subscription = new DefaultSubscription(headers, handler);
+		checkOrAddReceipt(stompHeaders);
+		Subscription subscription = new DefaultSubscription(stompHeaders, handler);
 
 		StompHeaderAccessor accessor = createHeaderAccessor(StompCommand.SUBSCRIBE);
-		accessor.addNativeHeaders(headers);
+		accessor.addNativeHeaders(stompHeaders);
 		Message<byte[]> message = createMessage(accessor, EMPTY_PAYLOAD);
 		execute(message);
 
@@ -324,34 +320,30 @@ public class DefaultStompSession implements ConnectionHandlingStompSession {
 
 	@Override
 	public Receiptable acknowledge(String messageId, boolean consumed) {
-		StompHeaders headers = new StompHeaders();
+		StompHeaders stompHeaders = new StompHeaders();
 		if ("1.1".equals(this.version)) {
-			headers.setMessageId(messageId);
+			stompHeaders.setMessageId(messageId);
 		}
 		else {
-			headers.setId(messageId);
+			stompHeaders.setId(messageId);
 		}
-		return acknowledge(headers, consumed);
-	}
 
-	@Override
-	public Receiptable acknowledge(StompHeaders headers, boolean consumed) {
-		String receiptId = checkOrAddReceipt(headers);
+		String receiptId = checkOrAddReceipt(stompHeaders);
 		Receiptable receiptable = new ReceiptHandler(receiptId);
 
 		StompCommand command = (consumed ? StompCommand.ACK : StompCommand.NACK);
 		StompHeaderAccessor accessor = createHeaderAccessor(command);
-		accessor.addNativeHeaders(headers);
+		accessor.addNativeHeaders(stompHeaders);
 		Message<byte[]> message = createMessage(accessor, null);
 		execute(message);
 
 		return receiptable;
 	}
 
-	private void unsubscribe(String id, @Nullable StompHeaders headers) {
+	private void unsubscribe(String id, @Nullable StompHeaders stompHeaders) {
 		StompHeaderAccessor accessor = createHeaderAccessor(StompCommand.UNSUBSCRIBE);
-		if (headers != null) {
-			accessor.addNativeHeaders(headers);
+		if (stompHeaders != null) {
+			accessor.addNativeHeaders(stompHeaders);
 		}
 		accessor.setSubscriptionId(id);
 		Message<byte[]> message = createMessage(accessor, EMPTY_PAYLOAD);
@@ -382,9 +374,7 @@ public class DefaultStompSession implements ConnectionHandlingStompSession {
 		}
 		StompHeaderAccessor accessor = createHeaderAccessor(StompCommand.CONNECT);
 		accessor.addNativeHeaders(this.connectHeaders);
-		if (this.connectHeaders.getAcceptVersion() == null) {
-			accessor.setAcceptVersion("1.1,1.2");
-		}
+		accessor.setAcceptVersion("1.1,1.2");
 		Message<byte[]> message = createMessage(accessor, EMPTY_PAYLOAD);
 		execute(message);
 	}
@@ -406,7 +396,7 @@ public class DefaultStompSession implements ConnectionHandlingStompSession {
 		accessor.setSessionId(this.sessionId);
 		StompCommand command = accessor.getCommand();
 		Map<String, List<String>> nativeHeaders = accessor.getNativeHeaders();
-		StompHeaders headers = StompHeaders.readOnlyStompHeaders(nativeHeaders);
+		StompHeaders stompHeaders = StompHeaders.readOnlyStompHeaders(nativeHeaders);
 		boolean isHeartbeat = accessor.isHeartbeat();
 		if (logger.isTraceEnabled()) {
 			logger.trace("Received " + accessor.getDetailedLogMessage(message.getPayload()));
@@ -414,9 +404,9 @@ public class DefaultStompSession implements ConnectionHandlingStompSession {
 
 		try {
 			if (StompCommand.MESSAGE.equals(command)) {
-				DefaultSubscription subscription = this.subscriptions.get(headers.getSubscription());
+				DefaultSubscription subscription = this.subscriptions.get(stompHeaders.getSubscription());
 				if (subscription != null) {
-					invokeHandler(subscription.getHandler(), message, headers);
+					invokeHandler(subscription.getHandler(), message, stompHeaders);
 				}
 				else if (logger.isDebugEnabled()) {
 					logger.debug("No handler for: " + accessor.getDetailedLogMessage(message.getPayload()) +
@@ -425,7 +415,7 @@ public class DefaultStompSession implements ConnectionHandlingStompSession {
 			}
 			else {
 				if (StompCommand.RECEIPT.equals(command)) {
-					String receiptId = headers.getReceiptId();
+					String receiptId = stompHeaders.getReceiptId();
 					ReceiptHandler handler = this.receiptHandlers.get(receiptId);
 					if (handler != null) {
 						handler.handleReceiptReceived();
@@ -435,13 +425,13 @@ public class DefaultStompSession implements ConnectionHandlingStompSession {
 					}
 				}
 				else if (StompCommand.CONNECTED.equals(command)) {
-					initHeartbeatTasks(headers);
-					this.version = headers.getFirst("version");
+					initHeartbeatTasks(stompHeaders);
+					this.version = stompHeaders.getFirst("version");
 					this.sessionFuture.set(this);
-					this.sessionHandler.afterConnected(this, headers);
+					this.sessionHandler.afterConnected(this, stompHeaders);
 				}
 				else if (StompCommand.ERROR.equals(command)) {
-					invokeHandler(this.sessionHandler, message, headers);
+					invokeHandler(this.sessionHandler, message, stompHeaders);
 				}
 				else if (!isHeartbeat && logger.isTraceEnabled()) {
 					logger.trace("Message not handled.");
@@ -449,16 +439,16 @@ public class DefaultStompSession implements ConnectionHandlingStompSession {
 			}
 		}
 		catch (Throwable ex) {
-			this.sessionHandler.handleException(this, command, headers, message.getPayload(), ex);
+			this.sessionHandler.handleException(this, command, stompHeaders, message.getPayload(), ex);
 		}
 	}
 
-	private void invokeHandler(StompFrameHandler handler, Message<byte[]> message, StompHeaders headers) {
+	private void invokeHandler(StompFrameHandler handler, Message<byte[]> message, StompHeaders stompHeaders) {
 		if (message.getPayload().length == 0) {
-			handler.handleFrame(headers, null);
+			handler.handleFrame(stompHeaders, null);
 			return;
 		}
-		Type payloadType = handler.getPayloadType(headers);
+		Type payloadType = handler.getPayloadType(stompHeaders);
 		Class<?> resolvedType = ResolvableType.forType(payloadType).resolve();
 		if (resolvedType == null) {
 			throw new MessageConversionException("Unresolvable payload type [" + payloadType +
@@ -469,7 +459,7 @@ public class DefaultStompSession implements ConnectionHandlingStompSession {
 			throw new MessageConversionException("No suitable converter for payload type [" + payloadType +
 					"] from handler type [" + handler.getClass() + "]");
 		}
-		handler.handleFrame(headers, object);
+		handler.handleFrame(stompHeaders, object);
 	}
 
 	private void initHeartbeatTasks(StompHeaders connectedHeaders) {
@@ -662,11 +652,11 @@ public class DefaultStompSession implements ConnectionHandlingStompSession {
 		}
 
 		@Override
-		public void unsubscribe(@Nullable StompHeaders headers) {
+		public void unsubscribe(@Nullable StompHeaders stompHeaders) {
 			String id = this.headers.getId();
 			if (id != null) {
 				DefaultStompSession.this.subscriptions.remove(id);
-				DefaultStompSession.this.unsubscribe(id, headers);
+				DefaultStompSession.this.unsubscribe(id, stompHeaders);
 			}
 		}
 

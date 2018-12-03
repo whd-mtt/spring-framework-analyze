@@ -49,7 +49,9 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.util.Assert;
 import org.springframework.util.SocketUtils;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Integration tests for {@link StompBrokerRelayMessageHandler} running against ActiveMQ.
@@ -77,7 +79,7 @@ public class StompBrokerRelayMessageHandlerIntegrationTests {
 
 
 	@Before
-	public void setup() throws Exception {
+	public void setUp() throws Exception {
 		logger.debug("Setting up before '" + this.testName.getMethodName() + "'");
 		this.port = SocketUtils.findAvailableTcpPort(61613);
 		this.responseChannel = new ExecutorSubscribableChannel();
@@ -100,21 +102,19 @@ public class StompBrokerRelayMessageHandlerIntegrationTests {
 	}
 
 	private void createAndStartRelay() throws InterruptedException {
-		StubMessageChannel channel = new StubMessageChannel();
-		List<String> prefixes = Arrays.asList("/queue/", "/topic/");
-		this.relay = new StompBrokerRelayMessageHandler(channel, this.responseChannel, channel, prefixes);
+		this.relay = new StompBrokerRelayMessageHandler(new StubMessageChannel(),
+				this.responseChannel, new StubMessageChannel(), Arrays.asList("/queue/", "/topic/"));
 		this.relay.setRelayPort(this.port);
 		this.relay.setApplicationEventPublisher(this.eventPublisher);
 		this.relay.setSystemHeartbeatReceiveInterval(0);
 		this.relay.setSystemHeartbeatSendInterval(0);
-		this.relay.setPreservePublishOrder(true);
 
 		this.relay.start();
 		this.eventPublisher.expectBrokerAvailabilityEvent(true);
 	}
 
 	@After
-	public void stop() throws Exception {
+	public void tearDown() throws Exception {
 		try {
 			logger.debug("STOMP broker relay stats: " + this.relay.getStatsInfo());
 			this.relay.stop();
@@ -168,6 +168,7 @@ public class StompBrokerRelayMessageHandlerIntegrationTests {
 
 	@Test(expected = MessageDeliveryException.class)
 	public void messageDeliveryExceptionIfSystemSessionForwardFails() throws Exception {
+
 		logger.debug("Starting test messageDeliveryExceptionIfSystemSessionForwardFails()");
 
 		stopActiveMqBrokerAndAwait();
@@ -178,8 +179,8 @@ public class StompBrokerRelayMessageHandlerIntegrationTests {
 	}
 
 	@Test
-	public void brokerBecomingUnavailableTriggersErrorFrame() throws Exception {
-		logger.debug("Starting test brokerBecomingUnavailableTriggersErrorFrame()");
+	public void brokerBecomingUnvailableTriggersErrorFrame() throws Exception {
+		logger.debug("Starting test brokerBecomingUnvailableTriggersErrorFrame()");
 
 		String sess1 = "sess1";
 		MessageExchange connect = MessageExchangeBuilder.connect(sess1).build();

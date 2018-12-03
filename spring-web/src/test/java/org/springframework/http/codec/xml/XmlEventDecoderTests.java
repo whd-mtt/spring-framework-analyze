@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,9 @@ import reactor.core.publisher.Flux;
 import reactor.test.StepVerifier;
 
 import org.springframework.core.io.buffer.AbstractDataBufferAllocatingTestCase;
-import org.springframework.core.io.buffer.DataBuffer;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Arjen Poutsma
@@ -80,36 +80,6 @@ public class XmlEventDecoderTests extends AbstractDataBufferAllocatingTestCase {
 				.consumeNextWith(e -> assertEndElement(e, "pojo"))
 				.consumeNextWith(e -> assertTrue(e.isEndDocument()))
 				.expectComplete()
-				.verify();
-	}
-
-	@Test
-	public void decodeErrorAalto() {
-		Flux<DataBuffer> source = Flux.just(stringBuffer("<pojo>"))
-				.concatWith(Flux.error(new RuntimeException()));
-
-		Flux<XMLEvent> events =
-				this.decoder.decode(source, null, null, Collections.emptyMap());
-
-		StepVerifier.create(events)
-				.consumeNextWith(e -> assertTrue(e.isStartDocument()))
-				.consumeNextWith(e -> assertStartElement(e, "pojo"))
-				.expectError(RuntimeException.class)
-				.verify();
-	}
-
-	@Test
-	public void decodeErrorNonAalto() {
-		decoder.useAalto = false;
-
-		Flux<DataBuffer> source = Flux.just(stringBuffer("<pojo>"))
-				.concatWith(Flux.error(new RuntimeException()));
-
-		Flux<XMLEvent> events =
-				this.decoder.decode(source, null, null, Collections.emptyMap());
-
-		StepVerifier.create(events)
-				.expectError(RuntimeException.class)
 				.verify();
 	}
 

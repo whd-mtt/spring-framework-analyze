@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.test.web.servlet;
 
-import java.util.concurrent.CountDownLatch;
-
+import org.junit.Before;
 import org.junit.Test;
 
 import org.springframework.mock.web.MockHttpServletRequest;
+
+import static org.junit.Assert.*;
 
 /**
  * Test fixture for {@link DefaultMvcResult}.
@@ -29,17 +29,22 @@ import org.springframework.mock.web.MockHttpServletRequest;
  */
 public class DefaultMvcResultTests {
 
-	private final DefaultMvcResult mvcResult = new DefaultMvcResult(new MockHttpServletRequest(), null);
+	private DefaultMvcResult mvcResult;
+
+	@Before
+	public void setup() {
+		MockHttpServletRequest request = new MockHttpServletRequest();
+		this.mvcResult = new DefaultMvcResult(request, null);
+	}
 
 	@Test
-	public void getAsyncResultSuccess() {
+	public void getAsyncResultSuccess() throws Exception {
 		this.mvcResult.setAsyncResult("Foo");
-		this.mvcResult.setAsyncDispatchLatch(new CountDownLatch(0));
-		this.mvcResult.getAsyncResult();
+		assertEquals("Foo", this.mvcResult.getAsyncResult());
 	}
 
 	@Test(expected = IllegalStateException.class)
-	public void getAsyncResultFailure() {
+	public void getAsyncResultFailure() throws Exception {
 		this.mvcResult.getAsyncResult(0);
 	}
 

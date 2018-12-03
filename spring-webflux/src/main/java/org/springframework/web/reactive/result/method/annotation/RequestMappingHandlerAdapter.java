@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,15 +38,12 @@ import org.springframework.web.bind.support.WebBindingInitializer;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.reactive.BindingContext;
 import org.springframework.web.reactive.HandlerAdapter;
-import org.springframework.web.reactive.HandlerMapping;
 import org.springframework.web.reactive.HandlerResult;
 import org.springframework.web.reactive.result.method.InvocableHandlerMethod;
 import org.springframework.web.server.ServerWebExchange;
 
 /**
- * Supports the invocation of
- * {@link org.springframework.web.bind.annotation.RequestMapping @RequestMapping}
- * handler methods.
+ * Supports the invocation of {@code @RequestMapping} methods.
  *
  * @author Rossen Stoyanchev
  * @since 5.0
@@ -170,7 +167,7 @@ public class RequestMappingHandlerAdapter implements HandlerAdapter, Application
 		}
 
 		this.methodResolver = new ControllerMethodResolver(this.argumentResolverConfigurer,
-				this.reactiveAdapterRegistry, this.applicationContext, this.messageReaders);
+				this.messageReaders, this.reactiveAdapterRegistry, this.applicationContext);
 
 		this.modelInitializer = new ModelInitializer(this.methodResolver, this.reactiveAdapterRegistry);
 	}
@@ -178,7 +175,7 @@ public class RequestMappingHandlerAdapter implements HandlerAdapter, Application
 
 	@Override
 	public boolean supports(Object handler) {
-		return handler instanceof HandlerMethod;
+		return HandlerMethod.class.equals(handler.getClass());
 	}
 
 	@Override
@@ -207,14 +204,11 @@ public class RequestMappingHandlerAdapter implements HandlerAdapter, Application
 
 		Assert.state(this.methodResolver != null, "Not initialized");
 
-		// Success and error responses may use different content types
-		exchange.getAttributes().remove(HandlerMapping.PRODUCIBLE_MEDIA_TYPES_ATTRIBUTE);
-
 		InvocableHandlerMethod invocable = this.methodResolver.getExceptionHandlerMethod(exception, handlerMethod);
 		if (invocable != null) {
 			try {
 				if (logger.isDebugEnabled()) {
-					logger.debug(exchange.getLogPrefix() + "Using @ExceptionHandler " + invocable);
+					logger.debug("Invoking @ExceptionHandler method: " + invocable.getMethod());
 				}
 				bindingContext.getModel().asMap().clear();
 				Throwable cause = exception.getCause();
@@ -227,7 +221,7 @@ public class RequestMappingHandlerAdapter implements HandlerAdapter, Application
 			}
 			catch (Throwable invocationEx) {
 				if (logger.isWarnEnabled()) {
-					logger.warn(exchange.getLogPrefix() + "Failure in @ExceptionHandler " + invocable, invocationEx);
+					logger.warn("Failed to invoke: " + invocable.getMethod(), invocationEx);
 				}
 			}
 		}

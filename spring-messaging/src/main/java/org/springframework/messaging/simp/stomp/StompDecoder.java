@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.simp.SimpLogging;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.messaging.support.MessageHeaderInitializer;
 import org.springframework.messaging.support.NativeMessageHeaderAccessor;
@@ -51,7 +51,7 @@ public class StompDecoder {
 
 	static final byte[] HEARTBEAT_PAYLOAD = new byte[] {'\n'};
 
-	private static final Log logger = SimpLogging.forLogName(StompDecoder.class);
+	private static final Log logger = LogFactory.getLog(StompDecoder.class);
 
 	@Nullable
 	private MessageHeaderInitializer headerInitializer;
@@ -59,7 +59,7 @@ public class StompDecoder {
 
 	/**
 	 * Configure a {@link MessageHeaderInitializer} to apply to the headers of
-	 * {@link Message Messages} from decoded STOMP frames.
+	 * {@link Message}s from decoded STOMP frames.
 	 */
 	public void setHeaderInitializer(@Nullable MessageHeaderInitializer headerInitializer) {
 		this.headerInitializer = headerInitializer;
@@ -76,7 +76,7 @@ public class StompDecoder {
 
 	/**
 	 * Decodes one or more STOMP frames from the given {@code ByteBuffer} into a
-	 * list of {@link Message Messages}. If the input buffer contains partial STOMP frame
+	 * list of {@link Message}s. If the input buffer contains partial STOMP frame
 	 * content, or additional content with a partial STOMP frame, the buffer is
 	 * reset and {@code null} is returned.
 	 * @param byteBuffer the buffer to decode the STOMP frame from
@@ -89,7 +89,7 @@ public class StompDecoder {
 
 	/**
 	 * Decodes one or more STOMP frames from the given {@code buffer} and returns
-	 * a list of {@link Message Messages}.
+	 * a list of {@link Message}s.
 	 * <p>If the given ByteBuffer contains only partial STOMP frame content and no
 	 * complete STOMP frames, an empty list is returned, and the buffer is reset to
 	 * to where it was.
@@ -260,7 +260,7 @@ public class StompDecoder {
 	private String unescape(String inString) {
 		StringBuilder sb = new StringBuilder(inString.length());
 		int pos = 0;  // position in the old string
-		int index = inString.indexOf('\\');
+		int index = inString.indexOf("\\");
 
 		while (index >= 0) {
 			sb.append(inString.substring(pos, index));
@@ -285,7 +285,7 @@ public class StompDecoder {
 				throw new StompConversionException("Illegal escape sequence at index " + index + ": " + inString);
 			}
 			pos = index + 2;
-			index = inString.indexOf('\\', pos);
+			index = inString.indexOf("\\", pos);
 		}
 
 		sb.append(inString.substring(pos));
@@ -299,8 +299,8 @@ public class StompDecoder {
 			contentLength = headerAccessor.getContentLength();
 		}
 		catch (NumberFormatException ex) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Ignoring invalid content-length: '" + headerAccessor);
+			if (logger.isWarnEnabled()) {
+				logger.warn("Ignoring invalid content-length: '" + headerAccessor);
 			}
 			contentLength = null;
 		}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.servlet.http.Part;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
@@ -52,7 +53,7 @@ import static org.mockito.BDDMockito.*;
 import static org.springframework.web.method.MvcAnnotationPredicates.*;
 
 /**
- * Test fixture with {@link RequestParamMethodArgumentResolver}.
+ * Test fixture with {@link org.springframework.web.method.annotation.RequestParamMethodArgumentResolver}.
  *
  * @author Arjen Poutsma
  * @author Rossen Stoyanchev
@@ -60,13 +61,21 @@ import static org.springframework.web.method.MvcAnnotationPredicates.*;
  */
 public class RequestParamMethodArgumentResolverTests {
 
-	private RequestParamMethodArgumentResolver resolver = new RequestParamMethodArgumentResolver(null, true);
+	private RequestParamMethodArgumentResolver resolver;
 
-	private MockHttpServletRequest request = new MockHttpServletRequest();
+	private NativeWebRequest webRequest;
 
-	private NativeWebRequest webRequest = new ServletWebRequest(request, new MockHttpServletResponse());
+	private MockHttpServletRequest request;
 
 	private ResolvableMethod testMethod = ResolvableMethod.on(getClass()).named("handle").build();
+
+
+	@Before
+	public void setup() throws Exception {
+		resolver = new RequestParamMethodArgumentResolver(null, true);
+		request = new MockHttpServletRequest();
+		webRequest = new ServletWebRequest(request, new MockHttpServletResponse());
+	}
 
 
 	@Test
@@ -376,7 +385,7 @@ public class RequestParamMethodArgumentResolverTests {
 		WebDataBinderFactory binderFactory = mock(WebDataBinderFactory.class);
 		given(binderFactory.createBinder(webRequest, null, "stringNotAnnot")).willReturn(binder);
 
-		request.addParameter("stringNotAnnot", "");
+		this.request.addParameter("stringNotAnnot", "");
 
 		MethodParameter param = this.testMethod.annotNotPresent(RequestParam.class).arg(String.class);
 		Object arg = resolver.resolveArgument(param, null, webRequest, binderFactory);
@@ -391,7 +400,7 @@ public class RequestParamMethodArgumentResolverTests {
 		WebDataBinderFactory binderFactory = mock(WebDataBinderFactory.class);
 		given(binderFactory.createBinder(webRequest, null, "name")).willReturn(binder);
 
-		request.addParameter("name", "");
+		this.request.addParameter("name", "");
 
 		MethodParameter param = this.testMethod.annot(requestParam().notRequired()).arg(String.class);
 		Object arg = resolver.resolveArgument(param, null, webRequest, binderFactory);
@@ -417,7 +426,7 @@ public class RequestParamMethodArgumentResolverTests {
 
 	@Test  // SPR-10180
 	public void resolveEmptyValueToDefault() throws Exception {
-		request.addParameter("name", "");
+		this.request.addParameter("name", "");
 		MethodParameter param = this.testMethod.annot(requestParam().notRequired("bar")).arg(String.class);
 		Object result = resolver.resolveArgument(param, null, webRequest, null);
 		assertEquals("bar", result);
@@ -425,7 +434,7 @@ public class RequestParamMethodArgumentResolverTests {
 
 	@Test
 	public void resolveEmptyValueWithoutDefault() throws Exception {
-		request.addParameter("stringNotAnnot", "");
+		this.request.addParameter("stringNotAnnot", "");
 		MethodParameter param = this.testMethod.annotNotPresent(RequestParam.class).arg(String.class);
 		Object result = resolver.resolveArgument(param, null, webRequest, null);
 		assertEquals("", result);
@@ -433,7 +442,7 @@ public class RequestParamMethodArgumentResolverTests {
 
 	@Test
 	public void resolveEmptyValueRequiredWithoutDefault() throws Exception {
-		request.addParameter("name", "");
+		this.request.addParameter("name", "");
 		MethodParameter param = this.testMethod.annot(requestParam().notRequired()).arg(String.class);
 		Object result = resolver.resolveArgument(param, null, webRequest, null);
 		assertEquals("", result);
@@ -450,7 +459,7 @@ public class RequestParamMethodArgumentResolverTests {
 		Object result = resolver.resolveArgument(param, null, webRequest, binderFactory);
 		assertEquals(Optional.empty(), result);
 
-		request.addParameter("name", "123");
+		this.request.addParameter("name", "123");
 		result = resolver.resolveArgument(param, null, webRequest, binderFactory);
 		assertEquals(Optional.class, result.getClass());
 		assertEquals(123, ((Optional) result).get());
@@ -483,7 +492,7 @@ public class RequestParamMethodArgumentResolverTests {
 		Object result = resolver.resolveArgument(param, null, webRequest, binderFactory);
 		assertEquals(Optional.empty(), result);
 
-		request.addParameter("name", "123", "456");
+		this.request.addParameter("name", "123", "456");
 		result = resolver.resolveArgument(param, null, webRequest, binderFactory);
 		assertEquals(Optional.class, result.getClass());
 		assertArrayEquals(new Integer[] {123, 456}, (Integer[]) ((Optional) result).get());
@@ -516,7 +525,7 @@ public class RequestParamMethodArgumentResolverTests {
 		Object result = resolver.resolveArgument(param, null, webRequest, binderFactory);
 		assertEquals(Optional.empty(), result);
 
-		request.addParameter("name", "123", "456");
+		this.request.addParameter("name", "123", "456");
 		result = resolver.resolveArgument(param, null, webRequest, binderFactory);
 		assertEquals(Optional.class, result.getClass());
 		assertEquals(Arrays.asList("123", "456"), ((Optional) result).get());

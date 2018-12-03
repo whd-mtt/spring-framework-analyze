@@ -151,11 +151,11 @@
 
 	<bean id="beanWithBooleanAndString" class="org.springframework.beans.factory.xml.SingleSimpleTypeConstructorBean" scope="prototype">
 		<constructor-arg type="boolean"><value>true</value></constructor-arg>
-		<constructor-arg><value>A String</value></constructor-arg>
+		<constructor-arg><value>AppConfig String</value></constructor-arg>
 	</bean>
 
 	<bean id="beanWithBooleanAndString2" class="org.springframework.beans.factory.xml.SingleSimpleTypeConstructorBean" scope="prototype">
-		<constructor-arg value="A String"/>
+		<constructor-arg value="AppConfig String"/>
 		<constructor-arg value="true"/>
 	</bean>
 

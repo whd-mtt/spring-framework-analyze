@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,19 +98,12 @@ public abstract class BeanUtils {
 	}
 
 	/**
-	 * Instantiate a class using its 'primary' constructor (for Kotlin classes,
-	 * potentially having default arguments declared) or its default constructor
-	 * (for regular Java classes, expecting a standard no-arg setup).
+	 * Instantiate a class using its no-arg constructor.
 	 * <p>Note that this method tries to set the constructor accessible
 	 * if given a non-accessible (that is, non-public) constructor.
-	 * @param clazz the class to instantiate
+	 * @param clazz class to instantiate
 	 * @return the new instance
-	 * @throws BeanInstantiationException if the bean cannot be instantiated.
-	 * The cause may notably indicate a {@link NoSuchMethodException} if no
-	 * primary/default constructor was found, a {@link NoClassDefFoundError}
-	 * or other {@link LinkageError} in case of an unresolvable class definition
-	 * (e.g. due to a missing dependency at runtime), or an exception thrown
-	 * from the constructor invocation itself.
+	 * @throws BeanInstantiationException if the bean cannot be instantiated
 	 * @see Constructor#newInstance
 	 */
 	public static <T> T instantiateClass(Class<T> clazz) throws BeanInstantiationException {
@@ -119,17 +112,15 @@ public abstract class BeanUtils {
 			throw new BeanInstantiationException(clazz, "Specified class is an interface");
 		}
 		try {
-			return instantiateClass(clazz.getDeclaredConstructor());
+			Constructor<T> ctor = (KotlinDetector.isKotlinType(clazz) ?
+					KotlinDelegate.findPrimaryConstructor(clazz) : clazz.getDeclaredConstructor());
+			if (ctor == null) {
+				throw new BeanInstantiationException(clazz, "No default constructor found");
+			}
+			return instantiateClass(ctor);
 		}
 		catch (NoSuchMethodException ex) {
-			Constructor<T> ctor = findPrimaryConstructor(clazz);
-			if (ctor != null) {
-				return instantiateClass(ctor);
-			}
 			throw new BeanInstantiationException(clazz, "No default constructor found", ex);
-		}
-		catch (LinkageError err) {
-			throw new BeanInstantiationException(clazz, "Unresolvable class definition", err);
 		}
 	}
 
@@ -168,7 +159,7 @@ public abstract class BeanUtils {
 		Assert.notNull(ctor, "Constructor must not be null");
 		try {
 			ReflectionUtils.makeAccessible(ctor);
-			return (KotlinDetector.isKotlinReflectPresent() && KotlinDetector.isKotlinType(ctor.getDeclaringClass()) ?
+			return (KotlinDetector.isKotlinType(ctor.getDeclaringClass()) ?
 					KotlinDelegate.instantiateClass(ctor, args) : ctor.newInstance(args));
 		}
 		catch (InstantiationException ex) {
@@ -198,7 +189,7 @@ public abstract class BeanUtils {
 	@Nullable
 	public static <T> Constructor<T> findPrimaryConstructor(Class<T> clazz) {
 		Assert.notNull(clazz, "Class must not be null");
-		if (KotlinDetector.isKotlinReflectPresent() && KotlinDetector.isKotlinType(clazz)) {
+		if (KotlinDetector.isKotlinType(clazz)) {
 			Constructor<T> kotlinPrimaryConstructor = KotlinDelegate.findPrimaryConstructor(clazz);
 			if (kotlinPrimaryConstructor != null) {
 				return kotlinPrimaryConstructor;
@@ -369,23 +360,23 @@ public abstract class BeanUtils {
 	public static Method resolveSignature(String signature, Class<?> clazz) {
 		Assert.hasText(signature, "'signature' must not be empty");
 		Assert.notNull(clazz, "Class must not be null");
-		int startParen = signature.indexOf('(');
-		int endParen = signature.indexOf(')');
-		if (startParen > -1 && endParen == -1) {
+		int firstParen = signature.indexOf("(");
+		int lastParen = signature.indexOf(")");
+		if (firstParen > -1 && lastParen == -1) {
 			throw new IllegalArgumentException("Invalid method signature '" + signature +
 					"': expected closing ')' for args list");
 		}
-		else if (startParen == -1 && endParen > -1) {
+		else if (lastParen > -1 && firstParen == -1) {
 			throw new IllegalArgumentException("Invalid method signature '" + signature +
 					"': expected opening '(' for args list");
 		}
-		else if (startParen == -1) {
+		else if (firstParen == -1 && lastParen == -1) {
 			return findMethodWithMinimalParameters(clazz, signature);
 		}
 		else {
-			String methodName = signature.substring(0, startParen);
+			String methodName = signature.substring(0, firstParen);
 			String[] parameterTypeNames =
-					StringUtils.commaDelimitedListToStringArray(signature.substring(startParen + 1, endParen));
+					StringUtils.commaDelimitedListToStringArray(signature.substring(firstParen + 1, lastParen));
 			Class<?>[] parameterTypes = new Class<?>[parameterTypeNames.length];
 			for (int i = 0; i < parameterTypeNames.length; i++) {
 				String parameterTypeName = parameterTypeNames[i].trim();
@@ -498,8 +489,8 @@ public abstract class BeanUtils {
 		try {
 			Class<?> editorClass = cl.loadClass(editorName);
 			if (!PropertyEditor.class.isAssignableFrom(editorClass)) {
-				if (logger.isInfoEnabled()) {
-					logger.info("Editor class [" + editorName +
+				if (logger.isWarnEnabled()) {
+					logger.warn("Editor class [" + editorName +
 							"] does not implement [java.beans.PropertyEditor] interface");
 				}
 				unknownEditorTypes.add(targetType);
@@ -508,8 +499,8 @@ public abstract class BeanUtils {
 			return (PropertyEditor) instantiateClass(editorClass);
 		}
 		catch (ClassNotFoundException ex) {
-			if (logger.isTraceEnabled()) {
-				logger.trace("No property editor [" + editorName + "] found for type " +
+			if (logger.isDebugEnabled()) {
+				logger.debug("No property editor [" + editorName + "] found for type " +
 						targetType.getName() + " according to 'Editor' suffix convention");
 			}
 			unknownEditorTypes.add(targetType);
@@ -570,14 +561,13 @@ public abstract class BeanUtils {
 
 	/**
 	 * Check if the given type represents a "simple" value type:
-	 * a primitive, an enum, a String or other CharSequence, a Number, a Date,
+	 * a primitive, a String or other CharSequence, a Number, a Date,
 	 * a URI, a URL, a Locale or a Class.
 	 * @param clazz the type to check
 	 * @return whether the given type represents a "simple" value type
 	 */
 	public static boolean isSimpleValueType(Class<?> clazz) {
-		return (ClassUtils.isPrimitiveOrWrapper(clazz) ||
-				Enum.class.isAssignableFrom(clazz) ||
+		return (ClassUtils.isPrimitiveOrWrapper(clazz) || clazz.isEnum() ||
 				CharSequence.class.isAssignableFrom(clazz) ||
 				Number.class.isAssignableFrom(clazz) ||
 				Date.class.isAssignableFrom(clazz) ||
@@ -702,10 +692,10 @@ public abstract class BeanUtils {
 	private static class KotlinDelegate {
 
 		/**
-		 * Retrieve the Java constructor corresponding to the Kotlin primary constructor, if any.
+		 * Return the Java constructor corresponding to the Kotlin primary constructor if any.
 		 * @param clazz the {@link Class} of the Kotlin class
 		 * @see <a href="http://kotlinlang.org/docs/reference/classes.html#constructors">
-		 * http://kotlinlang.org/docs/reference/classes.html#constructors</a>
+		 *     http://kotlinlang.org/docs/reference/classes.html#constructors</a>
 		 */
 		@Nullable
 		public static <T> Constructor<T> findPrimaryConstructor(Class<T> clazz) {
@@ -715,10 +705,8 @@ public abstract class BeanUtils {
 					return null;
 				}
 				Constructor<T> constructor = ReflectJvmMapping.getJavaConstructor(primaryCtor);
-				if (constructor == null) {
-					throw new IllegalStateException(
-							"Failed to find Java constructor for Kotlin primary constructor: " + clazz.getName());
-				}
+				Assert.notNull(constructor,
+						() -> "Failed to find Java constructor for Kotlin primary constructor: " + clazz.getName());
 				return constructor;
 			}
 			catch (UnsupportedOperationException ex) {
@@ -729,8 +717,7 @@ public abstract class BeanUtils {
 		/**
 		 * Instantiate a Kotlin class using the provided constructor.
 		 * @param ctor the constructor of the Kotlin class to instantiate
-		 * @param args the constructor arguments to apply
-		 * (use {@code null} for unspecified parameter if needed)
+		 * @param args the constructor arguments to apply (use null for unspecified parameter if needed)
 		 */
 		public static <T> T instantiateClass(Constructor<T> ctor, Object... args)
 				throws IllegalAccessException, InvocationTargetException, InstantiationException {

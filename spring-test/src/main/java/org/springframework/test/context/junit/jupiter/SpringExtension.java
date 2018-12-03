@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,11 +155,10 @@ public class SpringExtension implements BeforeAllCallback, AfterAllCallback, Tes
 	@Override
 	public boolean supportsParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
 		Parameter parameter = parameterContext.getParameter();
-		int index = parameterContext.getIndex();
 		Executable executable = parameter.getDeclaringExecutable();
 		return (executable instanceof Constructor &&
 				AnnotatedElementUtils.hasAnnotation(executable, Autowired.class)) ||
-				ParameterAutowireUtils.isAutowirable(parameter, index);
+				ParameterAutowireUtils.isAutowirable(parameter);
 	}
 
 	/**
@@ -173,10 +172,9 @@ public class SpringExtension implements BeforeAllCallback, AfterAllCallback, Tes
 	@Nullable
 	public Object resolveParameter(ParameterContext parameterContext, ExtensionContext extensionContext) {
 		Parameter parameter = parameterContext.getParameter();
-		int index = parameterContext.getIndex();
 		Class<?> testClass = extensionContext.getRequiredTestClass();
 		ApplicationContext applicationContext = getApplicationContext(extensionContext);
-		return ParameterAutowireUtils.resolveDependency(parameter, index, testClass, applicationContext);
+		return ParameterAutowireUtils.resolveDependency(parameter, testClass, applicationContext);
 	}
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package org.springframework.http.server.reactive;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Map;
 import javax.servlet.AsyncContext;
 import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
@@ -33,8 +35,6 @@ import org.reactivestreams.Publisher;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.lang.Nullable;
@@ -62,18 +62,11 @@ class ServletServerHttpResponse extends AbstractListenerServerHttpResponse {
 
 	private volatile boolean flushOnNext;
 
-	private final ServletServerHttpRequest request;
 
 	public ServletServerHttpResponse(HttpServletResponse response, AsyncContext asyncContext,
-			DataBufferFactory bufferFactory, int bufferSize, ServletServerHttpRequest request) throws IOException {
+			DataBufferFactory bufferFactory, int bufferSize) throws IOException {
 
-		this(new HttpHeaders(), response, asyncContext, bufferFactory, bufferSize, request);
-	}
-
-	public ServletServerHttpResponse(HttpHeaders headers, HttpServletResponse response, AsyncContext asyncContext,
-			DataBufferFactory bufferFactory, int bufferSize, ServletServerHttpRequest request) throws IOException {
-
-		super(bufferFactory, headers);
+		super(bufferFactory);
 
 		Assert.notNull(response, "HttpServletResponse must not be null");
 		Assert.notNull(bufferFactory, "DataBufferFactory must not be null");
@@ -82,7 +75,6 @@ class ServletServerHttpResponse extends AbstractListenerServerHttpResponse {
 		this.response = response;
 		this.outputStream = response.getOutputStream();
 		this.bufferSize = bufferSize;
-		this.request = request;
 
 		asyncContext.addListener(new ResponseAsyncListener());
 
@@ -98,12 +90,6 @@ class ServletServerHttpResponse extends AbstractListenerServerHttpResponse {
 	}
 
 	@Override
-	public HttpStatus getStatusCode() {
-		HttpStatus httpStatus = super.getStatusCode();
-		return httpStatus != null ? httpStatus : HttpStatus.resolve(this.response.getStatus());
-	}
-
-	@Override
 	protected void applyStatusCode() {
 		Integer statusCode = getStatusCodeValue();
 		if (statusCode != null) {
@@ -113,11 +99,12 @@ class ServletServerHttpResponse extends AbstractListenerServerHttpResponse {
 
 	@Override
 	protected void applyHeaders() {
-		getHeaders().forEach((headerName, headerValues) -> {
-			for (String headerValue : headerValues) {
+		for (Map.Entry<String, List<String>> entry : getHeaders().entrySet()) {
+			String headerName = entry.getKey();
+			for (String headerValue : entry.getValue()) {
 				this.response.addHeader(headerName, headerValue);
 			}
-		});
+		}
 		MediaType contentType = getHeaders().getContentType();
 		if (this.response.getContentType() == null && contentType != null) {
 			this.response.setContentType(contentType.toString());
@@ -281,10 +268,6 @@ class ServletServerHttpResponse extends AbstractListenerServerHttpResponse {
 
 	private class ResponseBodyFlushProcessor extends AbstractListenerWriteFlushProcessor<DataBuffer> {
 
-		public ResponseBodyFlushProcessor() {
-			super(request.getLogPrefix());
-		}
-
 		@Override
 		protected Processor<? super DataBuffer, Void> createWriteProcessor() {
 			ResponseBodyProcessor processor = new ResponseBodyProcessor();
@@ -294,8 +277,8 @@ class ServletServerHttpResponse extends AbstractListenerServerHttpResponse {
 
 		@Override
 		protected void flush() throws IOException {
-			if (rsWriteFlushLogger.isTraceEnabled()) {
-				rsWriteFlushLogger.trace(getLogPrefix() + "Flush attempt");
+			if (logger.isTraceEnabled()) {
+				logger.trace("flush");
 			}
 			ServletServerHttpResponse.this.flush();
 		}
@@ -314,11 +297,6 @@ class ServletServerHttpResponse extends AbstractListenerServerHttpResponse {
 
 	private class ResponseBodyProcessor extends AbstractListenerWriteProcessor<DataBuffer> {
 
-
-		public ResponseBodyProcessor() {
-			super(request.getLogPrefix());
-		}
-
 		@Override
 		protected boolean isWritePossible() {
 			return ServletServerHttpResponse.this.isWritePossible();
@@ -332,45 +310,35 @@ class ServletServerHttpResponse extends AbstractListenerServerHttpResponse {
 		@Override
 		protected boolean write(DataBuffer dataBuffer) throws IOException {
 			if (ServletServerHttpResponse.this.flushOnNext) {
-				if (rsWriteLogger.isTraceEnabled()) {
-					rsWriteLogger.trace(getLogPrefix() + "Flush attempt");
+				if (logger.isTraceEnabled()) {
+					logger.trace("flush");
 				}
 				flush();
 			}
-
 			boolean ready = ServletServerHttpResponse.this.isWritePossible();
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("write: " + dataBuffer + " ready: " + ready);
+			}
 			int remaining = dataBuffer.readableByteCount();
 			if (ready && remaining > 0) {
-				// In case of IOException, onError handling should call discardData(DataBuffer)..
 				int written = writeToOutputStream(dataBuffer);
-				if (logger.isTraceEnabled()) {
-					logger.trace(getLogPrefix() + "Wrote " + written + " of " + remaining + " bytes");
-				}
-				else if (rsWriteLogger.isTraceEnabled()) {
-					rsWriteLogger.trace(getLogPrefix() + "Wrote " + written + " of " + remaining + " bytes");
+				if (this.logger.isTraceEnabled()) {
+					this.logger.trace("written: " + written + " total: " + remaining);
 				}
 				if (written == remaining) {
+					if (logger.isTraceEnabled()) {
+						logger.trace("releaseData: " + dataBuffer);
+					}
 					DataBufferUtils.release(dataBuffer);
 					return true;
 				}
 			}
-			else {
-				if (rsWriteLogger.isTraceEnabled()) {
-					rsWriteLogger.trace(getLogPrefix() + "ready: " + ready + ", remaining: " + remaining);
-				}
-			}
-
 			return false;
 		}
 
 		@Override
 		protected void writingComplete() {
 			bodyProcessor = null;
-		}
-
-		@Override
-		protected void discardData(DataBuffer dataBuffer) {
-			DataBufferUtils.release(dataBuffer);
 		}
 	}
 

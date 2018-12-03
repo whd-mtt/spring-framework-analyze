@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,8 +70,8 @@ public class InjectionMetadata {
 			if (!beanDefinition.isExternallyManagedConfigMember(member)) {
 				beanDefinition.registerExternallyManagedConfigMember(member);
 				checkedElements.add(element);
-				if (logger.isTraceEnabled()) {
-					logger.trace("Registered injected element on class [" + this.targetClass.getName() + "]: " + element);
+				if (logger.isDebugEnabled()) {
+					logger.debug("Registered injected element on class [" + this.targetClass.getName() + "]: " + element);
 				}
 			}
 		}
@@ -83,9 +83,10 @@ public class InjectionMetadata {
 		Collection<InjectedElement> elementsToIterate =
 				(checkedElements != null ? checkedElements : this.injectedElements);
 		if (!elementsToIterate.isEmpty()) {
+			boolean debug = logger.isDebugEnabled();
 			for (InjectedElement element : elementsToIterate) {
-				if (logger.isTraceEnabled()) {
-					logger.trace("Processing injected element of bean '" + beanName + "': " + element);
+				if (debug) {
+					logger.debug("Processing injected element of bean '" + beanName + "': " + element);
 				}
 				element.inject(target, beanName, pvs);
 			}
@@ -93,7 +94,6 @@ public class InjectionMetadata {
 	}
 
 	/**
-	 * Clear property skipping for the contained elements.
 	 * @since 3.2.13
 	 */
 	public void clear(@Nullable PropertyValues pvs) {
@@ -113,10 +113,7 @@ public class InjectionMetadata {
 	}
 
 
-	/**
-	 * A single injected element.
-	 */
-	public abstract static class InjectedElement {
+	public static abstract class InjectedElement {
 
 		protected final Member member;
 
@@ -229,7 +226,6 @@ public class InjectionMetadata {
 		}
 
 		/**
-		 * Clear property skipping for this element.
 		 * @since 3.2.13
 		 */
 		protected void clearPropertySkipping(@Nullable PropertyValues pvs) {

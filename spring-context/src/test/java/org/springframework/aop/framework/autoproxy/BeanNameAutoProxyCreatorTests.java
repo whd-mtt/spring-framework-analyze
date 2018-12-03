@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package org.springframework.aop.framework.autoproxy;
+
+import java.io.IOException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -43,14 +45,13 @@ public class BeanNameAutoProxyCreatorTests {
 
 	private BeanFactory beanFactory;
 
-
 	@Before
-	public void setup() {
+	public void setUp() throws IOException {
 		// Note that we need an ApplicationContext, not just a BeanFactory,
 		// for post-processing and hence auto-proxying to work.
-		beanFactory = new ClassPathXmlApplicationContext(getClass().getSimpleName() + "-context.xml", getClass());
+		beanFactory =
+			new ClassPathXmlApplicationContext(getClass().getSimpleName() + "-context.xml", getClass());
 	}
-
 
 	@Test
 	public void testNoProxy() {
@@ -169,7 +170,6 @@ public class BeanNameAutoProxyCreatorTests {
 		ITestBean testBean = (ITestBean) beanFactory.getBean("frozenBean");
 		assertTrue(((Advised)testBean).isFrozen());
 	}
-
 
 	private void jdkAssertions(ITestBean tb, int nopInterceptorCount)  {
 		NopInterceptor nop = (NopInterceptor) beanFactory.getBean("nopInterceptor");

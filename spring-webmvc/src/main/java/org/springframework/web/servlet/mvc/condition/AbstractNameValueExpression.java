@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.springframework.web.servlet.mvc.condition;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.lang.Nullable;
-import org.springframework.util.ObjectUtils;
 
 /**
  * Supports "name=value" style expressions as described in:
@@ -29,7 +28,6 @@ import org.springframework.util.ObjectUtils;
  * @author Rossen Stoyanchev
  * @author Arjen Poutsma
  * @since 3.1
- * @param <T> the value type
  */
 abstract class AbstractNameValueExpression<T> implements NameValueExpression<T> {
 
@@ -94,16 +92,19 @@ abstract class AbstractNameValueExpression<T> implements NameValueExpression<T> 
 
 
 	@Override
-	public boolean equals(@Nullable Object other) {
-		if (this == other) {
+	public boolean equals(Object obj) {
+		if (this == obj) {
 			return true;
 		}
-		if (other == null || getClass() != other.getClass()) {
-			return false;
+		if (obj instanceof AbstractNameValueExpression) {
+			AbstractNameValueExpression<?> other = (AbstractNameValueExpression<?>) obj;
+			String thisName = (isCaseSensitiveName() ? this.name : this.name.toLowerCase());
+			String otherName = (isCaseSensitiveName() ? other.name : other.name.toLowerCase());
+			return (thisName.equalsIgnoreCase(otherName) &&
+					(this.value != null ? this.value.equals(other.value) : other.value == null) &&
+					this.isNegated == other.isNegated);
 		}
-		AbstractNameValueExpression<?> that = (AbstractNameValueExpression<?>) other;
-		return ((isCaseSensitiveName() ? this.name.equals(that.name) : this.name.equalsIgnoreCase(that.name)) &&
-				ObjectUtils.nullSafeEquals(this.value, that.value) && this.isNegated == that.isNegated);
+		return false;
 	}
 
 	@Override

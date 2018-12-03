@@ -46,9 +46,9 @@ class ApplicationListenerDetector implements DestructionAwareBeanPostProcessor, 
 
 	private static final Log logger = LogFactory.getLog(ApplicationListenerDetector.class);
 
-	private final transient AbstractApplicationContext applicationContext;
+	private transient final AbstractApplicationContext applicationContext;
 
-	private final transient Map<String, Boolean> singletonNames = new ConcurrentHashMap<>(256);
+	private transient final Map<String, Boolean> singletonNames = new ConcurrentHashMap<>(256);
 
 
 	public ApplicationListenerDetector(AbstractApplicationContext applicationContext) {

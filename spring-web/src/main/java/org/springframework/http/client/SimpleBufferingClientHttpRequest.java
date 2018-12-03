@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -67,7 +69,7 @@ final class SimpleBufferingClientHttpRequest extends AbstractBufferingClientHttp
 	protected ClientHttpResponse executeInternal(HttpHeaders headers, byte[] bufferedOutput) throws IOException {
 		addHeaders(this.connection, headers);
 		// JDK <1.8 doesn't support getOutputStream with HTTP DELETE
-		if (getMethod() == HttpMethod.DELETE && bufferedOutput.length == 0) {
+		if (HttpMethod.DELETE == getMethod() && bufferedOutput.length == 0) {
 			this.connection.setDoOutput(false);
 		}
 		if (this.connection.getDoOutput() && this.outputStreaming) {
@@ -91,18 +93,19 @@ final class SimpleBufferingClientHttpRequest extends AbstractBufferingClientHttp
 	 * @param headers the headers to add
 	 */
 	static void addHeaders(HttpURLConnection connection, HttpHeaders headers) {
-		headers.forEach((headerName, headerValues) -> {
+		for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+			String headerName = entry.getKey();
 			if (HttpHeaders.COOKIE.equalsIgnoreCase(headerName)) {  // RFC 6265
-				String headerValue = StringUtils.collectionToDelimitedString(headerValues, "; ");
+				String headerValue = StringUtils.collectionToDelimitedString(entry.getValue(), "; ");
 				connection.setRequestProperty(headerName, headerValue);
 			}
 			else {
-				for (String headerValue : headerValues) {
+				for (String headerValue : entry.getValue()) {
 					String actualHeaderValue = headerValue != null ? headerValue : "";
 					connection.addRequestProperty(headerName, actualHeaderValue);
 				}
 			}
-		});
+		}
 	}
 
 }

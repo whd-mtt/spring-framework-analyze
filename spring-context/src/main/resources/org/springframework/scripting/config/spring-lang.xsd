@@ -32,7 +32,7 @@
 	<xsd:element name="groovy">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[
-	A Spring bean backed by a Groovy class definition.
+	AppConfig Spring bean backed by a Groovy class definition.
 			]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:complexType>
@@ -47,7 +47,7 @@
 	<xsd:element name="bsh">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[
-	A Spring bean backed by a BeanShell script.
+	AppConfig Spring bean backed by a BeanShell script.
 			]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:complexType>
@@ -62,7 +62,7 @@
 	<xsd:element name="std">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[
-	A Spring bean backed by a standard JSR-223 based script.
+	AppConfig Spring bean backed by a standard JSR-223 based script.
 	Supports JavaScript, Groovy, JRuby and other JSR-223 compliant engines.
 			]]></xsd:documentation>
 		</xsd:annotation>
@@ -228,7 +228,7 @@
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
 	Flag to tell the bean factory that if this bean is proxied it should be done using the target class type, 
-	not its interfaces. A refreshable script is normally proxied, so often this is useful in conjunction with
+	not its interfaces. AppConfig refreshable script is normally proxied, so often this is useful in conjunction with
 	refresh-check-delay. Defaults to false requiring no additional library dependencies, but hiding behavior
 	in the bean that is not defined in an interface.
 				]]></xsd:documentation>

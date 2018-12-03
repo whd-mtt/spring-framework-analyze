@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * Describes the semantics of a reactive type including boolean checks for
- * {@link #isMultiValue()}, {@link #supportsEmpty()}, and {@link #isNoValue()}.
+ * Descriptor for a reactive type with information about its stream semantics, i.e.
+ * how many values it can produce.
  *
  * @author Rossen Stoyanchev
  * @since 5.0
  */
-public final class ReactiveTypeDescriptor {
+public class ReactiveTypeDescriptor {
 
 	private final Class<?> reactiveType;
 
@@ -55,10 +55,19 @@ public final class ReactiveTypeDescriptor {
 
 
 	/**
-	 * Return the reactive type for this descriptor.
+	 * Return the reactive type the descriptor was created for.
 	 */
 	public Class<?> getReactiveType() {
 		return this.reactiveType;
+	}
+
+	/**
+	 * Return an empty-value instance for the underlying reactive or async type.
+	 * Use of this type implies {@link #supportsEmpty()} is true.
+	 */
+	public Object getEmptyValue() {
+		Assert.state(this.emptyValueSupplier != null, "Empty values not supported");
+		return this.emptyValueSupplier.get();
 	}
 
 	/**
@@ -84,15 +93,6 @@ public final class ReactiveTypeDescriptor {
 	 */
 	public boolean isNoValue() {
 		return this.noValue;
-	}
-
-	/**
-	 * Return an empty-value instance for the underlying reactive or async type.
-	 * Use of this type implies {@link #supportsEmpty()} is true.
-	 */
-	public Object getEmptyValue() {
-		Assert.state(this.emptyValueSupplier != null, "Empty values not supported");
-		return this.emptyValueSupplier.get();
 	}
 
 

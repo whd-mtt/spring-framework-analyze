@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,9 @@ import org.springframework.core.PriorityOrdered;
  * @author Juergen Hoeller
  */
 @SuppressWarnings("serial")
-public final class ExposeInvocationInterceptor implements MethodInterceptor, PriorityOrdered, Serializable {
+public class ExposeInvocationInterceptor implements MethodInterceptor, PriorityOrdered, Serializable {
 
-	/** Singleton instance of this class. */
+	/** Singleton instance of this class */
 	public static final ExposeInvocationInterceptor INSTANCE = new ExposeInvocationInterceptor();
 
 	/**
@@ -69,12 +69,11 @@ public final class ExposeInvocationInterceptor implements MethodInterceptor, Pri
 	 */
 	public static MethodInvocation currentInvocation() throws IllegalStateException {
 		MethodInvocation mi = invocation.get();
-		if (mi == null) {
+		if (mi == null)
 			throw new IllegalStateException(
 					"No MethodInvocation found: Check that an AOP invocation is in progress, and that the " +
 					"ExposeInvocationInterceptor is upfront in the interceptor chain. Specifically, note that " +
 					"advices with order HIGHEST_PRECEDENCE will execute before ExposeInvocationInterceptor!");
-		}
 		return mi;
 	}
 

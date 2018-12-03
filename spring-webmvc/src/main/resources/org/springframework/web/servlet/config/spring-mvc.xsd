@@ -101,7 +101,7 @@
 								<xsd:element ref="beans:ref">
 									<xsd:annotation>
 										<xsd:documentation><![CDATA[
-	A reference to an HttpMessageConverter bean.
+	AppConfig reference to an HttpMessageConverter bean.
 										]]></xsd:documentation>
 									</xsd:annotation>
 								</xsd:element>
@@ -137,7 +137,7 @@
 							<xsd:element ref="beans:ref" minOccurs="0" maxOccurs="unbounded">
 								<xsd:annotation>
 									<xsd:documentation><![CDATA[
-	A reference to a HandlerMethodArgumentResolver bean definition.
+	AppConfig reference to a HandlerMethodArgumentResolver bean definition.
 									]]></xsd:documentation>
 									<xsd:appinfo>
 										<tool:annotation kind="ref">
@@ -169,7 +169,7 @@
 							<xsd:element ref="beans:ref" minOccurs="0" maxOccurs="unbounded">
 								<xsd:annotation>
 									<xsd:documentation><![CDATA[
-	A reference to a HandlerMethodReturnValueHandler bean definition.
+	AppConfig reference to a HandlerMethodReturnValueHandler bean definition.
 									]]></xsd:documentation>
 									<xsd:appinfo>
 										<tool:annotation kind="ref">
@@ -347,7 +347,7 @@
 	<xsd:complexType name="content-version-strategy">
 		<xsd:annotation>
 			<xsd:documentation source="org.springframework.web.servlet.resource.ContentVersionStrategy"><![CDATA[
-	A VersionStrategy that calculates an Hex MD5 hashes from the content of the resource and appends it
+	AppConfig VersionStrategy that calculates an Hex MD5 hashes from the content of the resource and appends it
 	to the file name, e.g. "styles/main-e36d2e05253c6c7085a91522ce43a0b4.css".
 			]]></xsd:documentation>
 		</xsd:annotation>
@@ -357,7 +357,7 @@
 	<xsd:complexType name="fixed-version-strategy">
 		<xsd:annotation>
 			<xsd:documentation source="org.springframework.web.servlet.resource.FixedVersionStrategy"><![CDATA[
-	A VersionStrategy that relies on a fixed version applied as a request path prefix,
+	AppConfig VersionStrategy that relies on a fixed version applied as a request path prefix,
 	e.g. reduced SHA, version name, release date, etc.
 			]]></xsd:documentation>
 		</xsd:annotation>
@@ -368,21 +368,21 @@
 	<xsd:complexType name="resource-version-strategy">
 		<xsd:annotation>
 			<xsd:documentation source="org.springframework.web.servlet.resource.VersionStrategy"><![CDATA[
-	A strategy for extracting and embedding a resource version in its URL path.
+	AppConfig strategy for extracting and embedding a resource version in its URL path.
 			]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:choice minOccurs="1" maxOccurs="1">
 			<xsd:element ref="beans:bean">
 				<xsd:annotation>
 					<xsd:documentation source="org.springframework.web.servlet.resource.VersionStrategy"><![CDATA[
-	A VersionStrategy bean definition.
+	AppConfig VersionStrategy bean definition.
 					]]></xsd:documentation>
 				</xsd:annotation>
 			</xsd:element>
 			<xsd:element ref="beans:ref">
 				<xsd:annotation>
 					<xsd:documentation source="org.springframework.web.servlet.resource.VersionStrategy"><![CDATA[
-	A reference to a VersionStrategy bean.
+	AppConfig reference to a VersionStrategy bean.
 					]]></xsd:documentation>
 				</xsd:annotation>
 			</xsd:element>
@@ -408,8 +408,8 @@
 	<xsd:complexType name="resource-resolvers">
 		<xsd:annotation>
 			<xsd:documentation source="org.springframework.web.servlet.resource.ResourceResolver"><![CDATA[
-	A list of ResourceResolver beans definition and references.
-	A ResourceResolver provides mechanisms for resolving an incoming request to an actual Resource and for
+	AppConfig list of ResourceResolver beans definition and references.
+	AppConfig ResourceResolver provides mechanisms for resolving an incoming request to an actual Resource and for
 	obtaining the public URL path that clients should use when requesting the resource.
 			]]></xsd:documentation>
 		</xsd:annotation>
@@ -419,14 +419,14 @@
 				<xsd:element ref="beans:bean">
 					<xsd:annotation>
 						<xsd:documentation source="org.springframework.web.servlet.resource.ResourceResolver"><![CDATA[
-	A ResourceResolver bean definition.
+	AppConfig ResourceResolver bean definition.
 						]]></xsd:documentation>
 					</xsd:annotation>
 				</xsd:element>
 				<xsd:element ref="beans:ref">
 					<xsd:annotation>
 						<xsd:documentation source="org.springframework.web.servlet.resource.ResourceResolver"><![CDATA[
-	A reference to a ResourceResolver bean.
+	AppConfig reference to a ResourceResolver bean.
 					]]></xsd:documentation>
 					</xsd:annotation>
 				</xsd:element>
@@ -437,8 +437,8 @@
 	<xsd:complexType name="resource-transformers">
 		<xsd:annotation>
 			<xsd:documentation source="org.springframework.web.servlet.resource.ResourceTransformer"><![CDATA[
-	A list of ResourceTransformer beans definition and references.
-	A ResourceTransformer provides mechanisms for transforming the content of a resource.
+	AppConfig list of ResourceTransformer beans definition and references.
+	AppConfig ResourceTransformer provides mechanisms for transforming the content of a resource.
 			]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:sequence>
@@ -446,14 +446,14 @@
 				<xsd:element ref="beans:bean">
 					<xsd:annotation>
 						<xsd:documentation source="org.springframework.web.servlet.resource.ResourceTransformer"><![CDATA[
-	A ResourceTransformer bean definition.
+	AppConfig ResourceTransformer bean definition.
 						]]></xsd:documentation>
 					</xsd:annotation>
 				</xsd:element>
 				<xsd:element ref="beans:ref">
 					<xsd:annotation>
 						<xsd:documentation source="org.springframework.web.servlet.resource.ResourceTransformer"><![CDATA[
-	A reference to a ResourceTransformer bean.
+	AppConfig reference to a ResourceTransformer bean.
 					]]></xsd:documentation>
 					</xsd:annotation>
 				</xsd:element>
@@ -469,7 +469,7 @@
 	(CssLinkResourceTransformer, if a VersionResourceResolver has been manually registered).
 	The resource-cache attribute sets whether to cache the result of resource resolution/transformation;
 	setting this to "true" is recommended for production (and "false" for development).
-	A custom Cache can be configured if a CacheManager is provided as a bean reference
+	AppConfig custom Cache can be configured if a CacheManager is provided as a bean reference
 	in the "cache-manager" attribute, and the cache name provided in the "cache-name" attribute.
 			]]></xsd:documentation>
 		</xsd:annotation>
@@ -737,7 +737,7 @@
 									<xsd:attribute name="path" type="xsd:string" use="required">
 										<xsd:annotation>
 											<xsd:documentation><![CDATA[
-	A path into the application intercepted by this interceptor.
+	AppConfig path into the application intercepted by this interceptor.
 	Exact path mapping URIs (such as "/myPath") are supported as well as Ant-stype path patterns (such as /myPath/**).
 											]]></xsd:documentation>
 										</xsd:annotation>
@@ -749,7 +749,7 @@
 									<xsd:attribute name="path" type="xsd:string" use="required">
 										<xsd:annotation>
 											<xsd:documentation><![CDATA[
-	A path into the application that should not be intercepted by this interceptor.
+	AppConfig path into the application that should not be intercepted by this interceptor.
 	Exact path mapping URIs (such as "/admin") are supported as well as Ant-stype path patterns (such as /admin/**).
 											]]></xsd:documentation>
 										</xsd:annotation>
@@ -767,7 +767,7 @@
 								<xsd:element ref="beans:ref">
 									<xsd:annotation>
 										<xsd:documentation><![CDATA[
-		A reference to an interceptor bean.
+		AppConfig reference to an interceptor bean.
 										]]></xsd:documentation>
 									</xsd:annotation>
 								</xsd:element>
@@ -918,14 +918,14 @@
 							<xsd:element ref="beans:bean">
 								<xsd:annotation>
 									<xsd:documentation><![CDATA[
-	A bean definition for an org.springframework.web.servlet.View class.
+	AppConfig bean definition for an org.springframework.web.servlet.View class.
 									]]></xsd:documentation>
 								</xsd:annotation>
 							</xsd:element>
 							<xsd:element ref="beans:ref">
 								<xsd:annotation>
 									<xsd:documentation><![CDATA[
-	A reference to a bean for an org.springframework.web.servlet.View class.
+	AppConfig reference to a bean for an org.springframework.web.servlet.View class.
 									]]></xsd:documentation>
 								</xsd:annotation>
 							</xsd:element>
@@ -1119,7 +1119,7 @@
 							<xsd:annotation>
 								<xsd:documentation><![CDATA[
 	The location of a file containing Tiles definitions (or a Spring resource pattern).
-	If no Tiles definitions are registered, then "/WEB-INF/tiles.xml" is expected to exists.
+	If no Tiles definitions are registerd, then "/WEB-INF/tiles.xml" is expected to exists.
 								]]></xsd:documentation>
 							</xsd:annotation>
 						</xsd:attribute>
@@ -1310,18 +1310,15 @@
 					<xsd:annotation>
 						<xsd:documentation><![CDATA[
 	Enable cross origin requests processing on the specified path pattern.
-	The following defaults are applied to the resulting CorsRegistration:
-	 - Allow all origins.
-	 - Allow "simple" methods {@code GET}, {@code HEAD} and {@code POST}.
-	 - Allow all headers.
-	 - Set max age to 1800 seconds (30 minutes).
+	By default, all origins, GET HEAD POST methods, all headers and credentials
+	are allowed and max age is set to 30 minutes.
 						]]></xsd:documentation>
 					</xsd:annotation>
 					<xsd:complexType>
 						<xsd:attribute name="path" type="xsd:string" use="required">
 							<xsd:annotation>
 								<xsd:documentation><![CDATA[
-	A path into the application that should handle CORS requests.
+	AppConfig path into the application that should handle CORS requests.
 	Exact path mapping URIs (such as "/admin") are supported as well as Ant-stype path patterns (such as /admin/**).
 								]]></xsd:documentation>
 							</xsd:annotation>
@@ -1331,12 +1328,6 @@
 								<xsd:documentation><![CDATA[
 	Comma-separated list of origins to allow, e.g. "http://domain1.com, http://domain2.com".
 	The special value "*" allows all domains (default).
-
-	Note that CORS checks use values from "Forwarded" (RFC 7239), "X-Forwarded-Host",
-	"X-Forwarded-Port", and "X-Forwarded-Proto" headers, if present, in order to reflect
-	the client-originated address. Consider using the ForwardedHeaderFilter in order to
-	choose from a central place whether to extract and use such headers, or whether to
-	discard them. See the Spring Framework reference for more on this filter.
 								]]></xsd:documentation>
 							</xsd:annotation>
 						</xsd:attribute>
@@ -1370,19 +1361,7 @@
 						<xsd:attribute name="allow-credentials" type="xsd:boolean">
 							<xsd:annotation>
 								<xsd:documentation><![CDATA[
-	Whether the browser should send credentials, such as cookies along with
-	cross domain requests, to the annotated endpoint. The configured value is
-	set on the "Access-Control-Allow-Credentials" response header of
-	preflight requests.
-
-	NOTE: Be aware that this option establishes a high
-	level of trust with the configured domains and also increases the surface
-	attack of the web application by exposing sensitive user-specific
-	information such as cookies and CSRF tokens.
-
-	By default this is not set in which case the
-	"Access-Control-Allow-Credentials" header is also not set and
-	credentials are therefore not allowed.
+	Whether user credentials are supported (true by default).
 								]]></xsd:documentation>
 							</xsd:annotation>
 						</xsd:attribute>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,26 +41,25 @@ import org.springframework.web.util.JavaScriptUtils;
  * <caption>Attribute Summary</caption>
  * <thead>
  * <tr>
- * <th>Attribute</th>
- * <th>Required?</th>
- * <th>Runtime Expression?</th>
- * <th>Description</th>
+ * <th class="colFirst">Attribute</th>
+ * <th class="colOne">Required?</th>
+ * <th class="colOne">Runtime Expression?</th>
+ * <th class="colLast">Description</th>
  * </tr>
- * </thead>
  * <tbody>
- * <tr>
- * <td>htmlEscape</td>
- * <td>false</td>
- * <td>true</td>
+ * <tr class="altColor">
+ * <td>htmlEscape</p></td>
+ * <td>false</p></td>
+ * <td>true</p></td>
  * <td>Set HTML escaping for this tag, as boolean value.
- * Overrides the default HTML escaping setting for the current page.</td>
+ * Overrides the default HTML escaping setting for the current page.</p></td>
  * </tr>
- * <tr>
- * <td>javaScriptEscape</td>
- * <td>false</td>
- * <td>true</td>
+ * <tr class="rowColor">
+ * <td>javaScriptEscape</p></td>
+ * <td>false</p></td>
+ * <td>true</p></td>
  * <td>Set JavaScript escaping for this tag, as boolean value.
- * Default is false.</td>
+ * Default is false.</p></td>
  * </tr>
  * </tbody>
  * </table>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public interface ValueRef {
 	/**
 	 * A ValueRef for the null value.
 	 */
-	class NullValueRef implements ValueRef {
+	static class NullValueRef implements ValueRef {
 
 		static final NullValueRef INSTANCE = new NullValueRef();
 
@@ -85,13 +85,13 @@ public interface ValueRef {
 	/**
 	 * A ValueRef holder for a single value, which cannot be set.
 	 */
-	class TypedValueHolderValueRef implements ValueRef {
+	static class TypedValueHolderValueRef implements ValueRef {
 
 		private final TypedValue typedValue;
 
 		private final SpelNodeImpl node;  // used only for error reporting
 
-		public TypedValueHolderValueRef(TypedValue typedValue, SpelNodeImpl node) {
+		public TypedValueHolderValueRef(TypedValue typedValue,SpelNodeImpl node) {
 			this.typedValue = typedValue;
 			this.node = node;
 		}

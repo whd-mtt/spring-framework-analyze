@@ -458,7 +458,6 @@ public class ServletInvocableHandlerMethodTests {
 			this.value = value;
 		}
 
-		@SuppressWarnings("unused")
 		public String getValue() {
 			return this.value;
 		}

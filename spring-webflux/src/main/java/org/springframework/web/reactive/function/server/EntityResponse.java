@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,7 @@ import org.springframework.web.reactive.function.BodyInserters;
  * Entity-specific subtype of {@link ServerResponse} that exposes entity data.
  *
  * @author Arjen Poutsma
- * @author Juergen Hoeller
  * @since 5.0
- * @param <T> the entity type
  */
 public interface EntityResponse<T> extends ServerResponse {
 
@@ -101,8 +99,6 @@ public interface EntityResponse<T> extends ServerResponse {
 
 	/**
 	 * Defines a builder for {@code EntityResponse}.
-	 *
-	 * @param <T> a self reference to the builder type
 	 */
 	interface Builder<T> {
 
@@ -124,19 +120,11 @@ public interface EntityResponse<T> extends ServerResponse {
 		Builder<T> headers(HttpHeaders headers);
 
 		/**
-		 * Set the HTTP status.
+		 * Set the status.
 		 * @param status the response status
 		 * @return this builder
 		 */
 		Builder<T> status(HttpStatus status);
-
-		/**
-		 * Set the HTTP status.
-		 * @param status the response status
-		 * @return this builder
-		 * @since 5.0.3
-		 */
-		Builder<T> status(int status);
 
 		/**
 		 * Add the given cookie to the response.

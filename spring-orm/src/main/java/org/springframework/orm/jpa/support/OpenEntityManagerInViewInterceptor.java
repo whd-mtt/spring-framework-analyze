@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,16 +69,18 @@ public class OpenEntityManagerInViewInterceptor extends EntityManagerFactoryAcce
 
 	@Override
 	public void preHandle(WebRequest request) throws DataAccessException {
-		String key = getParticipateAttributeName();
+		String participateAttributeName = getParticipateAttributeName();
 		WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
-		if (asyncManager.hasConcurrentResult() && applyEntityManagerBindingInterceptor(asyncManager, key)) {
-			return;
+		if (asyncManager.hasConcurrentResult()) {
+			if (applyEntityManagerBindingInterceptor(asyncManager, participateAttributeName)) {
+				return;
+			}
 		}
 
 		EntityManagerFactory emf = obtainEntityManagerFactory();
 		if (TransactionSynchronizationManager.hasResource(emf)) {
 			// Do not modify the EntityManager: just mark the request accordingly.
-			Integer count = (Integer) request.getAttribute(key, WebRequest.SCOPE_REQUEST);
+			Integer count = (Integer) request.getAttribute(participateAttributeName, WebRequest.SCOPE_REQUEST);
 			int newCount = (count != null ? count + 1 : 1);
 			request.setAttribute(getParticipateAttributeName(), newCount, WebRequest.SCOPE_REQUEST);
 		}
@@ -90,8 +92,8 @@ public class OpenEntityManagerInViewInterceptor extends EntityManagerFactoryAcce
 				TransactionSynchronizationManager.bindResource(emf, emHolder);
 
 				AsyncRequestInterceptor interceptor = new AsyncRequestInterceptor(emf, emHolder);
-				asyncManager.registerCallableInterceptor(key, interceptor);
-				asyncManager.registerDeferredResultInterceptor(key, interceptor);
+				asyncManager.registerCallableInterceptor(participateAttributeName, interceptor);
+				asyncManager.registerDeferredResultInterceptor(participateAttributeName, interceptor);
 			}
 			catch (PersistenceException ex) {
 				throw new DataAccessResourceFailureException("Could not create JPA EntityManager", ex);

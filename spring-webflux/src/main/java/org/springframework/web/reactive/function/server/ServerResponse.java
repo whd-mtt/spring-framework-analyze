@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.codec.HttpMessageWriter;
 import org.springframework.http.codec.json.Jackson2CodecSupport;
 import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.util.Assert;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -50,11 +51,12 @@ import org.springframework.web.server.ServerWebExchange;
  * {@linkplain HandlerFilterFunction filter function}.
  *
  * @author Arjen Poutsma
- * @author Juergen Hoeller
  * @author Sebastien Deleuze
  * @since 5.0
  */
 public interface ServerResponse {
+
+	// Instance methods
 
 	/**
 	 * Return the status code of this response.
@@ -80,7 +82,7 @@ public interface ServerResponse {
 	Mono<Void> writeTo(ServerWebExchange exchange, Context context);
 
 
-	// Static methods
+	// Static builder methods
 
 	/**
 	 * Create a builder with the status code and headers of the given response.
@@ -88,25 +90,18 @@ public interface ServerResponse {
 	 * @return the created builder
 	 */
 	static BodyBuilder from(ServerResponse other) {
-		return new DefaultServerResponseBuilder(other);
+		Assert.notNull(other, "Other ServerResponse must not be null");
+		DefaultServerResponseBuilder builder = new DefaultServerResponseBuilder(other.statusCode());
+		return builder.headers(headers -> headers.addAll(other.headers()));
 	}
 
 	/**
-	 * Create a builder with the given HTTP status.
+	 * Create a builder with the given status.
 	 * @param status the response status
 	 * @return the created builder
 	 */
 	static BodyBuilder status(HttpStatus status) {
-		return new DefaultServerResponseBuilder(status);
-	}
-
-	/**
-	 * Create a builder with the given HTTP status.
-	 * @param status the response status
-	 * @return the created builder
-	 * @since 5.0.3
-	 */
-	static BodyBuilder status(int status) {
+		Assert.notNull(status, "HttpStatus must not be null");
 		return new DefaultServerResponseBuilder(status);
 	}
 
@@ -188,6 +183,7 @@ public interface ServerResponse {
 
 	/**
 	 * Create a builder with a {@linkplain HttpStatus#NOT_FOUND 404 Not Found} status.
+	 *
 	 * @return the created builder
 	 */
 	static HeadersBuilder<?> notFound() {
@@ -278,6 +274,8 @@ public interface ServerResponse {
 		/**
 		 * Set the time the resource was last changed, as specified by the
 		 * {@code Last-Modified} header.
+		 * <p>The date should be specified as the number of milliseconds since
+		 * January 1, 1970 GMT.
 		 * @param lastModified the last modified date
 		 * @return this builder
 		 * @see HttpHeaders#setLastModified(long)
@@ -316,6 +314,7 @@ public interface ServerResponse {
 
 		/**
 		 * Build the response entity with no body.
+		 * @return the built response
 		 */
 		Mono<ServerResponse> build();
 
@@ -323,12 +322,14 @@ public interface ServerResponse {
 		 * Build the response entity with no body.
 		 * The response will be committed when the given {@code voidPublisher} completes.
 		 * @param voidPublisher publisher publisher to indicate when the response should be committed
+		 * @return the built response
 		 */
 		Mono<ServerResponse> build(Publisher<Void> voidPublisher);
 
 		/**
 		 * Build the response entity with a custom writer function.
 		 * @param writeFunction the function used to write to the {@link ServerWebExchange}
+		 * @return the built response
 		 */
 		Mono<ServerResponse> build(BiFunction<ServerWebExchange, Context, Mono<Void>> writeFunction);
 	}
@@ -412,9 +413,9 @@ public interface ServerResponse {
 		 * Render the template with the given {@code name} using the given {@code modelAttributes}.
 		 * The model attributes are mapped under a
 		 * {@linkplain org.springframework.core.Conventions#getVariableName generated name}.
-		 * <p><em>Note: Empty {@link Collection Collections} are not added to
+		 * <p><emphasis>Note: Empty {@link Collection Collections} are not added to
 		 * the model when using this method because we cannot correctly determine
-		 * the true convention name.</em>
+		 * the true convention name.</emphasis>
 		 * @param name the name of the template to be rendered
 		 * @param modelAttributes the modelAttributes used to render the template
 		 * @return the built response
@@ -437,16 +438,17 @@ public interface ServerResponse {
 	interface Context {
 
 		/**
-		 * Return the {@link HttpMessageWriter HttpMessageWriters} to be used for response body conversion.
+		 * Return the {@link HttpMessageWriter}s to be used for response body conversion.
 		 * @return the list of message writers
 		 */
 		List<HttpMessageWriter<?>> messageWriters();
 
 		/**
-		 * Return the  {@link ViewResolver ViewResolvers} to be used for view name resolution.
+		 * Return the  {@link ViewResolver}s to be used for view name resolution.
 		 * @return the list of view resolvers
 		 */
 		List<ViewResolver> viewResolvers();
 	}
+
 
 }

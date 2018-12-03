@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.HandlerMapping;
 import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 /**
  * Integration tests with server-side {@link WebSocketHandler}s.
@@ -48,8 +49,6 @@ import static org.junit.Assert.*;
 public class WebSocketIntegrationTests extends AbstractWebSocketIntegrationTests {
 
 	private static final Log logger = LogFactory.getLog(WebSocketIntegrationTests.class);
-
-	private static final Duration TIMEOUT = Duration.ofMillis(5000);
 
 
 	@Override
@@ -64,14 +63,22 @@ public class WebSocketIntegrationTests extends AbstractWebSocketIntegrationTests
 		Flux<String> input = Flux.range(1, count).map(index -> "msg-" + index);
 		ReplayProcessor<Object> output = ReplayProcessor.create(count);
 
-		this.client.execute(getUrl("/echo"), session -> session
-				.send(input.map(session::textMessage))
-				.thenMany(session.receive().take(count).map(WebSocketMessage::getPayloadAsText))
-				.subscribeWith(output)
-				.then())
-				.block(TIMEOUT);
+		this.client.execute(getUrl("/echo"),
+				session -> {
+					logger.debug("Starting to send messages");
+					return session
+							.send(input.doOnNext(s -> logger.debug("outbound " + s)).map(session::textMessage))
+							.thenMany(session.receive().take(count).map(WebSocketMessage::getPayloadAsText))
+							.subscribeWith(output)
+							.doOnNext(s -> logger.debug("inbound " + s))
+							.then()
+							.doOnSuccessOrError((aVoid, ex) ->
+									logger.debug("Done with " + (ex != null ? ex.getMessage() : "success")));
+				})
+				.block(Duration.ofMillis(5000));
 
-		assertEquals(input.collectList().block(TIMEOUT), output.collectList().block(TIMEOUT));
+		assertEquals(input.collectList().block(Duration.ofMillis(5000)),
+				output.collectList().block(Duration.ofMillis(5000)));
 	}
 
 	@Test
@@ -95,13 +102,13 @@ public class WebSocketIntegrationTests extends AbstractWebSocketIntegrationTests
 								.then();
 					}
 				})
-				.block(TIMEOUT);
+				.block(Duration.ofMillis(5000));
 
 		HandshakeInfo info = infoRef.get();
 		assertThat(info.getHeaders().getFirst("Upgrade"), Matchers.equalToIgnoringCase("websocket"));
 		assertEquals(protocol, info.getHeaders().getFirst("Sec-WebSocket-Protocol"));
 		assertEquals("Wrong protocol accepted", protocol, info.getSubProtocol());
-		assertEquals("Wrong protocol detected on the server side", protocol, output.block(TIMEOUT));
+		assertEquals("Wrong protocol detected on the server side", protocol, output.block(Duration.ofMillis(5000)));
 	}
 
 	@Test
@@ -115,24 +122,9 @@ public class WebSocketIntegrationTests extends AbstractWebSocketIntegrationTests
 						.map(WebSocketMessage::getPayloadAsText)
 						.subscribeWith(output)
 						.then())
-				.block(TIMEOUT);
+				.block(Duration.ofMillis(5000));
 
-		assertEquals("my-header:my-value", output.block(TIMEOUT));
-	}
-
-	@Test
-	public void sessionClosing() throws Exception {
-		this.client.execute(getUrl("/close"),
-				session -> {
-					logger.debug("Starting..");
-					return session.receive()
-							.doOnNext(s -> logger.debug("inbound " + s))
-							.then()
-							.doFinally(signalType -> {
-								logger.debug("Completed with: " + signalType);
-							});
-				})
-				.block(TIMEOUT);
+		assertEquals("my-header:my-value", output.block(Duration.ofMillis(5000)));
 	}
 
 
@@ -145,7 +137,6 @@ public class WebSocketIntegrationTests extends AbstractWebSocketIntegrationTests
 			map.put("/echo", new EchoWebSocketHandler());
 			map.put("/sub-protocol", new SubProtocolWebSocketHandler());
 			map.put("/custom-header", new CustomHeaderHandler());
-			map.put("/close", new SessionClosingHandler());
 
 			SimpleUrlHandlerMapping mapping = new SimpleUrlHandlerMapping();
 			mapping.setUrlMap(map);
@@ -175,7 +166,7 @@ public class WebSocketIntegrationTests extends AbstractWebSocketIntegrationTests
 		@Override
 		public Mono<Void> handle(WebSocketSession session) {
 			String protocol = session.getHandshakeInfo().getSubProtocol();
-			WebSocketMessage message = session.textMessage(protocol != null ? protocol : "none");
+			WebSocketMessage message = session.textMessage(protocol);
 			return session.send(Mono.just(message));
 		}
 	}
@@ -189,18 +180,6 @@ public class WebSocketIntegrationTests extends AbstractWebSocketIntegrationTests
 			String payload = "my-header:" + headers.getFirst("my-header");
 			WebSocketMessage message = session.textMessage(payload);
 			return session.send(Mono.just(message));
-		}
-	}
-
-
-	private static class SessionClosingHandler implements WebSocketHandler {
-
-		@Override
-		public Mono<Void> handle(WebSocketSession session) {
-			return session.send(Flux
-					.error(new Throwable())
-					.onErrorResume(ex -> session.close(CloseStatus.GOING_AWAY)) // SPR-17306 (nested close)
-					.cast(WebSocketMessage.class));
 		}
 	}
 

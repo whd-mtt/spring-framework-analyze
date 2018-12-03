@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,10 +60,10 @@ public class ObjectUtilsTests {
 
 	@Test
 	public void isCompatibleWithThrowsClause() {
-		Class<?>[] empty = new Class<?>[0];
-		Class<?>[] exception = new Class<?>[] {Exception.class};
-		Class<?>[] sqlAndIO = new Class<?>[] {SQLException.class, IOException.class};
-		Class<?>[] throwable = new Class<?>[] {Throwable.class};
+		Class<?>[] empty = new Class[0];
+		Class<?>[] exception = new Class[] {Exception.class};
+		Class<?>[] sqlAndIO = new Class[] {SQLException.class, IOException.class};
+		Class<?>[] throwable = new Class[] {Throwable.class};
 
 		assertTrue(ObjectUtils.isCompatibleWithThrowsClause(new RuntimeException()));
 		assertTrue(ObjectUtils.isCompatibleWithThrowsClause(new RuntimeException(), empty));
@@ -102,7 +102,7 @@ public class ObjectUtilsTests {
 		assertTrue(isEmpty(new Integer[0]));
 
 		assertFalse(isEmpty(new int[] { 42 }));
-		assertFalse(isEmpty(new Integer[] { 42 }));
+		assertFalse(isEmpty(new Integer[] { new Integer(42) }));
 	}
 
 	@Test
@@ -271,7 +271,7 @@ public class ObjectUtilsTests {
 	@Test
 	@Deprecated
 	public void hashCodeWithLong() {
-		long lng = 883L;
+		long lng = 883l;
 		int expected = (new Long(lng)).hashCode();
 		assertEquals(expected, ObjectUtils.hashCode(lng));
 	}
@@ -489,12 +489,12 @@ public class ObjectUtilsTests {
 
 	@Test
 	public void nullSafeHashCodeWithLongArray() {
-		long lng = 7993L;
+		long lng = 7993l;
 		int expected = 31 * 7 + (int) (lng ^ (lng >>> 32));
-		lng = 84320L;
+		lng = 84320l;
 		expected = 31 * expected + (int) (lng ^ (lng >>> 32));
 
-		long[] array = {7993L, 84320L};
+		long[] array = {7993l, 84320l};
 		int actual = ObjectUtils.nullSafeHashCode(array);
 
 		assertEquals(expected, actual);
@@ -715,7 +715,7 @@ public class ObjectUtilsTests {
 
 	@Test
 	public void nullSafeToStringWithLongArray() {
-		long[] array = {434L, 23423L};
+		long[] array = {434l, 23423l};
 		assertEquals("{434, 23423}", ObjectUtils.nullSafeToString(array));
 	}
 
@@ -737,7 +737,7 @@ public class ObjectUtilsTests {
 
 	@Test
 	public void nullSafeToStringWithObjectArray() {
-		Object[] array = {"Han", Long.valueOf(43)};
+		Object[] array = {"Han", new Long(43)};
 		assertEquals("{Han, 43}", ObjectUtils.nullSafeToString(array));
 	}
 

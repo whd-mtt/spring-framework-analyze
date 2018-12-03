@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -525,11 +525,19 @@ public class AnnotatedElementUtilsTests {
 		assertNotNull("Should find @Transactional on ConcreteClassWithInheritedAnnotation.handle() method", attributes);
 	}
 
+	/**
+	 * <p>{@code AbstractClassWithInheritedAnnotation} declares {@code handleParameterized(T)}; whereas,
+	 * {@code ConcreteClassWithInheritedAnnotation} declares {@code handleParameterized(String)}.
+	 * <p>As of Spring 4.2, {@code AnnotatedElementUtils.processWithFindSemantics()} does not resolve an
+	 * <em>equivalent</em> method in {@code AbstractClassWithInheritedAnnotation} for the <em>bridged</em>
+	 * {@code handleParameterized(String)} method.
+	 * @since 4.2
+	 */
 	@Test
 	public void findMergedAnnotationAttributesInheritedFromBridgedMethod() throws NoSuchMethodException {
 		Method method = ConcreteClassWithInheritedAnnotation.class.getMethod("handleParameterized", String.class);
 		AnnotationAttributes attributes = findMergedAnnotationAttributes(method, Transactional.class);
-		assertNotNull("Should find @Transactional on bridged ConcreteClassWithInheritedAnnotation.handleParameterized()", attributes);
+		assertNull("Should not find @Transactional on bridged ConcreteClassWithInheritedAnnotation.handleParameterized()", attributes);
 	}
 
 	/**
@@ -538,7 +546,7 @@ public class AnnotatedElementUtilsTests {
 	 * @since 4.2
 	 */
 	@Test
-	public void findMergedAnnotationAttributesFromBridgeMethod() {
+	public void findMergedAnnotationAttributesFromBridgeMethod() throws NoSuchMethodException {
 		Method[] methods = StringGenericParameter.class.getMethods();
 		Method bridgeMethod = null;
 		Method bridgedMethod = null;
@@ -723,20 +731,6 @@ public class AnnotatedElementUtilsTests {
 		Method m = TransactionalServiceImpl.class.getMethod("doIt");
 		Set<Transactional> allMergedAnnotations = findAllMergedAnnotations(m, Transactional.class);
 		assertEquals(1, allMergedAnnotations.size());
-	}
-
-	@Test  // SPR-16060
-	public void findMethodAnnotationFromGenericInterface() throws Exception {
-		Method method = ImplementsInterfaceWithGenericAnnotatedMethod.class.getMethod("foo", String.class);
-		Order order = findMergedAnnotation(method, Order.class);
-		assertNotNull(order);
-	}
-
-	@Test  // SPR-17146
-	public void findMethodAnnotationFromGenericSuperclass() throws Exception {
-		Method method = ExtendsBaseClassWithGenericAnnotatedMethod.class.getMethod("foo", String.class);
-		Order order = findMergedAnnotation(method, Order.class);
-		assertNotNull(order);
 	}
 
 

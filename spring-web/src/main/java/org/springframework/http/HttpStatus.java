@@ -504,7 +504,7 @@ public enum HttpStatus {
 	 */
 	@Override
 	public String toString() {
-		return Integer.toString(this.value) + " " + name();
+		return Integer.toString(this.value);
 	}
 
 

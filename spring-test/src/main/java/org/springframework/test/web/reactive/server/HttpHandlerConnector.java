@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ public class HttpHandlerConnector implements ClientHttpConnector {
 
 	private static Log logger = LogFactory.getLog(HttpHandlerConnector.class);
 
+
 	private final HttpHandler handler;
 
 
@@ -90,11 +91,11 @@ public class HttpHandlerConnector implements ClientHttpConnector {
 			return Mono.empty();
 		});
 
-		mockServerResponse.setWriteHandler(responseBody ->
-				Mono.fromRunnable(() -> {
-					log("Creating client response for ", httpMethod, uri);
-					result.onNext(adaptResponse(mockServerResponse, responseBody));
-				}));
+		mockServerResponse.setWriteHandler(responseBody -> {
+			log("Creating client response for ", httpMethod, uri);
+			result.onNext(adaptResponse(mockServerResponse, responseBody));
+			return Mono.empty();
+		});
 
 		log("Writing client request for ", httpMethod, uri);
 		requestCallback.apply(mockClientRequest).subscribe(aVoid -> {}, result::onError);
@@ -117,7 +118,8 @@ public class HttpHandlerConnector implements ClientHttpConnector {
 	}
 
 	private ServerHttpResponse prepareResponse(ServerHttpResponse response, ServerHttpRequest request) {
-		return (request.getMethod() == HttpMethod.HEAD ? new HttpHeadResponseDecorator(response) : response);
+		return HttpMethod.HEAD.equals(request.getMethod()) ?
+				new HttpHeadResponseDecorator(response) : response;
 	}
 
 	private ClientHttpResponse adaptResponse(MockServerHttpResponse response, Flux<DataBuffer> body) {

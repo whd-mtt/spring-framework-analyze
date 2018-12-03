@@ -94,7 +94,7 @@
 			<xsd:attribute name="data-source" type="xsd:string" default="dataSource">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-			A reference to a data source that should be initialized. Defaults to "dataSource".
+			AppConfig reference to a data source that should be initialized. Defaults to "dataSource".
 					]]></xsd:documentation>
 					<xsd:appinfo>
 						<tool:annotation kind="ref"/>

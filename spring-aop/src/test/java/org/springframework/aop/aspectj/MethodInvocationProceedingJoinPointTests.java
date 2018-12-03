@@ -218,7 +218,7 @@ public class MethodInvocationProceedingJoinPointTests {
 			itb.unreliableFileOperation();
 		}
 		catch (IOException ex) {
-			// we don't really care...
+			// we don't realy care...
 		}
 	}
 

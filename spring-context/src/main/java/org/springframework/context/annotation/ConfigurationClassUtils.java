@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 /**
- * Utilities for identifying {@link Configuration} classes.
+ * Utilities for processing @{@link Configuration} classes.
  *
  * @author Chris Beams
  * @author Juergen Hoeller
@@ -60,7 +60,7 @@ abstract class ConfigurationClassUtils {
 
 	private static final Log logger = LogFactory.getLog(ConfigurationClassUtils.class);
 
-	private static final Set<String> candidateIndicators = new HashSet<>(8);
+	private static final Set<String> candidateIndicators = new HashSet<>(4);
 
 	static {
 		candidateIndicators.add(Component.class.getName());
@@ -78,9 +78,7 @@ abstract class ConfigurationClassUtils {
 	 * @param metadataReaderFactory the current factory in use by the caller
 	 * @return whether the candidate qualifies as (any kind of) configuration class
 	 */
-	public static boolean checkConfigurationClassCandidate(
-			BeanDefinition beanDef, MetadataReaderFactory metadataReaderFactory) {
-
+	public static boolean checkConfigurationClassCandidate(BeanDefinition beanDef, MetadataReaderFactory metadataReaderFactory) {
 		String className = beanDef.getBeanClassName();
 		if (className == null || beanDef.getFactoryMethodName() != null) {
 			return false;
@@ -105,8 +103,7 @@ abstract class ConfigurationClassUtils {
 			}
 			catch (IOException ex) {
 				if (logger.isDebugEnabled()) {
-					logger.debug("Could not find class file for introspecting configuration annotations: " +
-							className, ex);
+					logger.debug("Could not find class file for introspecting configuration annotations: " + className, ex);
 				}
 				return false;
 			}
@@ -205,8 +202,8 @@ abstract class ConfigurationClassUtils {
 	/**
 	 * Determine the order for the given configuration class metadata.
 	 * @param metadata the metadata of the annotated class
-	 * @return the {@code @Order} annotation value on the configuration class,
-	 * or {@code Ordered.LOWEST_PRECEDENCE} if none declared
+	 * @return the {@link @Order} annotation value on the configuration class,
+	 * or {@link Ordered#LOWEST_PRECEDENCE} if none declared
 	 * @since 5.0
 	 */
 	@Nullable
@@ -219,7 +216,7 @@ abstract class ConfigurationClassUtils {
 	 * Determine the order for the given configuration class bean definition,
 	 * as set by {@link #checkConfigurationClassCandidate}.
 	 * @param beanDef the bean definition to check
-	 * @return the {@link Order @Order} annotation value on the configuration class,
+	 * @return the {@link @Order} annotation value on the configuration class,
 	 * or {@link Ordered#LOWEST_PRECEDENCE} if none declared
 	 * @since 4.2
 	 */

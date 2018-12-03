@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,31 +37,10 @@ import org.springframework.util.concurrent.ListenableFuture;
  */
 public class HandlerMethodReturnValueHandlerComposite implements AsyncHandlerMethodReturnValueHandler {
 
-	/** Public for wrapping with fallback logger. */
-	public static final Log defaultLogger = LogFactory.getLog(HandlerMethodReturnValueHandlerComposite.class);
-
-
-	private Log logger = defaultLogger;
+	private static final Log logger = LogFactory.getLog(HandlerMethodReturnValueHandlerComposite.class);
 
 	private final List<HandlerMethodReturnValueHandler> returnValueHandlers = new ArrayList<>();
 
-
-	/**
-	 * Set an alternative logger to use than the one based on the class name.
-	 * @param logger the logger to use
-	 * @since 5.1
-	 */
-	public void setLogger(Log logger) {
-		this.logger = logger;
-	}
-
-	/**
-	 * Return the currently configured Logger.
-	 * @since 5.1
-	 */
-	public Log getLogger() {
-		return logger;
-	}
 
 	/**
 	 * Return a read-only list with the configured handlers.
@@ -86,13 +65,15 @@ public class HandlerMethodReturnValueHandlerComposite implements AsyncHandlerMet
 	}
 
 	/**
-	 * Add the given {@link HandlerMethodReturnValueHandler HandlerMethodReturnValueHandlers}.
+	 * Add the given {@link HandlerMethodReturnValueHandler}s.
 	 */
 	public HandlerMethodReturnValueHandlerComposite addHandlers(
 			@Nullable List<? extends HandlerMethodReturnValueHandler> handlers) {
 
 		if (handlers != null) {
-			this.returnValueHandlers.addAll(handlers);
+			for (HandlerMethodReturnValueHandler handler : handlers) {
+				this.returnValueHandlers.add(handler);
+			}
 		}
 		return this;
 	}
@@ -102,11 +83,9 @@ public class HandlerMethodReturnValueHandlerComposite implements AsyncHandlerMet
 		return getReturnValueHandler(returnType) != null;
 	}
 
-	@SuppressWarnings("ForLoopReplaceableByForEach")
 	@Nullable
 	private HandlerMethodReturnValueHandler getReturnValueHandler(MethodParameter returnType) {
-		for (int i = 0; i < this.returnValueHandlers.size(); i++) {
-			HandlerMethodReturnValueHandler handler = this.returnValueHandlers.get(i);
+		for (HandlerMethodReturnValueHandler handler : this.returnValueHandlers) {
 			if (handler.supportsReturnType(returnType)) {
 				return handler;
 			}

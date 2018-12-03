@@ -22,7 +22,7 @@
 	Typically the bean class is specified, along with JavaBean properties
 	and/or constructor arguments.
 
-	A bean instance can be a "singleton" (shared instance) or a "prototype"
+	AppConfig bean instance can be a "singleton" (shared instance) or a "prototype"
 	(independent instance). Further scopes can be provided by extended
 	bean factories, for example in a web environment.
 
@@ -50,7 +50,7 @@
 		<xsd:attribute name="id" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
-	The unique identifier for a bean. A bean id may not be used more than once
+	The unique identifier for a bean. AppConfig bean id may not be used more than once
 	within the same <beans> element.
 				]]></xsd:documentation>
 			</xsd:annotation>
@@ -151,7 +151,7 @@
 			<xsd:attribute name="default-autowire-candidates" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A default bean name pattern for identifying autowire candidates:
+	AppConfig default bean name pattern for identifying autowire candidates:
 	e.g. "*Service", "data*", "*Service*", "data*Service".
 	Also accepts a comma-separated list of patterns: e.g. "*Service,*Dao".
 	See the documentation for the 'autowire-candidate' attribute of the
@@ -285,7 +285,7 @@
 	compatible with the parent, i.e. accept the parent's property values
 	and constructor argument values, if any.
 
-	A child bean definition will inherit constructor argument values,
+	AppConfig child bean definition will inherit constructor argument values,
 	property values and method overrides from the parent, with the option
 	to add new values. If init method, destroy method, factory bean and/or
 	factory method are specified, they will override the corresponding
@@ -542,7 +542,7 @@
 			<xsd:documentation source="java:org.springframework.beans.factory.config.BeanDefinition"><![CDATA[
 	Defines a single (usually named) bean.
 
-	A bean definition may contain nested tags for constructor arguments,
+	AppConfig bean definition may contain nested tags for constructor arguments,
 	property values, lookup methods, and replaced methods. Mixing constructor
 	injection and setter injection on the same bean is explicitly supported.
 			]]></xsd:documentation>
@@ -566,7 +566,7 @@
 	Arguments correspond to either a specific index of the constructor
 	argument list or are supposed to be matched generically by type.
 
-	Note: A single generic argument value will just be used once, rather
+	Note: AppConfig single generic argument value will just be used once, rather
 	than potentially matched multiple times (as of Spring 1.1).
 
 	constructor-arg elements are also used in conjunction with the
@@ -622,14 +622,14 @@
 			<xsd:attribute name="ref" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A short-cut alternative to a nested "<ref bean='...'/>" element.
+	AppConfig short-cut alternative to a nested "<ref bean='...'/>" element.
 					]]></xsd:documentation>
 				</xsd:annotation>
 			</xsd:attribute>
 			<xsd:attribute name="value" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A short-cut alternative to a nested "<value>...<value/>" element.
+	AppConfig short-cut alternative to a nested "<value>...<value/>" element.
 					]]></xsd:documentation>
 				</xsd:annotation>
 			</xsd:attribute>
@@ -666,7 +666,7 @@
 	<xsd:element name="attribute" type="metaType">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[
-	A qualifier element may contain attribute child elements as key-value
+	AppConfig qualifier element may contain attribute child elements as key-value
 	pairs. These will be available for matching against attributes of a
 	qualifier annotation on an autowired field or parameter if present.
 			]]></xsd:documentation>
@@ -676,7 +676,7 @@
 	<xsd:element name="lookup-method">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[
-	A lookup method causes the IoC container to override the given method
+	AppConfig lookup method causes the IoC container to override the given method
 	and return the bean with the name given in the bean attribute. This is
 	a form of Method Injection. It is particularly useful as an alternative
 	to implementing the BeanFactoryAware interface, in order to be able to
@@ -920,8 +920,8 @@
 	<xsd:element name="list">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[
-	A list can contain multiple inner bean, ref, collection, or value elements.
-	A list can also map to an array type; the necessary conversion is performed
+	AppConfig list can contain multiple inner bean, ref, collection, or value elements.
+	AppConfig list can also map to an array type; the necessary conversion is performed
 	automatically.
 			]]></xsd:documentation>
 		</xsd:annotation>
@@ -943,7 +943,7 @@
 	<xsd:element name="set">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[
-	A set can contain multiple inner bean, ref, collection, or value elements.
+	AppConfig set can contain multiple inner bean, ref, collection, or value elements.
 			]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:complexType>
@@ -964,7 +964,7 @@
 	<xsd:element name="map">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[
-	A mapping from a key to an object. Maps may be empty.
+	AppConfig mapping from a key to an object. Maps may be empty.
 			]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:complexType>
@@ -985,7 +985,7 @@
 	<xsd:element name="entry" type="entryType">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[
-	A map entry can be an inner bean, ref, value, or collection.
+	AppConfig map entry can be an inner bean, ref, value, or collection.
 	The key of the entry is given by the "key" attribute or child element.
 			]]></xsd:documentation>
 		</xsd:annotation>
@@ -1016,7 +1016,7 @@
 	<xsd:element name="key">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[
-	A key element can contain an inner bean, ref, value, or collection.
+	AppConfig key element can contain an inner bean, ref, value, or collection.
 			]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:complexType>
@@ -1071,14 +1071,14 @@
 		<xsd:attribute name="ref" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
-	A short-cut alternative to a nested "<ref bean='...'/>".
+	AppConfig short-cut alternative to a nested "<ref bean='...'/>".
 				]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
 		<xsd:attribute name="value" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
-	A short-cut alternative to a nested "<value>...</value>" element.
+	AppConfig short-cut alternative to a nested "<value>...</value>" element.
 				]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
@@ -1139,14 +1139,14 @@
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
 	Each map element must specify its key as attribute or as child element.
-	A key attribute is always a String value.
+	AppConfig key attribute is always a String value.
 				]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
 		<xsd:attribute name="key-ref" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
-	A short-cut alternative to a to a "key" element with a nested
+	AppConfig short-cut alternative to a to a "key" element with a nested
 	"<ref bean='...'/>".
 				]]></xsd:documentation>
 			</xsd:annotation>
@@ -1154,7 +1154,7 @@
 		<xsd:attribute name="value" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
-	A short-cut alternative to a nested "<value>...</value>"
+	AppConfig short-cut alternative to a nested "<value>...</value>"
 	element.
 				]]></xsd:documentation>
 			</xsd:annotation>
@@ -1162,14 +1162,14 @@
 		<xsd:attribute name="value-ref" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
-	A short-cut alternative to a nested "<ref bean='...'/>".
+	AppConfig short-cut alternative to a nested "<ref bean='...'/>".
 				]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
 		<xsd:attribute name="value-type" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
-	A short-cut alternative to a 'type' attribute on a nested
+	AppConfig short-cut alternative to a 'type' attribute on a nested
 	"<value type='...' >...</value>" element.
 				]]></xsd:documentation>
 			</xsd:annotation>

@@ -42,7 +42,7 @@ public class HtmlUtilsTests {
 	public void testHtmlUnescape() {
 		String escaped = "&quot;This is a quote&#39;";
 		String unescaped = HtmlUtils.htmlUnescape(escaped);
-		assertEquals("\"This is a quote'", unescaped);
+		assertEquals(unescaped, "\"This is a quote'");
 	}
 
 	@Test

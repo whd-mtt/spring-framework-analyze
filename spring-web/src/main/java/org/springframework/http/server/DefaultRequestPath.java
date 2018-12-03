@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,10 +132,10 @@ class DefaultRequestPath implements RequestPath {
 		if (other == null || getClass() != other.getClass()) {
 			return false;
 		}
-		DefaultRequestPath otherPath= (DefaultRequestPath) other;
-		return (this.fullPath.equals(otherPath.fullPath) &&
-				this.contextPath.equals(otherPath.contextPath) &&
-				this.pathWithinApplication.equals(otherPath.pathWithinApplication));
+		DefaultRequestPath that = (DefaultRequestPath) other;
+		return (this.fullPath.equals(that.fullPath) &&
+				this.contextPath.equals(that.contextPath) &&
+				this.pathWithinApplication.equals(that.pathWithinApplication));
 	}
 
 	@Override
@@ -148,7 +148,9 @@ class DefaultRequestPath implements RequestPath {
 
 	@Override
 	public String toString() {
-		return this.fullPath.toString();
+		return "DefaultRequestPath[fullPath='" + this.fullPath + "', " +
+				"contextPath='" + this.contextPath.value() + "', " +
+				"pathWithinApplication='" + this.pathWithinApplication.value() + "']";
 	}
 
 }

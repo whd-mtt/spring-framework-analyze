@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,7 +119,12 @@ public class WebSocketExtension {
 	public String toString() {
 		StringBuilder str = new StringBuilder();
 		str.append(this.name);
-		this.parameters.forEach((key, value) -> str.append(';').append(key).append('=').append(value));
+		for (Map.Entry<String, String> entry : this.parameters.entrySet()) {
+			str.append(';');
+			str.append(entry.getKey());
+			str.append('=');
+			str.append(entry.getValue());
+		}
 		return str.toString();
 	}
 

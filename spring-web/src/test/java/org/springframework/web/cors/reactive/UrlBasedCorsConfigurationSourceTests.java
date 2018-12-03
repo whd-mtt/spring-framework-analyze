@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.springframework.mock.http.server.reactive.test.MockServerHttpRequest;
 import org.springframework.mock.web.test.server.MockServerWebExchange;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.util.pattern.PathPatternParser;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -34,7 +35,7 @@ import static org.junit.Assert.assertNull;
 public class UrlBasedCorsConfigurationSourceTests {
 
 	private final UrlBasedCorsConfigurationSource configSource
-			= new UrlBasedCorsConfigurationSource();
+			= new UrlBasedCorsConfigurationSource(new PathPatternParser());
 
 
 	@Test

@@ -20,7 +20,7 @@
 		<xsd:attribute name="path" type="xsd:string" use="required">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
-	A path that maps a particular request to a handler.
+	AppConfig path that maps a particular request to a handler.
 	Exact path mapping URIs (such as "/myPath") are supported as well as Ant-type path patterns (such as /myPath/**).
                 ]]></xsd:documentation>
 			</xsd:annotation>
@@ -48,8 +48,8 @@
 	<xsd:complexType name="handshake-interceptors">
 		<xsd:annotation>
 			<xsd:documentation source="org.springframework.web.socket.server.HandshakeInterceptor"><![CDATA[
-	A list of HandshakeInterceptor beans definition and references.
-	A HandshakeInterceptor can be used to inspect the handshake request and response as well as to pass attributes to the target WebSocketHandler.
+	AppConfig list of HandshakeInterceptor beans definition and references.
+	AppConfig HandshakeInterceptor can be used to inspect the handshake request and response as well as to pass attributes to the target WebSocketHandler.
 			]]></xsd:documentation>
 		</xsd:annotation>
 		<xsd:sequence>
@@ -57,14 +57,14 @@
 				<xsd:element ref="beans:bean">
 					<xsd:annotation>
 						<xsd:documentation source="org.springframework.web.socket.server.HandshakeInterceptor"><![CDATA[
-	A HandshakeInterceptor bean definition.
+	AppConfig HandshakeInterceptor bean definition.
                         ]]></xsd:documentation>
 					</xsd:annotation>
 				</xsd:element>
 				<xsd:element ref="beans:ref">
 					<xsd:annotation>
 						<xsd:documentation source="org.springframework.web.socket.server.HandshakeInterceptor"><![CDATA[
-	A reference to a HandshakeInterceptor bean.
+	AppConfig reference to a HandshakeInterceptor bean.
                     ]]></xsd:documentation>
 					</xsd:annotation>
 				</xsd:element>
@@ -93,14 +93,14 @@
 							<xsd:element ref="beans:bean">
 								<xsd:annotation>
 									<xsd:documentation><![CDATA[
-	A TransportHandler bean definition.
+	AppConfig TransportHandler bean definition.
                         ]]></xsd:documentation>
 								</xsd:annotation>
 							</xsd:element>
 							<xsd:element ref="beans:ref">
 								<xsd:annotation>
 									<xsd:documentation><![CDATA[
-	A reference to a TransportHandler bean.
+	AppConfig reference to a TransportHandler bean.
                         ]]></xsd:documentation>
 								</xsd:annotation>
 							</xsd:element>
@@ -122,7 +122,7 @@
 		<xsd:attribute name="name" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation source="java:org.springframework.web.socket.sockjs.support.AbstractSockJsService"><![CDATA[
-	A unique name for the service, mainly for logging purposes.
+	AppConfig unique name for the service, mainly for logging purposes.
                 ]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
@@ -148,7 +148,7 @@
                 ]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="stream-bytes-limit" type="xsd:int">
+		<xsd:attribute name="stream-bytes-limit" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation source="java:org.springframework.web.socket.sockjs.support.AbstractSockJsService"><![CDATA[
 	Minimum number of bytes that can be send over a single HTTP streaming request before it will be closed.
@@ -165,7 +165,7 @@
                 ]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="heartbeat-time" type="xsd:long">
+		<xsd:attribute name="heartbeat-time" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation source="java:org.springframework.web.socket.sockjs.support.AbstractSockJsService"><![CDATA[
 	The amount of time in milliseconds when the server has not sent any messages and after which the server
@@ -174,7 +174,7 @@
                 ]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="disconnect-delay" type="xsd:long">
+		<xsd:attribute name="disconnect-delay" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation source="java:org.springframework.web.socket.sockjs.support.AbstractSockJsService"><![CDATA[
 	The amount of time in milliseconds before a client is considered disconnected after not having
@@ -183,7 +183,7 @@
                 ]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="message-cache-size" type="xsd:int">
+		<xsd:attribute name="message-cache-size" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation source="java:org.springframework.web.socket.sockjs.support.AbstractSockJsService"><![CDATA[
 	The number of server-to-client messages that a session can cache while waiting for
@@ -192,7 +192,7 @@
                 ]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="websocket-enabled" type="xsd:boolean">
+		<xsd:attribute name="websocket-enabled" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation source="java:org.springframework.web.socket.sockjs.support.AbstractSockJsService"><![CDATA[
 	Some load balancers don't support websockets. Set this option to "false" to disable the WebSocket transport on the server side.
@@ -216,7 +216,7 @@
                 ]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="suppress-cors" type="xsd:boolean">
+		<xsd:attribute name="suppress-cors" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation source="java:org.springframework.web.socket.sockjs.support.AbstractSockJsService"><![CDATA[
 	This option can be used to disable automatic addition of CORS headers for SockJS requests.
@@ -252,7 +252,7 @@
                 ]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="relay-port" type="xsd:int">
+		<xsd:attribute name="relay-port" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation source="java:org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler"><![CDATA[
 	The STOMP message broker port.
@@ -295,14 +295,14 @@
                 ]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="heartbeat-send-interval" type="xsd:long">
+		<xsd:attribute name="heartbeat-send-interval" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation source="java:org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler"><![CDATA[
 	The interval, in milliseconds, at which the "system" connection will send heartbeats to the STOMP broker.
                 ]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="heartbeat-receive-interval" type="xsd:long">
+		<xsd:attribute name="heartbeat-receive-interval" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation source="java:org.springframework.messaging.simp.stomp.StompBrokerRelayMessageHandler"><![CDATA[
 	The interval, in milliseconds, at which the "system" connection expects to receive heartbeats from the STOMP broker.
@@ -384,23 +384,6 @@
                 ]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="selector-header" type="xsd:string">
-			<xsd:annotation>
-				<xsd:documentation source="java:org.springframework.messaging.simp.stomp.SimpleBrokerMessageHandler"><![CDATA[
-	Configure the name of a header that a subscription message can have for
-	the purpose of filtering messages matched to the subscription. The header
-	value is expected to be a Spring EL boolean expression to be applied to
-	the headers of messages matched to the subscription.
-
-	For example:
-	headers.foo == 'bar'
-
-	By default this is set to "selector". You can set it to a different
-	name, or to "" to turn off support for a selector header.
-                ]]></xsd:documentation>
-			</xsd:annotation>
-		</xsd:attribute>
-
 	</xsd:complexType>
 
 	<xsd:complexType name="channel">
@@ -416,7 +399,7 @@
 	Configuration for the ThreadPoolTaskExecutor that sends messages for the message channel.
                 ]]></xsd:documentation>
 		</xsd:annotation>
-		<xsd:attribute name="core-pool-size" type="xsd:int" use="optional">
+		<xsd:attribute name="core-pool-size" type="xsd:string" use="optional">
 			<xsd:annotation>
 				<xsd:documentation source="java:org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"><![CDATA[
 	Set the core pool size of the ThreadPoolExecutor.
@@ -429,7 +412,7 @@
                 ]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="max-pool-size" type="xsd:int" use="optional">
+		<xsd:attribute name="max-pool-size" type="xsd:string" use="optional">
 			<xsd:annotation>
 				<xsd:documentation source="java:org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"><![CDATA[
 	 Set the max pool size of the ThreadPoolExecutor.
@@ -439,7 +422,7 @@
                 ]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="keep-alive-seconds" type="xsd:int" use="optional">
+		<xsd:attribute name="keep-alive-seconds" type="xsd:string" use="optional">
 			<xsd:annotation>
 				<xsd:documentation source="java:org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"><![CDATA[
 	 Set the time limit for which threads may remain idle before being terminated.
@@ -449,7 +432,7 @@
                 ]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
-		<xsd:attribute name="queue-capacity" type="xsd:int" use="optional">
+		<xsd:attribute name="queue-capacity" type="xsd:string" use="optional">
 			<xsd:annotation>
 				<xsd:documentation source="java:org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"><![CDATA[
 	 Set the queue capacity for the ThreadPoolExecutor.
@@ -474,14 +457,14 @@
 				<xsd:element ref="beans:bean">
 					<xsd:annotation>
 						<xsd:documentation><![CDATA[
-	A ChannelInterceptor bean definition.
+	AppConfig ChannelInterceptor bean definition.
                         ]]></xsd:documentation>
 					</xsd:annotation>
 				</xsd:element>
 				<xsd:element ref="beans:ref">
 					<xsd:annotation>
 						<xsd:documentation><![CDATA[
-	A reference to a ChannelInterceptor bean.
+	AppConfig reference to a ChannelInterceptor bean.
                         ]]></xsd:documentation>
 					</xsd:annotation>
 				</xsd:element>
@@ -526,14 +509,14 @@
 			<xsd:attribute name="allowed-origins" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-		Configure allowed Origin header values. Multiple origins may be specified
+		Configure allowed {@code Origin} header values. Multiple origins may be specified
 		as a comma-separated list.
 
 		This check is mostly designed for browser clients. There is noting preventing other
 		types of client to modify the Origin header value.
 
 		When SockJS is enabled and allowed origins are restricted, transport types that do not
-		use Origin headers for cross origin requests (jsonp-polling, iframe-xhr-polling,
+		use {@code Origin} headers for cross origin requests (jsonp-polling, iframe-xhr-polling,
 		iframe-eventsource and iframe-htmlfile) are disabled. As a consequence, IE6/IE7 won't be
 		supported anymore and IE8/IE9 will only be supported without cookies.
 
@@ -550,7 +533,7 @@
 	Configures broker-backed messaging over WebSocket using a higher-level messaging sub-protocol.
 	Registers a SimpleUrlHandlerMapping and maps paths to registered Controllers.
 
-	A StompSubProtocolHandler is registered to handle various versions of the STOMP protocol.
+	AppConfig StompSubProtocolHandler is registered to handle various versions of the STOMP protocol.
 
 	See EnableWebSocketMessageBroker javadoc for information on code-based alternatives to enabling broker-backed messaging.
             ]]></xsd:documentation>
@@ -580,14 +563,14 @@
 											<xsd:element ref="beans:bean">
 												<xsd:annotation>
 													<xsd:documentation source="org.springframework.web.socket.handler.WebSocketHandlerDecoratorFactory"><![CDATA[
-	A WebSocketHandlerDecoratorFactory bean definition.
+	AppConfig WebSocketHandlerDecoratorFactory bean definition.
                         ]]></xsd:documentation>
 												</xsd:annotation>
 											</xsd:element>
 											<xsd:element ref="beans:ref">
 												<xsd:annotation>
 													<xsd:documentation source="org.springframework.web.socket.handler.WebSocketHandlerDecoratorFactory"><![CDATA[
-	A reference to a WebSocketHandlerDecoratorFactory bean.
+	AppConfig reference to a WebSocketHandlerDecoratorFactory bean.
                     ]]></xsd:documentation>
 												</xsd:annotation>
 											</xsd:element>
@@ -596,7 +579,7 @@
 								</xsd:complexType>
 							</xsd:element>
 						</xsd:sequence>
-						<xsd:attribute name="message-size" type="xsd:int">
+						<xsd:attribute name="message-size" type="xsd:string">
 							<xsd:annotation>
 								<xsd:documentation><![CDATA[
 	Configure the maximum size for an incoming sub-protocol message.
@@ -619,7 +602,7 @@
                                 ]]></xsd:documentation>
 							</xsd:annotation>
 						</xsd:attribute>
-						<xsd:attribute name="send-timeout" type="xsd:int">
+						<xsd:attribute name="send-timeout" type="xsd:string">
 							<xsd:annotation>
 								<xsd:documentation><![CDATA[
 	Configure a time limit (in milliseconds) for the maximum amount of a time
@@ -628,10 +611,10 @@
 
 	In general WebSocket servers expect that messages to a single WebSocket
 	session are sent from a single thread at a time. This is automatically
-	guaranteed when using @EnableWebSocketMessageBroker configuration.
+	guaranteed when using {@code @EnableWebSocketMessageBroker} configuration.
 	If message sending is slow, or at least slower than rate of messages sending,
-	subsequent messages are buffered until either the sendTimeLimit
-	or the sendBufferSizeLimit are reached at which point the session
+	subsequent messages are buffered until either the {@code sendTimeLimit}
+	or the {@code sendBufferSizeLimit} are reached at which point the session
 	state is cleared and an attempt is made to close the session.
 
 	NOTE that the session time limit is checked only
@@ -648,13 +631,13 @@
 	the server is using non-blocking IO such as Tomcat's NIO connector that
 	is used by default on Tomcat 8. If you must use blocking IO consider
 	customizing OS-level TCP settings, for example
-	/proc/sys/net/ipv4/tcp_retries2 on Linux.
+	{@code /proc/sys/net/ipv4/tcp_retries2} on Linux.
 
 	The default value is 10 seconds (i.e. 10 * 10000).
                                 ]]></xsd:documentation>
 							</xsd:annotation>
 						</xsd:attribute>
-						<xsd:attribute name="send-buffer-size" type="xsd:int">
+						<xsd:attribute name="send-buffer-size" type="xsd:string">
 							<xsd:annotation>
 								<xsd:documentation><![CDATA[
 	Configure the maximum amount of data to buffer when sending messages
@@ -663,10 +646,10 @@
 
 	In general WebSocket servers expect that messages to a single WebSocket
 	session are sent from a single thread at a time. This is automatically
-	guaranteed when using @EnableWebSocketMessageBroker configuration.
+	guaranteed when using {@code @EnableWebSocketMessageBroker} configuration.
 	If message sending is slow, or at least slower than rate of messages sending,
-	subsequent messages are buffered until either the sendTimeLimit
-	or the sendBufferSizeLimit are reached at which point the session
+	subsequent messages are buffered until either the {@code sendTimeLimit}
+	or the {@code sendBufferSizeLimit} are reached at which point the session
 	state is cleared and an attempt is made to close the session.
 
 	NOTE that closing the session may not succeed in
@@ -675,27 +658,14 @@
 	configured by default on Tomcat 7. Therefore it is recommended to ensure
 	the server is using non-blocking IO such as Tomcat's NIO connector used
 	by default on Tomcat 8. If you must use blocking IO consider customizing
-	OS-level TCP settings, for example /proc/sys/net/ipv4/tcp_retries2
+	OS-level TCP settings, for example {@code /proc/sys/net/ipv4/tcp_retries2}
 	on Linux.
 
-	The default value is 512K (i.e. 512 * 1024). If the value is set to less
-	than or equal to 0 then buffering is effectively disabled.
-                                ]]></xsd:documentation>
-							</xsd:annotation>
-						</xsd:attribute>
-						<xsd:attribute name="time-to-first-message" type="xsd:int">
-							<xsd:annotation>
-								<xsd:documentation><![CDATA[
-	 Set the maximum time allowed in milliseconds after the WebSocket
-	 connection is established and before the first sub-protocol message is
-	 received.
+	The default value is 512K (i.e. 512 * 1024).
 
-	 This handler is for WebSocket connections that use a sub-protocol.
-	 Therefore, we expect the client to send at least one sub-protocol message
-	 in the beginning, or else we assume the connection isn't doing well, e.g.
-	 proxy issue, slow network, and can be closed.
-
-	 By default this is set to 60,000 (1 minute).
+	@param sendBufferSizeLimit the maximum number of bytes to buffer when
+	sending messages; if the value is less than or equal to 0 then buffering
+	is effectively disabled.
                                 ]]></xsd:documentation>
 							</xsd:annotation>
 						</xsd:attribute>
@@ -716,7 +686,7 @@
 						<xsd:attribute name="path" type="xsd:string">
 							<xsd:annotation>
 								<xsd:documentation><![CDATA[
-	A path that maps a particular message destination to a handler method.
+	AppConfig path that maps a particular message destination to a handler method.
 	Exact path mapping URIs (such as "/myPath") are supported as well as Ant-stype path patterns (such as /myPath/**).
                 				]]></xsd:documentation>
 							</xsd:annotation>
@@ -724,14 +694,14 @@
 						<xsd:attribute name="allowed-origins" type="xsd:string">
 							<xsd:annotation>
 								<xsd:documentation><![CDATA[
-		Configure allowed Origin header values. Multiple origins may be specified
+		Configure allowed {@code Origin} header values. Multiple origins may be specified
 		as a comma-separated list.
 
 		This check is mostly designed for browser clients. There is noting preventing other
 		types of client to modify the Origin header value.
 
 		When SockJS is enabled and allowed origins are restricted, transport types that do not
-		use Origin headers for cross origin requests (jsonp-polling, iframe-xhr-polling,
+		use {@code Origin} headers for cross origin requests (jsonp-polling, iframe-xhr-polling,
 		iframe-eventsource and iframe-htmlfile) are disabled. As a consequence, IE6/IE7 won't be
 		supported anymore and IE8/IE9 will only be supported without cookies.
 
@@ -781,7 +751,7 @@
 							<xsd:element ref="beans:ref" minOccurs="0" maxOccurs="unbounded">
 								<xsd:annotation>
 									<xsd:documentation><![CDATA[
-	A reference to a HandlerMethodArgumentResolver bean definition.
+	AppConfig reference to a HandlerMethodArgumentResolver bean definition.
 									]]></xsd:documentation>
 									<xsd:appinfo>
 										<tool:annotation kind="ref">
@@ -813,7 +783,7 @@
 							<xsd:element ref="beans:ref" minOccurs="0" maxOccurs="unbounded">
 								<xsd:annotation>
 									<xsd:documentation><![CDATA[
-	A reference to a HandlerMethodReturnValueHandler bean definition.
+	AppConfig reference to a HandlerMethodReturnValueHandler bean definition.
 									]]></xsd:documentation>
 									<xsd:appinfo>
 										<tool:annotation kind="ref">
@@ -840,14 +810,14 @@
 								<xsd:element ref="beans:bean">
 									<xsd:annotation>
 										<xsd:documentation><![CDATA[
-	A MessageConverter bean definition.
+	AppConfig MessageConverter bean definition.
 										]]></xsd:documentation>
 									</xsd:annotation>
 								</xsd:element>
 								<xsd:element ref="beans:ref">
 									<xsd:annotation>
 										<xsd:documentation><![CDATA[
-	A reference to an HttpMessageConverter bean.
+	AppConfig reference to an HttpMessageConverter bean.
 										]]></xsd:documentation>
 									</xsd:annotation>
 								</xsd:element>
@@ -898,22 +868,6 @@
                     ]]></xsd:documentation>
 				</xsd:annotation>
 			</xsd:attribute>
-			<xsd:attribute name="preserve-publish-order" type="xsd:boolean">
-				<xsd:annotation>
-					<xsd:documentation><![CDATA[
-	Whether the client must receive messages in the order of publication.
-
-	By default messages sent to the clientOutboundChannel may
-	not be processed in the same order because the channel is backed by a
-	ThreadPoolExecutor that in turn does not guarantee processing in order.
-
-	When this flag is set to true messages within the same session
-	will be sent to the clientOutboundChannel one at a time in
-	order to preserve the order of publication. Enable this only if needed
-	since there is some performance overhead to keep messages in order.
-                    ]]></xsd:documentation>
-				</xsd:annotation>
-			</xsd:attribute>
 			<xsd:attribute name="user-destination-prefix" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
@@ -926,7 +880,7 @@
 			<xsd:attribute name="path-matcher" type="xsd:string">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A reference to the PathMatcher to use to match the destinations of incoming
+	AppConfig reference to the PathMatcher to use to match the destinations of incoming
 	messages to @MessageMapping and @SubscribeMapping methods.
 
 	By default AntPathMatcher is configured.

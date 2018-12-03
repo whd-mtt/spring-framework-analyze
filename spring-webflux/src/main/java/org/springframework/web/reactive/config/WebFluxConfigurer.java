@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import org.springframework.web.reactive.result.method.annotation.ArgumentResolve
 
 /**
  * Defines callback methods to customize the configuration for WebFlux
- * applications enabled via {@link EnableWebFlux @EnableWebFlux}.
+ * applications enabled via {@code @EnableWebFlux}.
  *
  * <p>{@code @EnableWebFlux}-annotated configuration classes may implement
  * this interface to be called back and given a chance to customize the
@@ -38,25 +38,18 @@ import org.springframework.web.reactive.result.method.annotation.ArgumentResolve
  * @author Brian Clozel
  * @author Rossen Stoyanchev
  * @since 5.0
- * @see WebFluxConfigurationSupport
- * @see DelegatingWebFluxConfiguration
  */
 public interface WebFluxConfigurer {
 
 	/**
-	 * Configure how the content type requested for the response is resolved
-	 * when handling requests with annotated controllers.
+	 * Configure how the content type requested for the response is resolved.
 	 * @param builder for configuring the resolvers to use
 	 */
 	default void configureContentTypeResolver(RequestedContentTypeResolverBuilder builder) {
 	}
 
 	/**
-	 * Configure "global" cross origin request processing.
-	 * <p>The configured readers and writers will apply to all requests including
-	 * annotated controllers and functional endpoints. Annotated controllers can
-	 * further declare more fine-grained configuration via
-	 * {@link org.springframework.web.bind.annotation.CrossOrigin @CrossOrigin}.
+	 * Configure cross origin requests processing.
 	 * @see CorsRegistry
 	 */
 	default void addCorsMappings(CorsRegistry registry) {
@@ -64,9 +57,8 @@ public interface WebFluxConfigurer {
 
 	/**
 	 * Configure path matching options.
-	 * <p>The configured path matching options will be used for mapping to
-	 * annotated controllers and also
-	 * {@link #addResourceHandlers(ResourceHandlerRegistry) static resources}.
+	 * 
+	 * {@code HandlerMapping}s with path matching options.
 	 * @param configurer the {@link PathMatchConfigurer} instance
 	 */
 	default void configurePathMatching(PathMatchConfigurer configurer) {
@@ -80,7 +72,7 @@ public interface WebFluxConfigurer {
 	}
 
 	/**
-	 * Configure resolvers for custom {@code @RequestMapping} method arguments.
+	 * Configure resolvers for custom controller method arguments.
 	 * @param configurer to configurer to use
 	 */
 	default void configureArgumentResolvers(ArgumentResolverConfigurer configurer) {
@@ -88,16 +80,14 @@ public interface WebFluxConfigurer {
 
 	/**
 	 * Configure custom HTTP message readers and writers or override built-in ones.
-	 * <p>The configured readers and writers will be used for both annotated
-	 * controllers and functional endpoints.
 	 * @param configurer the configurer to use
 	 */
 	default void configureHttpMessageCodecs(ServerCodecConfigurer configurer) {
 	}
 
 	/**
-	 * Add custom {@link Converter Converters} and {@link Formatter Formatters} for
-	 * performing type conversion and formatting of annotated controller method arguments.
+	 * Add custom {@link Converter}s and {@link Formatter}s for performing type
+	 * conversion and formatting of controller method arguments.
 	 */
 	default void addFormatters(FormatterRegistry registry) {
 	}
@@ -105,9 +95,7 @@ public interface WebFluxConfigurer {
 	/**
 	 * Provide a custom {@link Validator}.
 	 * <p>By default a validator for standard bean validation is created if
-	 * bean validation API is present on the classpath.
-	 * <p>The configured validator is used for validating annotated controller
-	 * method arguments.
+	 * bean validation api is present on the classpath.
 	 */
 	@Nullable
 	default Validator getValidator() {
@@ -115,9 +103,8 @@ public interface WebFluxConfigurer {
 	}
 
 	/**
-	 * Provide a custom {@link MessageCodesResolver} to use for data binding in
-	 * annotated controller method arguments instead of the one created by
-	 * default in {@link org.springframework.validation.DataBinder}.
+	 * Provide a custom {@link MessageCodesResolver} to use for data binding instead
+	 * of the one created by default in {@link org.springframework.validation.DataBinder}.
 	 */
 	@Nullable
 	default MessageCodesResolver getMessageCodesResolver() {
@@ -125,11 +112,14 @@ public interface WebFluxConfigurer {
 	}
 
 	/**
-	 * Configure view resolution for rendering responses with a view and a model,
-	 * where the view is typically an HTML template but could also be based on
-	 * an HTTP message writer (e.g. JSON, XML).
-	 * <p>The configured view resolvers will be used for both annotated
-	 * controllers and functional endpoints.
+	 * Configure view resolution for processing the return values of controller
+	 * methods that rely on resolving a
+	 * {@link org.springframework.web.reactive.result.view.View} to render
+	 * the response with. By default all controller methods rely on view
+	 * resolution unless annotated with {@code @ResponseBody} or explicitly
+	 * return {@code ResponseEntity}. A view may be specified explicitly with
+	 * a String return value or implicitly, e.g. {@code void} return value.
+	 * @see ViewResolverRegistry
 	 */
 	default void configureViewResolvers(ViewResolverRegistry registry) {
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,6 @@ import org.springframework.util.Assert;
  * @author Rossen Stoyanchev
  * @author Stephane Maldini
  * @since 5.0
- * @param <T> the type of element signaled
  */
 public class ChannelSendOperator<T> extends Mono<Void> implements Scannable {
 
@@ -51,7 +50,9 @@ public class ChannelSendOperator<T> extends Mono<Void> implements Scannable {
 	private final Flux<T> source;
 
 
-	public ChannelSendOperator(Publisher<? extends T> source, Function<Publisher<T>, Publisher<Void>> writeFunction) {
+	public ChannelSendOperator(Publisher<? extends T> source, Function<Publisher<T>,
+			Publisher<Void>> writeFunction) {
+
 		this.source = Flux.from(source);
 		this.writeFunction = writeFunction;
 	}
@@ -76,33 +77,6 @@ public class ChannelSendOperator<T> extends Mono<Void> implements Scannable {
 	}
 
 
-	private enum State {
-
-		/** No emissions from the upstream source yet. */
-		NEW,
-
-		/**
-		 * At least one signal of any kind has been received; we're ready to
-		 * call the write function and proceed with actual writing.
-		 */
-		FIRST_SIGNAL_RECEIVED,
-
-		/**
-		 * The write subscriber has subscribed and requested; we're going to
-		 * emit the cached signals.
-		 */
-		EMITTING_CACHED_SIGNALS,
-
-		/**
-		 * The write subscriber has subscribed, and cached signals have been
-		 * emitted to it; we're ready to switch to a simple pass-through mode
-		 * for all remaining signals.
-		 **/
-		READY_TO_WRITE
-
-	}
-
-
 	/**
 	 * A barrier inserted between the write source and the write subscriber
 	 * (i.e. the HTTP server adapter) that pre-fetches and waits for the first
@@ -118,7 +92,8 @@ public class ChannelSendOperator<T> extends Mono<Void> implements Scannable {
 	 * <p>Also uses {@link WriteCompletionBarrier} to communicate completion
 	 * and detect cancel signals from the completion subscriber.
 	 */
-	private class WriteBarrier implements CoreSubscriber<T>, Subscription, Publisher<T> {
+	@SuppressWarnings("deprecation")
+	private final class WriteBarrier implements CoreSubscriber<T>, Subscription, Publisher<T> {
 
 		/* Bridges signals to and from the completionSubscriber */
 		private final WriteCompletionBarrier writeCompletionBarrier;
@@ -127,24 +102,28 @@ public class ChannelSendOperator<T> extends Mono<Void> implements Scannable {
 		@Nullable
 		private Subscription subscription;
 
-		/** Cached data item before readyToWrite. */
+		/**
+		 * We've at at least one emission, we've called the write function, the write
+		 * subscriber has subscribed and cached signals have been emitted to it.
+		 * We're now simply passing data through to the write subscriber.
+		 **/
+		private boolean readyToWrite = false;
+
+		/** No emission from upstream yet */
+		private boolean beforeFirstEmission = true;
+
+		/** Cached signal before readyToWrite */
 		@Nullable
 		private T item;
 
-		/** Cached error signal before readyToWrite. */
+		/** Cached 1st/2nd signal before readyToWrite */
 		@Nullable
 		private Throwable error;
 
-		/** Cached onComplete signal before readyToWrite. */
+		/** Cached 1st/2nd signal before readyToWrite */
 		private boolean completed = false;
 
-		/** Recursive demand while emitting cached signals. */
-		private long demandBeforeReadyToWrite;
-
-		/** Current state. */
-		private State state = State.NEW;
-
-		/** The actual writeSubscriber from the HTTP server adapter. */
+		/** The actual writeSubscriber from the HTTP server adapter */
 		@Nullable
 		private Subscriber<? super T> writeSubscriber;
 
@@ -167,18 +146,18 @@ public class ChannelSendOperator<T> extends Mono<Void> implements Scannable {
 
 		@Override
 		public final void onNext(T item) {
-			if (this.state == State.READY_TO_WRITE) {
+			if (this.readyToWrite) {
 				requiredWriteSubscriber().onNext(item);
 				return;
 			}
 			//FIXME revisit in case of reentrant sync deadlock
 			synchronized (this) {
-				if (this.state == State.READY_TO_WRITE) {
+				if (this.readyToWrite) {
 					requiredWriteSubscriber().onNext(item);
 				}
-				else if (this.state == State.NEW) {
+				else if (this.beforeFirstEmission) {
 					this.item = item;
-					this.state = State.FIRST_SIGNAL_RECEIVED;
+					this.beforeFirstEmission = false;
 					writeFunction.apply(this).subscribe(this.writeCompletionBarrier);
 				}
 				else {
@@ -197,16 +176,16 @@ public class ChannelSendOperator<T> extends Mono<Void> implements Scannable {
 
 		@Override
 		public final void onError(Throwable ex) {
-			if (this.state == State.READY_TO_WRITE) {
+			if (this.readyToWrite) {
 				requiredWriteSubscriber().onError(ex);
 				return;
 			}
 			synchronized (this) {
-				if (this.state == State.READY_TO_WRITE) {
+				if (this.readyToWrite) {
 					requiredWriteSubscriber().onError(ex);
 				}
-				else if (this.state == State.NEW) {
-					this.state = State.FIRST_SIGNAL_RECEIVED;
+				else if (this.beforeFirstEmission) {
+					this.beforeFirstEmission = false;
 					this.writeCompletionBarrier.onError(ex);
 				}
 				else {
@@ -217,17 +196,17 @@ public class ChannelSendOperator<T> extends Mono<Void> implements Scannable {
 
 		@Override
 		public final void onComplete() {
-			if (this.state == State.READY_TO_WRITE) {
+			if (this.readyToWrite) {
 				requiredWriteSubscriber().onComplete();
 				return;
 			}
 			synchronized (this) {
-				if (this.state == State.READY_TO_WRITE) {
+				if (this.readyToWrite) {
 					requiredWriteSubscriber().onComplete();
 				}
-				else if (this.state == State.NEW) {
+				else if (this.beforeFirstEmission) {
 					this.completed = true;
-					this.state = State.FIRST_SIGNAL_RECEIVED;
+					this.beforeFirstEmission = false;
 					writeFunction.apply(this).subscribe(this.writeCompletionBarrier);
 				}
 				else {
@@ -250,28 +229,19 @@ public class ChannelSendOperator<T> extends Mono<Void> implements Scannable {
 			if (s == null) {
 				return;
 			}
-			if (this.state == State.READY_TO_WRITE) {
+			if (this.readyToWrite) {
 				s.request(n);
 				return;
 			}
 			synchronized (this) {
 				if (this.writeSubscriber != null) {
-					if (this.state == State.EMITTING_CACHED_SIGNALS) {
-						this.demandBeforeReadyToWrite = n;
+					this.readyToWrite = true;
+					if (emitCachedSignals()) {
 						return;
 					}
-					try {
-						this.state = State.EMITTING_CACHED_SIGNALS;
-						if (emitCachedSignals()) {
-							return;
-						}
-						n = n + this.demandBeforeReadyToWrite - 1;
-						if (n == 0) {
-							return;
-						}
-					}
-					finally {
-						this.state = State.READY_TO_WRITE;
+					n--;
+					if (n == 0) {
+						return;
 					}
 				}
 			}

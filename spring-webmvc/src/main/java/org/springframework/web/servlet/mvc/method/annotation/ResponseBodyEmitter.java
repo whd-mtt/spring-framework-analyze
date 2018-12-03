@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,25 +66,15 @@ public class ResponseBodyEmitter {
 	@Nullable
 	private final Long timeout;
 
+	private final Set<DataWithMediaType> earlySendAttempts = new LinkedHashSet<>(8);
+
 	@Nullable
 	private Handler handler;
 
-	/** Store send data before handler is initialized. */
-	private final Set<DataWithMediaType> earlySendAttempts = new LinkedHashSet<>(8);
-
-	/** Store complete invocation before handler is initialized. */
 	private boolean complete;
 
-	/** Store completeWithError invocation before handler is initialized. */
 	@Nullable
 	private Throwable failure;
-
-	/**
-	 * After an IOException on send, the servlet container will provide an onError
-	 * callback that we'll handle as completeWithError (on container thread).
-	 * We use this flag to ignore competing attempts to completeWithError by
-	 * the application via try-catch. */
-	private boolean sendFailed;
 
 	private final DefaultCallback timeoutCallback = new DefaultCallback();
 
@@ -157,11 +147,6 @@ public class ResponseBodyEmitter {
 	 * Write the given object to the response.
 	 * <p>If any exception occurs a dispatch is made back to the app server where
 	 * Spring MVC will pass the exception through its exception handling mechanism.
-	 * <p><strong>Note:</strong> if the send fails with an IOException, you do
-	 * not need to call {@link #completeWithError(Throwable)} in order to clean
-	 * up. Instead the Servlet container creates a notification that results in a
-	 * dispatch where Spring MVC invokes exception resolvers and completes
-	 * processing.
 	 * @param object the object to write
 	 * @throws IOException raised when an I/O error occurs
 	 * @throws java.lang.IllegalStateException wraps any other errors
@@ -171,8 +156,9 @@ public class ResponseBodyEmitter {
 	}
 
 	/**
-	 * Overloaded variant of {@link #send(Object)} that also accepts a MediaType
-	 * hint for how to serialize the given Object.
+	 * Write the given object to the response also using a MediaType hint.
+	 * <p>If any exception occurs a dispatch is made back to the app server where
+	 * Spring MVC will pass the exception through its exception handling mechanism.
 	 * @param object the object to write
 	 * @param mediaType a MediaType hint for selecting an HttpMessageConverter
 	 * @throws IOException raised when an I/O error occurs
@@ -189,11 +175,9 @@ public class ResponseBodyEmitter {
 				this.handler.send(object, mediaType);
 			}
 			catch (IOException ex) {
-				this.sendFailed = true;
 				throw ex;
 			}
 			catch (Throwable ex) {
-				this.sendFailed = true;
 				throw new IllegalStateException("Failed to send " + object, ex);
 			}
 		}
@@ -203,18 +187,11 @@ public class ResponseBodyEmitter {
 	}
 
 	/**
-	 * Complete request processing by performing a dispatch into the servlet
-	 * container, where Spring MVC is invoked once more, and completes the
-	 * request processing lifecycle.
-	 * <p><strong>Note:</strong> this method should be called by the application
-	 * to complete request processing. It should not be used after container
-	 * related events such as an error while {@link #send(Object) sending}.
+	 * Complete request processing.
+	 * <p>A dispatch is made into the app server where Spring MVC completes
+	 * asynchronous request processing.
 	 */
 	public synchronized void complete() {
-		// Ignore, after send failure
-		if (this.sendFailed) {
-			return;
-		}
 		this.complete = true;
 		if (this.handler != null) {
 			this.handler.complete();
@@ -224,19 +201,9 @@ public class ResponseBodyEmitter {
 	/**
 	 * Complete request processing with an error.
 	 * <p>A dispatch is made into the app server where Spring MVC will pass the
-	 * exception through its exception handling mechanism. Note however that
-	 * at this stage of request processing, the response is committed and the
-	 * response status can no longer be changed.
-	 * <p><strong>Note:</strong> this method should be called by the application
-	 * to complete request processing with an error. It should not be used after
-	 * container related events such as an error while
-	 * {@link #send(Object) sending}.
+	 * exception through its exception handling mechanism.
 	 */
 	public synchronized void completeWithError(Throwable ex) {
-		// Ignore, after send failure
-		if (this.sendFailed) {
-			return;
-		}
 		this.complete = true;
 		this.failure = ex;
 		if (this.handler != null) {

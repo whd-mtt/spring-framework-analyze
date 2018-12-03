@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,9 @@ public class CustomScopeConfigurer implements BeanFactoryPostProcessor, BeanClas
 	@Override
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
 		if (this.scopes != null) {
-			this.scopes.forEach((scopeKey, value) -> {
+			for (Map.Entry<String, Object> entry : this.scopes.entrySet()) {
+				String scopeKey = entry.getKey();
+				Object value = entry.getValue();
 				if (value instanceof Scope) {
 					beanFactory.registerScope(scopeKey, (Scope) value);
 				}
@@ -116,7 +118,7 @@ public class CustomScopeConfigurer implements BeanFactoryPostProcessor, BeanClas
 							scopeKey + "] is not an instance of required type [" + Scope.class.getName() +
 							"] or a corresponding Class or String value indicating a Scope implementation");
 				}
-			});
+			}
 		}
 	}
 

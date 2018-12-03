@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,29 +73,19 @@ public abstract class AbstractRequestExpectationManager implements RequestExpect
 		return expectation;
 	}
 
-	@SuppressWarnings("deprecation")
 	@Override
 	public ClientHttpResponse validateRequest(ClientHttpRequest request) throws IOException {
-		RequestExpectation expectation = null;
 		synchronized (this.requests) {
 			if (this.requests.isEmpty()) {
 				afterExpectationsDeclared();
 			}
 			try {
-				// Try this first for backwards compatibility
-				ClientHttpResponse response = validateRequestInternal(request);
-				if (response != null) {
-					return response;
-				}
-				else {
-					expectation = matchRequest(request);
-				}
+				return validateRequestInternal(request);
 			}
 			finally {
 				this.requests.add(request);
 			}
 		}
-		return expectation.createResponse(request);
 	}
 
 	/**
@@ -108,30 +98,9 @@ public abstract class AbstractRequestExpectationManager implements RequestExpect
 	/**
 	 * Subclasses must implement the actual validation of the request
 	 * matching to declared expectations.
-	 * @deprecated as of 5.0.3, subclasses should implement {@link #matchRequest(ClientHttpRequest)}
-	 * instead and return only the matched expectation, leaving the call to create the response
-	 * as a separate step (to be invoked by this class).
 	 */
-	@Deprecated
-	@Nullable
-	protected ClientHttpResponse validateRequestInternal(ClientHttpRequest request) throws IOException {
-		return null;
-	}
-
-	/**
-	 * As of 5.0.3 subclasses should implement this method instead of
-	 * {@link #validateRequestInternal(ClientHttpRequest)} in order to match the
-	 * request to an expectation, leaving the call to create the response as a separate step
-	 * (to be invoked by this class).
-	 * @param request the current request
-	 * @return the matched expectation with its request count updated via
-	 * {@link RequestExpectation#incrementAndValidate()}.
-	 * @since 5.0.3
-	 */
-	protected RequestExpectation matchRequest(ClientHttpRequest request) throws IOException {
-		throw new UnsupportedOperationException("It looks like neither the deprecated \"validateRequestInternal\"" +
-				"nor its replacement (this method) are implemented.");
-	}
+	protected abstract ClientHttpResponse validateRequestInternal(ClientHttpRequest request)
+			throws IOException;
 
 	@Override
 	public void verify() {
@@ -193,17 +162,11 @@ public abstract class AbstractRequestExpectationManager implements RequestExpect
 
 		private final Set<RequestExpectation> expectations = new LinkedHashSet<>();
 
-		public void addAllExpectations(Collection<RequestExpectation> expectations) {
-			this.expectations.addAll(expectations);
-		}
-
 		public Set<RequestExpectation> getExpectations() {
 			return this.expectations;
 		}
 
-		/**
-		 * Return a matching expectation, or {@code null} if none match.
-		 */
+
 		@Nullable
 		public RequestExpectation findExpectation(ClientHttpRequest request) throws IOException {
 			for (RequestExpectation expectation : this.expectations) {
@@ -212,7 +175,7 @@ public abstract class AbstractRequestExpectationManager implements RequestExpect
 					return expectation;
 				}
 				catch (AssertionError error) {
-					// We're looking to find a match or return null..
+					// Ignore
 				}
 			}
 			return null;
@@ -220,15 +183,10 @@ public abstract class AbstractRequestExpectationManager implements RequestExpect
 
 		/**
 		 * Invoke this for an expectation that has been matched.
-		 * <p>The count of the given expectation is incremented, then it is
-		 * either stored if remainingCount > 0 or removed otherwise.
+		 * <p>The given expectation will either be stored if it has a remaining
+		 * count or it will be removed otherwise.
 		 */
 		public void update(RequestExpectation expectation) {
-			expectation.incrementAndValidate();
-			updateInternal(expectation);
-		}
-
-		private void updateInternal(RequestExpectation expectation) {
 			if (expectation.hasRemainingCount()) {
 				this.expectations.add(expectation);
 			}
@@ -238,17 +196,13 @@ public abstract class AbstractRequestExpectationManager implements RequestExpect
 		}
 
 		/**
-		 * Add expectations to this group.
-		 * @deprecated as of 5.0.3, if favor of {@link #addAllExpectations}
+		 * Collection variant of {@link #update(RequestExpectation)} that can
+		 * be used to insert expectations.
 		 */
-		@Deprecated
 		public void updateAll(Collection<RequestExpectation> expectations) {
-			expectations.forEach(this::updateInternal);
+			expectations.forEach(this::update);
 		}
 
-		/**
-		 * Reset all expectations for this group.
-		 */
 		public void reset() {
 			this.expectations.clear();
 		}

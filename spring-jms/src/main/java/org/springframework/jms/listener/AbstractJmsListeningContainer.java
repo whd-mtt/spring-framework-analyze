@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public abstract class AbstractJmsListeningContainer extends JmsDestinationAccess
 
 	private boolean autoStartup = true;
 
-	private int phase = DEFAULT_PHASE;
+	private int phase = Integer.MAX_VALUE;
 
 	@Nullable
 	private String beanName;
@@ -80,7 +80,7 @@ public abstract class AbstractJmsListeningContainer extends JmsDestinationAccess
 
 	private boolean active = false;
 
-	private volatile boolean running = false;
+	private boolean running = false;
 
 	private final List<Object> pausedTasks = new LinkedList<>();
 
@@ -319,6 +319,12 @@ public abstract class AbstractJmsListeningContainer extends JmsDestinationAccess
 		}
 	}
 
+	@Override
+	public void stop(Runnable callback) {
+		stop();
+		callback.run();
+	}
+
 	/**
 	 * Notify all invoker tasks and stop the shared Connection, if any.
 	 * @throws JMSException if thrown by JMS API methods
@@ -344,7 +350,9 @@ public abstract class AbstractJmsListeningContainer extends JmsDestinationAccess
 	 */
 	@Override
 	public final boolean isRunning() {
-		return (this.running && runningAllowed());
+		synchronized (this.lifecycleMonitor) {
+			return (this.running && runningAllowed());
+		}
 	}
 
 	/**
@@ -607,7 +615,7 @@ public abstract class AbstractJmsListeningContainer extends JmsDestinationAccess
 	 * Register any invokers within this container.
 	 * <p>Subclasses need to implement this method for their specific
 	 * invoker management process.
-	 * <p>A shared JMS Connection, if any, will already have been
+	 * <p>AppConfig shared JMS Connection, if any, will already have been
 	 * started at this point.
 	 * @throws JMSException if registration failed
 	 * @see #getSharedConnection()
@@ -618,7 +626,7 @@ public abstract class AbstractJmsListeningContainer extends JmsDestinationAccess
 	 * Close the registered invokers.
 	 * <p>Subclasses need to implement this method for their specific
 	 * invoker management process.
-	 * <p>A shared JMS Connection, if any, will automatically be closed
+	 * <p>AppConfig shared JMS Connection, if any, will automatically be closed
 	 * <i>afterwards</i>.
 	 * @throws JMSException if shutdown failed
 	 * @see #shutdown()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,29 +31,32 @@ import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
 
 /**
  * Internal utility class that can be used to obtain wrapped {@link Serializable}
- * variants of {@link java.lang.reflect.Type java.lang.reflect.Types}.
+ * variants of {@link java.lang.reflect.Type}s.
  *
  * <p>{@link #forField(Field) Fields} or {@link #forMethodParameter(MethodParameter)
  * MethodParameters} can be used as the root source for a serializable type.
- * Alternatively, a regular {@link Class} can also be used as source.
+ * Alternatively the {@link #forGenericSuperclass(Class) superclass},
+ * {@link #forGenericInterfaces(Class) interfaces} or {@link #forTypeParameters(Class)
+ * type parameters} or a regular {@link Class} can also be used as source.
  *
  * <p>The returned type will either be a {@link Class} or a serializable proxy of
  * {@link GenericArrayType}, {@link ParameterizedType}, {@link TypeVariable} or
  * {@link WildcardType}. With the exception of {@link Class} (which is final) calls
- * to methods that return further {@link Type Types} (for example
+ * to methods that return further {@link Type}s (for example
  * {@link GenericArrayType#getGenericComponentType()}) will be automatically wrapped.
  *
  * @author Phillip Webb
  * @author Juergen Hoeller
  * @since 4.0
  */
-final class SerializableTypeWrapper {
+abstract class SerializableTypeWrapper {
 
 	private static final Class<?>[] SUPPORTED_SERIALIZABLE_TYPES = {
 			GenericArrayType.class, ParameterizedType.class, TypeVariable.class, WildcardType.class};
@@ -61,15 +64,12 @@ final class SerializableTypeWrapper {
 	static final ConcurrentReferenceHashMap<Type, Type> cache = new ConcurrentReferenceHashMap<>(256);
 
 
-	private SerializableTypeWrapper() {
-	}
-
-
 	/**
 	 * Return a {@link Serializable} variant of {@link Field#getGenericType()}.
 	 */
 	@Nullable
 	public static Type forField(Field field) {
+		Assert.notNull(field, "Field must not be null");
 		return forTypeProvider(new FieldTypeProvider(field));
 	}
 
@@ -80,6 +80,41 @@ final class SerializableTypeWrapper {
 	@Nullable
 	public static Type forMethodParameter(MethodParameter methodParameter) {
 		return forTypeProvider(new MethodParameterTypeProvider(methodParameter));
+	}
+
+	/**
+	 * Return a {@link Serializable} variant of {@link Class#getGenericSuperclass()}.
+	 */
+	@SuppressWarnings("serial")
+	@Nullable
+	public static Type forGenericSuperclass(final Class<?> type) {
+		return forTypeProvider(type::getGenericSuperclass);
+	}
+
+	/**
+	 * Return a {@link Serializable} variant of {@link Class#getGenericInterfaces()}.
+	 */
+	@SuppressWarnings("serial")
+	public static Type[] forGenericInterfaces(final Class<?> type) {
+		Type[] result = new Type[type.getGenericInterfaces().length];
+		for (int i = 0; i < result.length; i++) {
+			final int index = i;
+			result[i] = forTypeProvider(() -> type.getGenericInterfaces()[index]);
+		}
+		return result;
+	}
+
+	/**
+	 * Return a {@link Serializable} variant of {@link Class#getTypeParameters()}.
+	 */
+	@SuppressWarnings("serial")
+	public static Type[] forTypeParameters(final Class<?> type) {
+		Type[] result = new Type[type.getTypeParameters().length];
+		for (int i = 0; i < result.length; i++) {
+			final int index = i;
+			result[i] = forTypeProvider(() -> type.getTypeParameters()[index]);
+		}
+		return result;
 	}
 
 	/**
@@ -98,29 +133,23 @@ final class SerializableTypeWrapper {
 
 	/**
 	 * Return a {@link Serializable} {@link Type} backed by a {@link TypeProvider} .
-	 * <p>If type artifacts are generally not serializable in the current runtime
-	 * environment, this delegate will simply return the original {@code Type} as-is.
 	 */
 	@Nullable
-	static Type forTypeProvider(TypeProvider provider) {
+	static Type forTypeProvider(final TypeProvider provider) {
+		Assert.notNull(provider, "Provider must not be null");
 		Type providedType = provider.getType();
-		if (providedType == null || providedType instanceof Serializable) {
-			// No serializable type wrapping necessary (e.g. for java.lang.Class)
+		if (providedType == null) {
+			return null;
+		}
+		if (providedType instanceof Serializable) {
 			return providedType;
 		}
-		if (GraalDetector.inImageCode() || !Serializable.class.isAssignableFrom(Class.class)) {
-			// Let's skip any wrapping attempts if types are generally not serializable in
-			// the current runtime environment (even java.lang.Class itself, e.g. on Graal)
-			return providedType;
-		}
-
-		// Obtain a serializable type proxy for the given provider...
 		Type cached = cache.get(providedType);
 		if (cached != null) {
 			return cached;
 		}
 		for (Class<?> type : SUPPORTED_SERIALIZABLE_TYPES) {
-			if (type.isInstance(providedType)) {
+			if (type.isAssignableFrom(providedType.getClass())) {
 				ClassLoader classLoader = provider.getClass().getClassLoader();
 				Class<?>[] interfaces = new Class<?>[] {type, SerializableTypeProxy.class, Serializable.class};
 				InvocationHandler handler = new TypeProxyInvocationHandler(provider);
@@ -222,7 +251,7 @@ final class SerializableTypeWrapper {
 
 
 	/**
-	 * {@link TypeProvider} for {@link Type Types} obtained from a {@link Field}.
+	 * {@link TypeProvider} for {@link Type}s obtained from a {@link Field}.
 	 */
 	@SuppressWarnings("serial")
 	static class FieldTypeProvider implements TypeProvider {
@@ -262,7 +291,7 @@ final class SerializableTypeWrapper {
 
 
 	/**
-	 * {@link TypeProvider} for {@link Type Types} obtained from a {@link MethodParameter}.
+	 * {@link TypeProvider} for {@link Type}s obtained from a {@link MethodParameter}.
 	 */
 	@SuppressWarnings("serial")
 	static class MethodParameterTypeProvider implements TypeProvider {
@@ -316,7 +345,7 @@ final class SerializableTypeWrapper {
 
 
 	/**
-	 * {@link TypeProvider} for {@link Type Types} obtained by invoking a no-arg method.
+	 * {@link TypeProvider} for {@link Type}s obtained by invoking a no-arg method.
 	 */
 	@SuppressWarnings("serial")
 	static class MethodInvokeTypeProvider implements TypeProvider {

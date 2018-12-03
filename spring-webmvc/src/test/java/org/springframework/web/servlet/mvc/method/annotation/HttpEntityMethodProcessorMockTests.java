@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,16 @@
 
 package org.springframework.web.servlet.mvc.method.annotation;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,7 +34,6 @@ import org.mockito.ArgumentCaptor;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -531,7 +526,7 @@ public class HttpEntityMethodProcessorMockTests {
 
 		then(resourceRegionMessageConverter).should(times(1)).write(
 				anyCollection(), eq(APPLICATION_OCTET_STREAM),
-				argThat(outputMessage -> "bytes".equals(outputMessage.getHeaders().getFirst(HttpHeaders.ACCEPT_RANGES))));
+				argThat(outputMessage -> outputMessage.getHeaders().getFirst(HttpHeaders.ACCEPT_RANGES) == "bytes"));
 		assertEquals(206, servletResponse.getStatus());
 	}
 
@@ -551,41 +546,8 @@ public class HttpEntityMethodProcessorMockTests {
 		assertEquals(416, servletResponse.getStatus());
 	}
 
-	@Test //SPR-16754
-	public void disableRangeSupportForStreamingResponses() throws Exception {
-		InputStream is = new ByteArrayInputStream("Content".getBytes(StandardCharsets.UTF_8));
-		InputStreamResource resource = new InputStreamResource(is, "test");
-		ResponseEntity<Resource> returnValue = ResponseEntity.ok(resource);
-		servletRequest.addHeader("Range", "bytes=0-5");
-
-		given(resourceMessageConverter.canWrite(any(), eq(null))).willReturn(true);
-		given(resourceMessageConverter.canWrite(any(), eq(APPLICATION_OCTET_STREAM))).willReturn(true);
-
-		processor.handleReturnValue(returnValue, returnTypeResponseEntityResource, mavContainer, webRequest);
-		then(resourceMessageConverter).should(times(1)).write(
-				any(InputStreamResource.class), eq(APPLICATION_OCTET_STREAM), any(HttpOutputMessage.class));
-		assertEquals(200, servletResponse.getStatus());
-		assertThat(servletResponse.getHeader(HttpHeaders.ACCEPT_RANGES), Matchers.isEmptyOrNullString());
-	}
-
-	@Test //SPR-16921
-	public void disableRangeSupportIfContentRangePresent() throws Exception {
-		ResponseEntity<Resource> returnValue = ResponseEntity
-				.status(HttpStatus.PARTIAL_CONTENT)
-				.header(HttpHeaders.RANGE, "bytes=0-5")
-				.body(new ByteArrayResource("Content".getBytes(StandardCharsets.UTF_8)));
-
-		given(resourceRegionMessageConverter.canWrite(any(), eq(null))).willReturn(true);
-		given(resourceRegionMessageConverter.canWrite(any(), eq(APPLICATION_OCTET_STREAM))).willReturn(true);
-
-		processor.handleReturnValue(returnValue, returnTypeResponseEntityResource, mavContainer, webRequest);
-
-		then(resourceRegionMessageConverter).should(never()).write(anyCollection(), any(), any());
-		assertEquals(206, servletResponse.getStatus());
-	}
-
 	@Test  //SPR-14767
-	public void shouldHandleValidatorHeadersInputResponses() throws Exception {
+	public void shouldHandleValidatorHeadersInPutResponses() throws Exception {
 		servletRequest.setMethod("PUT");
 		String etagValue = "\"some-etag\"";
 		ResponseEntity<String> returnValue = ResponseEntity.ok().header(HttpHeaders.ETAG, etagValue).body("body");
@@ -594,21 +556,6 @@ public class HttpEntityMethodProcessorMockTests {
 		processor.handleReturnValue(returnValue, returnTypeResponseEntity, mavContainer, webRequest);
 
 		assertConditionalResponse(HttpStatus.OK, "body", etagValue, -1);
-	}
-
-	@Test
-	public void shouldNotFailPreconditionForPutRequests() throws Exception {
-		servletRequest.setMethod("PUT");
-		ZonedDateTime dateTime = ofEpochMilli(new Date().getTime()).atZone(GMT);
-		servletRequest.addHeader(HttpHeaders.IF_UNMODIFIED_SINCE, RFC_1123_DATE_TIME.format(dateTime));
-
-		long justModified = dateTime.plus(1, ChronoUnit.SECONDS).toEpochSecond() * 1000;
-		ResponseEntity<String> returnValue = ResponseEntity.ok()
-				.lastModified(justModified).body("body");
-		initStringMessageConversion(TEXT_PLAIN);
-		processor.handleReturnValue(returnValue, returnTypeResponseEntity, mavContainer, webRequest);
-
-		assertConditionalResponse(HttpStatus.OK, null, null, justModified);
 	}
 
 	@Test

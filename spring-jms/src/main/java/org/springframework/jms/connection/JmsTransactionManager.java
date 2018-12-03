@@ -47,7 +47,7 @@ import org.springframework.util.Assert;
  * for example a standalone application or a test suite, with any message broker
  * as target. However, this strategy is <i>not</i> able to provide XA transactions,
  * for example in order to share transactions between messaging and database access.
- * A full JTA/XA setup is required for XA transactions, typically using Spring's
+ * AppConfig full JTA/XA setup is required for XA transactions, typically using Spring's
  * {@link org.springframework.transaction.jta.JtaTransactionManager} as strategy.
  *
  * <p>Application code is required to retrieve the transactional JMS Session via

@@ -19,7 +19,7 @@
 	<xsd:element name="config">
 		<xsd:annotation>
 			<xsd:documentation><![CDATA[
-	A section (compartmentalization) of AOP-specific configuration (including
+	AppConfig section (compartmentalization) of AOP-specific configuration (including
 	aspects, pointcuts, etc).
 			]]></xsd:documentation>
 		</xsd:annotation>
@@ -28,21 +28,21 @@
 				<xsd:element name="pointcut" type="pointcutType" minOccurs="0" maxOccurs="unbounded">
 					<xsd:annotation>
 						<xsd:documentation><![CDATA[
-	A named pointcut definition.
+	AppConfig named pointcut definition.
 						]]></xsd:documentation>
 					</xsd:annotation>
 				</xsd:element>
 				<xsd:element name="advisor" type="advisorType" minOccurs="0" maxOccurs="unbounded">
 					<xsd:annotation>
 						<xsd:documentation source="java:org.springframework.aop.Advisor"><![CDATA[
-	A named advisor definition.
+	AppConfig named advisor definition.
 						]]></xsd:documentation>
 					</xsd:annotation>
 				</xsd:element>
 				<xsd:element name="aspect" type="aspectType" minOccurs="0" maxOccurs="unbounded">
 					<xsd:annotation>
 						<xsd:documentation><![CDATA[
-	A named aspect definition.
+	AppConfig named aspect definition.
 						]]></xsd:documentation>
 					</xsd:annotation>
 				</xsd:element>
@@ -113,7 +113,7 @@
 				<xsd:documentation source="java:org.springframework.aop.scope.ScopedProxyFactoryBean"><![CDATA[
 	Marks a bean definition as being a scoped proxy.
 
-	A bean marked as such will be exposed via a proxy, with the 'real'
+	AppConfig bean marked as such will be exposed via a proxy, with the 'real'
 	bean instance being retrieved from some other source (such as a
 	HttpSession) as and when required.
 				]]></xsd:documentation>
@@ -134,7 +134,7 @@
 			<xsd:element name="pointcut" type="pointcutType">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A named pointcut definition.
+	AppConfig named pointcut definition.
 					]]></xsd:documentation>
 				</xsd:annotation>
 			</xsd:element>
@@ -149,7 +149,7 @@
 			<xsd:element name="before" type="basicAdviceType">
 				<xsd:annotation>
 					<xsd:documentation><![CDATA[
-	A before advice definition.
+	AppConfig before advice definition.
 					]]></xsd:documentation>
 				</xsd:annotation>
 			</xsd:element>
@@ -273,7 +273,7 @@
 		<xsd:attribute name="delegate-ref" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
-	A reference to the bean that will serve
+	AppConfig reference to the bean that will serve
 	as the default implementation of the introduced interface.
 				]]></xsd:documentation>
 				<xsd:appinfo>
@@ -362,7 +362,7 @@
 		<xsd:attribute name="advice-ref" type="xsd:string" use="required">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
-	A reference to an advice bean.
+	AppConfig reference to an advice bean.
 				]]></xsd:documentation>
 				<xsd:appinfo>
 					<tool:annotation kind="ref">
@@ -374,14 +374,14 @@
 		<xsd:attribute name="pointcut" type="xsd:string">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
-	A pointcut expression.
+	AppConfig pointcut expression.
 				]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>
 		<xsd:attribute name="pointcut-ref" type="pointcutRefType">
 			<xsd:annotation>
 				<xsd:documentation><![CDATA[
-	A reference to a pointcut definition.
+	AppConfig reference to a pointcut definition.
 				]]></xsd:documentation>
 			</xsd:annotation>
 		</xsd:attribute>

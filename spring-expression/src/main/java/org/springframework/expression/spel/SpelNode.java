@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.springframework.expression.TypedValue;
 import org.springframework.lang.Nullable;
 
 /**
- * Represents a node in the AST for a parsed expression.
+ * Represents a node in the Ast for a parsed expression.
  *
  * @author Andy Clement
  * @since 3.0
@@ -66,14 +66,12 @@ public interface SpelNode {
 	void setValue(ExpressionState expressionState, @Nullable Object newValue) throws EvaluationException;
 
 	/**
-	 * Return the string form the this AST node.
-	 * @return the string form
+	 * @return the string form of this AST node
 	 */
 	String toStringAST();
 
 	/**
-	 * Return the number of children under this node.
-	 * @return the child count
+	 * @return the number of children under this node
 	 */
 	int getChildCount();
 
@@ -93,14 +91,12 @@ public interface SpelNode {
 	Class<?> getObjectClass(@Nullable Object obj);
 
 	/**
-	 * Return the start position of this AST node in the expression string.
-	 * @return the start position
+	 * @return the start position of this Ast node in the expression string
 	 */
 	int getStartPosition();
 
 	/**
-	 * Return the end position of this AST node in the expression string.
-	 * @return the end position
+	 * @return the end position of this Ast node in the expression string
 	 */
 	int getEndPosition();
 

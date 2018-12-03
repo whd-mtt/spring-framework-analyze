@@ -50,7 +50,7 @@ import org.springframework.util.Assert;
  * <p>The underlying mechanism is based on standard JMS MessageConsumer handling,
  * which is perfectly compatible with both native JMS and JMS in a Java EE environment.
  * Neither the JMS {@code MessageConsumer.setMessageListener} facility  nor the JMS
- * ServerSessionPool facility is required. A further advantage of this approach is
+ * ServerSessionPool facility is required. AppConfig further advantage of this approach is
  * full control over the listening process, allowing for custom scaling and throttling
  * and of concurrent message processing (which is up to concrete subclasses).
  *
@@ -59,7 +59,7 @@ import org.springframework.util.Assert;
  * {@link org.springframework.transaction.PlatformTransactionManager} into the
  * {@link #setTransactionManager "transactionManager"} property. This will usually
  * be a {@link org.springframework.transaction.jta.JtaTransactionManager} in a
- * Java EE environment, in combination with a JTA-aware JMS ConnectionFactory
+ * Java EE enviroment, in combination with a JTA-aware JMS ConnectionFactory
  * obtained from JNDI (check your application server's documentation).
  *
  * <p>This base class does not assume any specific mechanism for asynchronous
@@ -163,7 +163,7 @@ public abstract class AbstractPollingMessageListenerContainer extends AbstractMe
 	 * of course). 0 indicates no timeout at all; however, this is only
 	 * feasible if not running within a transaction manager and generally
 	 * discouraged since such a listener container cannot cleanly shut down.
-	 * A negative value such as -1 indicates a no-wait receive operation.
+	 * AppConfig negative value such as -1 indicates a no-wait receive operation.
 	 * @see #receiveFromConsumer(MessageConsumer, long)
 	 * @see javax.jms.MessageConsumer#receive(long)
 	 * @see javax.jms.MessageConsumer#receiveNoWait()

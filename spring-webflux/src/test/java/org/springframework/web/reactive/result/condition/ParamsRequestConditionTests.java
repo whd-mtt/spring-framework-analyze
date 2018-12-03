@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,12 @@ import org.junit.Test;
 import org.springframework.mock.web.test.server.MockServerWebExchange;
 import org.springframework.web.server.ServerWebExchange;
 
-import static org.junit.Assert.*;
-import static org.springframework.mock.http.server.reactive.test.MockServerHttpRequest.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.springframework.mock.http.server.reactive.test.MockServerHttpRequest.get;
 
 /**
  * Unit tests for {@link ParamsRequestCondition}.
@@ -89,28 +93,6 @@ public class ParamsRequestConditionTests {
 
 		result = condition2.compareTo(condition1, exchange);
 		assertTrue("Invalid comparison result: " + result, result > 0);
-	}
-
-	@Test // SPR-16674
-	public void compareToWithMoreSpecificMatchByValue() {
-		ServerWebExchange exchange = MockServerWebExchange.from(get("/"));
-
-		ParamsRequestCondition condition1 = new ParamsRequestCondition("response_type=code");
-		ParamsRequestCondition condition2 = new ParamsRequestCondition("response_type");
-
-		int result = condition1.compareTo(condition2, exchange);
-		assertTrue("Invalid comparison result: " + result, result < 0);
-	}
-
-	@Test
-	public void compareToWithNegatedMatch() {
-		ServerWebExchange exchange = MockServerWebExchange.from(get("/"));
-
-		ParamsRequestCondition condition1 = new ParamsRequestCondition("response_type!=code");
-		ParamsRequestCondition condition2 = new ParamsRequestCondition("response_type");
-
-		assertEquals("Negated match should not count as more specific",
-				0, condition1.compareTo(condition2, exchange));
 	}
 
 	@Test

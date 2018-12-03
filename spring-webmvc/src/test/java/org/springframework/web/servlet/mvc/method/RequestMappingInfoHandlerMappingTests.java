@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 
 package org.springframework.web.servlet.mvc.method;
 
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
+
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,6 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.junit.Before;
@@ -59,8 +63,6 @@ import org.springframework.web.servlet.mvc.condition.ProducesRequestCondition;
 import org.springframework.web.servlet.mvc.condition.RequestMethodsRequestCondition;
 import org.springframework.web.util.UrlPathHelper;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
 
 /**
  * Test fixture with {@link RequestMappingInfoHandlerMapping}.
@@ -155,7 +157,9 @@ public class RequestMappingInfoHandlerMappingTests {
 		}
 	}
 
-	@Test(expected = HttpMediaTypeNotAcceptableException.class)  // SPR-9603
+	// SPR-9603
+
+	@Test(expected = HttpMediaTypeNotAcceptableException.class)
 	public void getHandlerRequestMethodMatchFalsePositive() throws Exception {
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/users");
 		request.addHeader("Accept", "application/xml");
@@ -163,7 +167,9 @@ public class RequestMappingInfoHandlerMappingTests {
 		this.handlerMapping.getHandler(request);
 	}
 
-	@Test  // SPR-8462
+	// SPR-8462
+
+	@Test
 	public void getHandlerMediaTypeNotSupported() throws Exception {
 		testHttpMediaTypeNotSupportedException("/person/1");
 		testHttpMediaTypeNotSupportedException("/person/1/");
@@ -172,8 +178,8 @@ public class RequestMappingInfoHandlerMappingTests {
 
 	@Test
 	public void getHandlerHttpOptions() throws Exception {
-		testHttpOptions("/foo", "GET,HEAD,OPTIONS");
-		testHttpOptions("/person/1", "PUT,OPTIONS");
+		testHttpOptions("/foo", "GET,HEAD");
+		testHttpOptions("/person/1", "PUT");
 		testHttpOptions("/persons", "GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS");
 		testHttpOptions("/something", "PUT,POST");
 	}
@@ -191,14 +197,18 @@ public class RequestMappingInfoHandlerMappingTests {
 		}
 	}
 
-	@Test  // SPR-8462
+	// SPR-8462
+
+	@Test
 	public void getHandlerMediaTypeNotAccepted() throws Exception {
 		testHttpMediaTypeNotAcceptableException("/persons");
 		testHttpMediaTypeNotAcceptableException("/persons/");
 		testHttpMediaTypeNotAcceptableException("/persons.json");
 	}
 
-	@Test  // SPR-12854
+	// SPR-12854
+
+	@Test
 	public void getHandlerUnsatisfiedServletRequestParameterException() throws Exception {
 		try {
 			MockHttpServletRequest request = new MockHttpServletRequest("GET", "/params");
@@ -265,8 +275,10 @@ public class RequestMappingInfoHandlerMappingTests {
 		assertEquals("2", uriVariables.get("path2"));
 	}
 
+	// SPR-9098
+
 	@SuppressWarnings("unchecked")
-	@Test  // SPR-9098
+	@Test
 	public void handleMatchUriTemplateVariablesDecode() {
 		RequestMappingInfo key = RequestMappingInfo.paths("/{group}/{identifier}").build();
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/group/a%2Fb");
@@ -311,7 +323,6 @@ public class RequestMappingInfoHandlerMappingTests {
 		MultiValueMap<String, String> matrixVariables;
 		Map<String, String> uriVariables;
 
-		// URI var parsed into path variable + matrix params..
 		request = new MockHttpServletRequest();
 		handleMatch(request, "/{cars}", "/cars;colors=red,blue,green;year=2012");
 
@@ -323,7 +334,6 @@ public class RequestMappingInfoHandlerMappingTests {
 		assertEquals("2012", matrixVariables.getFirst("year"));
 		assertEquals("cars", uriVariables.get("cars"));
 
-		// URI var with regex for path variable, and URI var for matrix params..
 		request = new MockHttpServletRequest();
 		handleMatch(request, "/{cars:[^;]+}{params}", "/cars;colors=red,blue,green;year=2012");
 
@@ -336,7 +346,6 @@ public class RequestMappingInfoHandlerMappingTests {
 		assertEquals("cars", uriVariables.get("cars"));
 		assertEquals(";colors=red,blue,green;year=2012", uriVariables.get("params"));
 
-		// URI var with regex for path variable, and (empty) URI var for matrix params..
 		request = new MockHttpServletRequest();
 		handleMatch(request, "/{cars:[^;]+}{params}", "/cars");
 
@@ -346,22 +355,9 @@ public class RequestMappingInfoHandlerMappingTests {
 		assertNull(matrixVariables);
 		assertEquals("cars", uriVariables.get("cars"));
 		assertEquals("", uriVariables.get("params"));
-
-		// SPR-11897
-		request = new MockHttpServletRequest();
-		handleMatch(request, "/{foo}", "/a=42;b=c");
-
-		matrixVariables = getMatrixVariables(request, "foo");
-		uriVariables = getUriTemplateVariables(request);
-
-		assertNotNull(matrixVariables);
-		assertEquals(2, matrixVariables.size());
-		assertEquals("42", matrixVariables.getFirst("a"));
-		assertEquals("c", matrixVariables.getFirst("b"));
-		assertEquals("a=42", uriVariables.get("foo"));
 	}
 
-	@Test // SPR-10140, SPR-16867
+	@Test
 	public void handleMatchMatrixVariablesDecoding() {
 
 		MockHttpServletRequest request;
@@ -370,17 +366,17 @@ public class RequestMappingInfoHandlerMappingTests {
 		urlPathHelper.setUrlDecode(false);
 		urlPathHelper.setRemoveSemicolonContent(false);
 
-		this.handlerMapping.setUrlPathHelper(urlPathHelper);
+		this.handlerMapping.setUrlPathHelper(urlPathHelper );
 
 		request = new MockHttpServletRequest();
-		handleMatch(request, "/{cars}", "/cars;mvar=a%2Fb");
+		handleMatch(request, "/path{filter}", "/path;mvar=a%2fb");
 
-		MultiValueMap<String, String> matrixVariables = getMatrixVariables(request, "cars");
+		MultiValueMap<String, String> matrixVariables = getMatrixVariables(request, "filter");
 		Map<String, String> uriVariables = getUriTemplateVariables(request);
 
 		assertNotNull(matrixVariables);
 		assertEquals(Collections.singletonList("a/b"), matrixVariables.get("mvar"));
-		assertEquals("cars", uriVariables.get("cars"));
+		assertEquals(";mvar=a/b", uriVariables.get("filter"));
 	}
 
 
@@ -506,7 +502,6 @@ public class RequestMappingInfoHandlerMappingTests {
 		}
 	}
 
-
 	@SuppressWarnings("unused")
 	@Controller
 	private static class UserController {
@@ -519,7 +514,6 @@ public class RequestMappingInfoHandlerMappingTests {
 		public void saveUser() {
 		}
 	}
-
 
 	private static class TestRequestMappingInfoHandlerMapping extends RequestMappingInfoHandlerMapping {
 

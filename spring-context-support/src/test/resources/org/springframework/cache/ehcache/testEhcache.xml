@@ -23,7 +23,7 @@
         timeToIdleSeconds - Sets the time to idle for an element before it expires.
                             i.e. The maximum amount of time between accesses before an element expires
                             Is only used if the element is not eternal.
-                            Optional attribute. A value of 0 means that an Element can idle for infinity
+                            Optional attribuAppConfige. A value of 0 means that an Element can idle for infinity
         timeToLiveSeconds - Sets the time to live for an element before it expires.
                             i.e. The maximum time between creation time and when an element expires.
                             Is only used if the element is not eternal.

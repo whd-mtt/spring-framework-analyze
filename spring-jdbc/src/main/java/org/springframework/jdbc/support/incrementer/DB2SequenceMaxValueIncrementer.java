@@ -19,17 +19,14 @@ package org.springframework.jdbc.support.incrementer;
 import javax.sql.DataSource;
 
 /**
- * {@link DataFieldMaxValueIncrementer} that retrieves the next value
- * of a given sequence on DB2 LUW (for Linux, Unix and Windows).
- *
- * <p>Thanks to Mark MacMahon for the suggestion!
+ * {@link DataFieldMaxValueIncrementer} that retrieves the next value of a given sequence
+ * on DB2 UDB (for Unix and Windows). Thanks to Mark MacMahon for the suggestion!
  *
  * @author Juergen Hoeller
  * @since 1.1.3
- * @deprecated in favor of the specifically named {@link Db2LuwMaxValueIncrementer}
+ * @see DB2MainframeSequenceMaxValueIncrementer
  */
-@Deprecated
-public class DB2SequenceMaxValueIncrementer extends Db2LuwMaxValueIncrementer {
+public class DB2SequenceMaxValueIncrementer extends AbstractSequenceMaxValueIncrementer {
 
 	/**
 	 * Default constructor for bean property style usage.
@@ -46,6 +43,12 @@ public class DB2SequenceMaxValueIncrementer extends Db2LuwMaxValueIncrementer {
 	 */
 	public DB2SequenceMaxValueIncrementer(DataSource dataSource, String incrementerName) {
 		super(dataSource, incrementerName);
+	}
+
+
+	@Override
+	protected String getSequenceQuery() {
+		return "values nextval for " + getIncrementerName();
 	}
 
 }

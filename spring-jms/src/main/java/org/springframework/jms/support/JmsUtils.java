@@ -217,7 +217,10 @@ public abstract class JmsUtils {
 		try {
 			session.commit();
 		}
-		catch (javax.jms.TransactionInProgressException | javax.jms.IllegalStateException ex) {
+		catch (javax.jms.TransactionInProgressException ex) {
+			// Ignore -> can only happen in case of a JTA transaction.
+		}
+		catch (javax.jms.IllegalStateException ex) {
 			// Ignore -> can only happen in case of a JTA transaction.
 		}
 	}
@@ -232,7 +235,10 @@ public abstract class JmsUtils {
 		try {
 			session.rollback();
 		}
-		catch (javax.jms.TransactionInProgressException | javax.jms.IllegalStateException ex) {
+		catch (javax.jms.TransactionInProgressException ex) {
+			// Ignore -> can only happen in case of a JTA transaction.
+		}
+		catch (javax.jms.IllegalStateException ex) {
 			// Ignore -> can only happen in case of a JTA transaction.
 		}
 	}

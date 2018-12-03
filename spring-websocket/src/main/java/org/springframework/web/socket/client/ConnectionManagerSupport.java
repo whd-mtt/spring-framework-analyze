@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,13 +38,14 @@ public abstract class ConnectionManagerSupport implements SmartLifecycle {
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
+
 	private final URI uri;
 
 	private boolean autoStartup = false;
 
-	private int phase = DEFAULT_PHASE;
+	private boolean running = false;
 
-	private volatile boolean running = false;
+	private int phase = Integer.MAX_VALUE;
 
 	private final Object lifecycleMonitor = new Object();
 
@@ -160,7 +161,9 @@ public abstract class ConnectionManagerSupport implements SmartLifecycle {
 	 */
 	@Override
 	public boolean isRunning() {
-		return this.running;
+		synchronized (this.lifecycleMonitor) {
+			return this.running;
+		}
 	}
 
 

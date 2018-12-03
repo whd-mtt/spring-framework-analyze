@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,19 +39,19 @@ import org.springframework.lang.Nullable;
  * <caption>Attribute Summary</caption>
  * <thead>
  * <tr>
- * <th>Attribute</th>
- * <th>Required?</th>
- * <th>Runtime Expression?</th>
- * <th>Description</th>
+ * <th class="colFirst">Attribute</th>
+ * <th class="colOne">Required?</th>
+ * <th class="colOne">Runtime Expression?</th>
+ * <th class="colLast">Description</th>
  * </tr>
  * </thead>
  * <tbody>
- * <tr>
- * <td>path</td>
- * <td>true</td>
- * <td>true</td>
+ * <tr class="altColor">
+ * <td>path</p></td>
+ * <td>true</p></td>
+ * <td>true</p></td>
  * <td>Set the path that this tag should apply. E.g. 'customer' to allow bind
- * paths like 'address.street' rather than 'customer.address.street'.</td>
+ * paths like 'address.street' rather than 'customer.address.street'.</p></td>
  * </tr>
  * </tbody>
  * </table>
@@ -71,7 +71,7 @@ public class NestedPathTag extends TagSupport implements TryCatchFinally {
 	@Nullable
 	private String path;
 
-	/** Caching a previous nested path, so that it may be reset. */
+	/** Caching a previous nested path, so that it may be reset */
 	@Nullable
 	private String previousNestedPath;
 
@@ -106,10 +106,10 @@ public class NestedPathTag extends TagSupport implements TryCatchFinally {
 		// Save previous nestedPath value, build and expose current nestedPath value.
 		// Use request scope to expose nestedPath to included pages too.
 		this.previousNestedPath =
-				(String) this.pageContext.getAttribute(NESTED_PATH_VARIABLE_NAME, PageContext.REQUEST_SCOPE);
+				(String) pageContext.getAttribute(NESTED_PATH_VARIABLE_NAME, PageContext.REQUEST_SCOPE);
 		String nestedPath =
 				(this.previousNestedPath != null ? this.previousNestedPath + getPath() : getPath());
-		this.pageContext.setAttribute(NESTED_PATH_VARIABLE_NAME, nestedPath, PageContext.REQUEST_SCOPE);
+		pageContext.setAttribute(NESTED_PATH_VARIABLE_NAME, nestedPath, PageContext.REQUEST_SCOPE);
 
 		return EVAL_BODY_INCLUDE;
 	}
@@ -121,11 +121,11 @@ public class NestedPathTag extends TagSupport implements TryCatchFinally {
 	public int doEndTag() {
 		if (this.previousNestedPath != null) {
 			// Expose previous nestedPath value.
-			this.pageContext.setAttribute(NESTED_PATH_VARIABLE_NAME, this.previousNestedPath, PageContext.REQUEST_SCOPE);
+			pageContext.setAttribute(NESTED_PATH_VARIABLE_NAME, this.previousNestedPath, PageContext.REQUEST_SCOPE);
 		}
 		else {
 			// Remove exposed nestedPath value.
-			this.pageContext.removeAttribute(NESTED_PATH_VARIABLE_NAME, PageContext.REQUEST_SCOPE);
+			pageContext.removeAttribute(NESTED_PATH_VARIABLE_NAME, PageContext.REQUEST_SCOPE);
 		}
 
 		return EVAL_PAGE;

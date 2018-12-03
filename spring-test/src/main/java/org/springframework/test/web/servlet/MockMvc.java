@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import org.springframework.util.Assert;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import org.springframework.web.servlet.DispatcherServlet;
 
 /**
  * <strong>Main entry point for server-side Spring MVC test support.</strong>
@@ -66,7 +65,7 @@ import org.springframework.web.servlet.DispatcherServlet;
  */
 public final class MockMvc {
 
-	static final String MVC_RESULT_ATTRIBUTE = MockMvc.class.getName().concat(".MVC_RESULT_ATTRIBUTE");
+	static String MVC_RESULT_ATTRIBUTE = MockMvc.class.getName().concat(".MVC_RESULT_ATTRIBUTE");
 
 	private final TestDispatcherServlet servlet;
 
@@ -90,7 +89,6 @@ public final class MockMvc {
 		Assert.notNull(servlet, "DispatcherServlet is required");
 		Assert.notNull(filters, "Filters cannot be null");
 		Assert.noNullElements(filters, "Filters cannot contain null values");
-
 		this.servlet = servlet;
 		this.filters = filters;
 		this.servletContext = servlet.getServletContext();
@@ -124,34 +122,20 @@ public final class MockMvc {
 	}
 
 	/**
-	 * Return the underlying {@link DispatcherServlet} instance that this
-	 * {@code MockMvc} was initialized with.
-	 * <p>This is intended for use in custom request processing scenario where a
-	 * request handling component happens to delegate to the {@code DispatcherServlet}
-	 * at runtime and therefore needs to be injected with it.
-	 * <p>For most processing scenarios, simply use {@link MockMvc#perform},
-	 * or if you need to configure the {@code DispatcherServlet}, provide a
-	 * {@link DispatcherServletCustomizer} to the {@code MockMvcBuilder}.
-	 * @since 5.1
-	 */
-	public DispatcherServlet getDispatcherServlet() {
-		return this.servlet;
-	}
-
-
-	/**
 	 * Perform a request and return a type that allows chaining further
 	 * actions, such as asserting expectations, on the result.
 	 * @param requestBuilder used to prepare the request to execute;
 	 * see static factory methods in
 	 * {@link org.springframework.test.web.servlet.request.MockMvcRequestBuilders}
-	 * @return an instance of {@link ResultActions} (never {@code null})
+	 * @return an instance of {@link ResultActions}; never {@code null}
 	 * @see org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 	 * @see org.springframework.test.web.servlet.result.MockMvcResultMatchers
 	 */
 	public ResultActions perform(RequestBuilder requestBuilder) throws Exception {
-		if (this.defaultRequestBuilder != null && requestBuilder instanceof Mergeable) {
-			requestBuilder = (RequestBuilder) ((Mergeable) requestBuilder).merge(this.defaultRequestBuilder);
+		if (this.defaultRequestBuilder != null) {
+			if (requestBuilder instanceof Mergeable) {
+				requestBuilder = (RequestBuilder) ((Mergeable) requestBuilder).merge(this.defaultRequestBuilder);
+			}
 		}
 
 		MockHttpServletRequest request = requestBuilder.buildRequest(this.servletContext);
@@ -182,7 +166,7 @@ public final class MockMvc {
 		filterChain.doFilter(request, servletResponse);
 
 		if (DispatcherType.ASYNC.equals(request.getDispatcherType()) &&
-				asyncContext != null && !request.isAsyncStarted()) {
+				asyncContext != null & !request.isAsyncStarted()) {
 			asyncContext.complete();
 		}
 
@@ -215,10 +199,13 @@ public final class MockMvc {
 		return (MockHttpServletResponse) servletResponse;
 	}
 
+
 	private void applyDefaultResultActions(MvcResult mvcResult) throws Exception {
+
 		for (ResultMatcher matcher : this.defaultResultMatchers) {
 			matcher.match(mvcResult);
 		}
+
 		for (ResultHandler handler : this.defaultResultHandlers) {
 			handler.handle(mvcResult);
 		}

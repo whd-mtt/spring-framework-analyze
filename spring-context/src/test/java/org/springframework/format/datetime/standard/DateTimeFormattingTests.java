@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.Month;
 import java.time.MonthDay;
 import java.time.Period;
-import java.time.Year;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -34,7 +32,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
-import java.util.TimeZone;
 
 import org.junit.After;
 import org.junit.Before;
@@ -63,12 +60,12 @@ public class DateTimeFormattingTests {
 
 
 	@Before
-	public void setup() {
+	public void setUp() {
 		DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
-		setup(registrar);
+		setUp(registrar);
 	}
 
-	private void setup(DateTimeFormatterRegistrar registrar) {
+	private void setUp(DateTimeFormatterRegistrar registrar) {
 		conversionService = new FormattingConversionService();
 		DefaultConversionService.addDefaultConverters(conversionService);
 		registrar.registerFormatters(conversionService);
@@ -85,7 +82,7 @@ public class DateTimeFormattingTests {
 	}
 
 	@After
-	public void cleanup() {
+	public void tearDown() {
 		LocaleContextHolder.setLocale(null);
 		DateTimeContextHolder.setDateTimeContext(null);
 	}
@@ -101,10 +98,10 @@ public class DateTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindLocalDateWithSpecificStyle() {
+	public void testBindLocalDateWithSpecificStyle() throws Exception {
 		DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
 		registrar.setDateStyle(FormatStyle.LONG);
-		setup(registrar);
+		setUp(registrar);
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("localDate", "October 31, 2009");
 		binder.bind(propertyValues);
@@ -113,10 +110,10 @@ public class DateTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindLocalDateWithSpecificFormatter() {
+	public void testBindLocalDateWithSpecificFormatter() throws Exception {
 		DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
 		registrar.setDateFormatter(DateTimeFormatter.ofPattern("yyyyMMdd"));
-		setup(registrar);
+		setUp(registrar);
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("localDate", "20091031");
 		binder.bind(propertyValues);
@@ -180,7 +177,7 @@ public class DateTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindLocalDateFromJavaUtilCalendar() {
+	public void testBindLocalDateFromJavaUtilCalendar() throws Exception {
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("localDate", new GregorianCalendar(2009, 9, 31, 0, 0));
 		binder.bind(propertyValues);
@@ -198,10 +195,10 @@ public class DateTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindLocalTimeWithSpecificStyle() {
+	public void testBindLocalTimeWithSpecificStyle() throws Exception {
 		DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
 		registrar.setTimeStyle(FormatStyle.MEDIUM);
-		setup(registrar);
+		setUp(registrar);
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("localTime", "12:00:00 PM");
 		binder.bind(propertyValues);
@@ -210,10 +207,10 @@ public class DateTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindLocalTimeWithSpecificFormatter() {
+	public void testBindLocalTimeWithSpecificFormatter() throws Exception {
 		DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
 		registrar.setTimeFormatter(DateTimeFormatter.ofPattern("HHmmss"));
-		setup(registrar);
+		setUp(registrar);
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("localTime", "130000");
 		binder.bind(propertyValues);
@@ -231,7 +228,7 @@ public class DateTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindLocalTimeFromJavaUtilCalendar() {
+	public void testBindLocalTimeFromJavaUtilCalendar() throws Exception {
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("localTime", new GregorianCalendar(1970, 0, 0, 12, 0));
 		binder.bind(propertyValues);
@@ -262,7 +259,7 @@ public class DateTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindLocalDateTimeFromJavaUtilCalendar() {
+	public void testBindLocalDateTimeFromJavaUtilCalendar() throws Exception {
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("localDateTime", new GregorianCalendar(2009, 9, 31, 12, 0));
 		binder.bind(propertyValues);
@@ -273,10 +270,10 @@ public class DateTimeFormattingTests {
 	}
 
 	@Test
-	public void testBindDateTimeWithSpecificStyle() {
+	public void testBindDateTimeWithSpecificStyle() throws Exception {
 		DateTimeFormatterRegistrar registrar = new DateTimeFormatterRegistrar();
 		registrar.setDateTimeStyle(FormatStyle.MEDIUM);
-		setup(registrar);
+		setUp(registrar);
 		MutablePropertyValues propertyValues = new MutablePropertyValues();
 		propertyValues.add("localDateTime", LocalDateTime.of(2009, 10, 31, 12, 0));
 		binder.bind(propertyValues);
@@ -359,19 +356,12 @@ public class DateTimeFormattingTests {
 
 	@Test
 	@SuppressWarnings("deprecation")
-	public void testBindInstantFromJavaUtilDate() {
-		TimeZone defaultZone = TimeZone.getDefault();
-		TimeZone.setDefault(TimeZone.getTimeZone("GMT"));
-		try {
-			MutablePropertyValues propertyValues = new MutablePropertyValues();
-			propertyValues.add("instant", new Date(109, 9, 31, 12, 0));
-			binder.bind(propertyValues);
-			assertEquals(0, binder.getBindingResult().getErrorCount());
-			assertTrue(binder.getBindingResult().getFieldValue("instant").toString().startsWith("2009-10-31"));
-		}
-		finally {
-			TimeZone.setDefault(defaultZone);
-		}
+	public void testBindInstantFromJavaUtilDate() throws Exception {
+		MutablePropertyValues propertyValues = new MutablePropertyValues();
+		propertyValues.add("instant", new Date(109, 9, 31, 12, 0));
+		binder.bind(propertyValues);
+		assertEquals(0, binder.getBindingResult().getErrorCount());
+		assertTrue(binder.getBindingResult().getFieldValue("instant").toString().startsWith("2009-10-31"));
 	}
 
 	@Test
@@ -390,33 +380,6 @@ public class DateTimeFormattingTests {
 		binder.bind(propertyValues);
 		assertEquals(0, binder.getBindingResult().getErrorCount());
 		assertTrue(binder.getBindingResult().getFieldValue("duration").toString().equals("PT8H6M12.345S"));
-	}
-
-	@Test
-	public void testBindYear() {
-		MutablePropertyValues propertyValues = new MutablePropertyValues();
-		propertyValues.add("year", "2007");
-		binder.bind(propertyValues);
-		assertEquals(0, binder.getBindingResult().getErrorCount());
-		assertTrue(binder.getBindingResult().getFieldValue("year").toString().equals("2007"));
-	}
-
-	@Test
-	public void testBindMonth() {
-		MutablePropertyValues propertyValues = new MutablePropertyValues();
-		propertyValues.add("month", "JULY");
-		binder.bind(propertyValues);
-		assertEquals(0, binder.getBindingResult().getErrorCount());
-		assertTrue(binder.getBindingResult().getFieldValue("month").toString().equals("JULY"));
-	}
-
-	@Test
-	public void testBindMonthInAnyCase() {
-		MutablePropertyValues propertyValues = new MutablePropertyValues();
-		propertyValues.add("month", "July");
-		binder.bind(propertyValues);
-		assertEquals(0, binder.getBindingResult().getErrorCount());
-		assertTrue(binder.getBindingResult().getFieldValue("month").toString().equals("JULY"));
 	}
 
 	@Test
@@ -472,10 +435,6 @@ public class DateTimeFormattingTests {
 		private Period period;
 
 		private Duration duration;
-
-		private Year year;
-
-		private Month month;
 
 		private YearMonth yearMonth;
 
@@ -585,22 +544,6 @@ public class DateTimeFormattingTests {
 
 		public void setDuration(Duration duration) {
 			this.duration = duration;
-		}
-
-		public Year getYear() {
-			return year;
-		}
-
-		public void setYear(Year year) {
-			this.year = year;
-		}
-
-		public Month getMonth() {
-			return month;
-		}
-
-		public void setMonth(Month month) {
-			this.month = month;
 		}
 
 		public YearMonth getYearMonth() {

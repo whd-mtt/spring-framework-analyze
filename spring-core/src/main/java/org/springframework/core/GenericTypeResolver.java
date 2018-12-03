@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,15 +41,11 @@ import org.springframework.util.ConcurrentReferenceHashMap;
  * @author Phillip Webb
  * @since 2.5.2
  */
-public final class GenericTypeResolver {
+public abstract class GenericTypeResolver {
 
-	/** Cache from Class to TypeVariable Map. */
+	/** Cache from Class to TypeVariable Map */
 	@SuppressWarnings("rawtypes")
 	private static final Map<Class<?>, Map<TypeVariable, Type>> typeVariableCache = new ConcurrentReferenceHashMap<>();
-
-
-	private GenericTypeResolver() {
-	}
 
 
 	/**
@@ -90,7 +86,7 @@ public final class GenericTypeResolver {
 	 */
 	@Nullable
 	public static Class<?> resolveReturnTypeArgument(Method method, Class<?> genericIfc) {
-		Assert.notNull(method, "Method must not be null");
+		Assert.notNull(method, "method must not be null");
 		ResolvableType resolvableType = ResolvableType.forMethodReturnType(method).as(genericIfc);
 		if (!resolvableType.hasGenerics() || resolvableType.getType() instanceof WildcardType) {
 			return null;
@@ -229,7 +225,7 @@ public final class GenericTypeResolver {
 	 */
 	@SuppressWarnings("rawtypes")
 	public static Class<?> resolveType(Type genericType, Map<TypeVariable, Type> map) {
-		return ResolvableType.forType(genericType, new TypeVariableMapVariableResolver(map)).toClass();
+		return ResolvableType.forType(genericType, new TypeVariableMapVariableResolver(map)).resolve(Object.class);
 	}
 
 	/**

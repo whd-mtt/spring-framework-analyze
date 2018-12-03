@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,51 +17,47 @@
 package org.springframework.http.server.reactive;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Collection;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.servlet.AsyncContext;
 import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
-import javax.servlet.DispatcherType;
 import javax.servlet.Servlet;
 import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
 import javax.servlet.ServletRegistration;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
-import org.springframework.http.HttpLogging;
 import org.springframework.http.HttpMethod;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * Adapt {@link HttpHandler} to an {@link HttpServlet} using Servlet Async support
- * and Servlet 3.1 non-blocking I/O.
+ * Adapt {@link HttpHandler} to an {@link HttpServlet} using Servlet Async
+ * support and Servlet 3.1 non-blocking I/O.
  *
  * @author Arjen Poutsma
  * @author Rossen Stoyanchev
  * @since 5.0
- * @see org.springframework.web.server.adapter.AbstractReactiveWebInitializer
  */
+@WebServlet(asyncSupported = true)
 @SuppressWarnings("serial")
 public class ServletHttpHandlerAdapter implements Servlet {
 
-	private static final Log logger = HttpLogging.forLogName(ServletHttpHandlerAdapter.class);
+	private static final Log logger = LogFactory.getLog(ServletHttpHandlerAdapter.class);
+
 
 	private static final int DEFAULT_BUFFER_SIZE = 8192;
-
-	private static final String WRITE_ERROR_ATTRIBUTE_NAME = ServletHttpHandlerAdapter.class.getName() + ".ERROR";
 
 
 	private final HttpHandler httpHandler;
@@ -140,8 +136,8 @@ public class ServletHttpHandlerAdapter implements Servlet {
 			}
 			if (mapping.endsWith("/*")) {
 				String path = mapping.substring(0, mapping.length() - 2);
-				if (!path.isEmpty() && logger.isDebugEnabled()) {
-					logger.debug("Found servlet mapping prefix '" + path + "' for '" + name + "'");
+				if (!path.isEmpty()) {
+					logger.info("Found Servlet mapping '" + path + "' for Servlet '" + name + "'");
 				}
 				return path;
 			}
@@ -155,55 +151,32 @@ public class ServletHttpHandlerAdapter implements Servlet {
 
 
 	@Override
-	public void service(ServletRequest request, ServletResponse response) throws ServletException, IOException {
-		// Check for existing error attribute first
-		if (DispatcherType.ASYNC.equals(request.getDispatcherType())) {
-			Throwable ex = (Throwable) request.getAttribute(WRITE_ERROR_ATTRIBUTE_NAME);
-			throw new ServletException("Failed to create response content", ex);
-		}
-
+	public void service(ServletRequest request, ServletResponse response) throws IOException {
 		// Start async before Read/WriteListener registration
 		AsyncContext asyncContext = request.startAsync();
 		asyncContext.setTimeout(-1);
 
-		ServletServerHttpRequest httpRequest;
-		try {
-			httpRequest = createRequest(((HttpServletRequest) request), asyncContext);
-		}
-		catch (URISyntaxException ex) {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Failed to get request  URL: " + ex.getMessage());
-			}
-			((HttpServletResponse) response).setStatus(400);
-			asyncContext.complete();
-			return;
-		}
+		ServerHttpRequest httpRequest = createRequest(((HttpServletRequest) request), asyncContext);
+		ServerHttpResponse httpResponse = createResponse(((HttpServletResponse) response), asyncContext);
 
-		ServerHttpResponse httpResponse = createResponse(((HttpServletResponse) response), asyncContext, httpRequest);
-		if (httpRequest.getMethod() == HttpMethod.HEAD) {
+		if (HttpMethod.HEAD.equals(httpRequest.getMethod())) {
 			httpResponse = new HttpHeadResponseDecorator(httpResponse);
 		}
 
-		AtomicBoolean isCompleted = new AtomicBoolean();
-		HandlerResultAsyncListener listener = new HandlerResultAsyncListener(isCompleted, httpRequest);
-		asyncContext.addListener(listener);
+		asyncContext.addListener(ERROR_LISTENER);
 
-		HandlerResultSubscriber subscriber = new HandlerResultSubscriber(asyncContext, isCompleted, httpRequest);
+		HandlerResultSubscriber subscriber = new HandlerResultSubscriber(asyncContext);
 		this.httpHandler.handle(httpRequest, httpResponse).subscribe(subscriber);
 	}
 
-	protected ServletServerHttpRequest createRequest(HttpServletRequest request, AsyncContext context)
-			throws IOException, URISyntaxException {
-
+	protected ServerHttpRequest createRequest(HttpServletRequest request, AsyncContext context) throws IOException {
 		Assert.notNull(this.servletPath, "Servlet path is not initialized");
 		return new ServletServerHttpRequest(
 				request, context, this.servletPath, getDataBufferFactory(), getBufferSize());
 	}
 
-	protected ServletServerHttpResponse createResponse(HttpServletResponse response,
-			AsyncContext context, ServletServerHttpRequest request) throws IOException {
-
-		return new ServletServerHttpResponse(response, context, getDataBufferFactory(), getBufferSize(), request);
+	protected ServerHttpResponse createResponse(HttpServletResponse response, AsyncContext context) throws IOException {
+		return new ServletServerHttpResponse(response, context, getDataBufferFactory(), getBufferSize());
 	}
 
 	@Override
@@ -224,11 +197,11 @@ public class ServletHttpHandlerAdapter implements Servlet {
 
 	/**
 	 * We cannot combine ERROR_LISTENER and HandlerResultSubscriber due to:
-	 * https://issues.jboss.org/browse/WFLY-8515.
+	 * https://issues.jboss.org/browse/WFLY-8515
 	 */
-	private static void runIfAsyncNotComplete(AsyncContext asyncContext, AtomicBoolean isCompleted, Runnable task) {
+	private static void runIfAsyncNotComplete(AsyncContext asyncContext, Runnable task) {
 		try {
-			if (asyncContext.getRequest().isAsyncStarted() && isCompleted.compareAndSet(false, true)) {
+			if (asyncContext.getRequest().isAsyncStarted()) {
 				task.run();
 			}
 		}
@@ -239,30 +212,18 @@ public class ServletHttpHandlerAdapter implements Servlet {
 	}
 
 
-	private static class HandlerResultAsyncListener implements AsyncListener {
-
-		private final AtomicBoolean isCompleted;
-
-		private final String logPrefix;
-
-		public HandlerResultAsyncListener(AtomicBoolean isCompleted, ServletServerHttpRequest httpRequest) {
-			this.isCompleted = isCompleted;
-			this.logPrefix = httpRequest.getLogPrefix();
-		}
+	private final static AsyncListener ERROR_LISTENER = new AsyncListener() {
 
 		@Override
 		public void onTimeout(AsyncEvent event) {
-			logger.debug(this.logPrefix + "Timeout notification");
 			AsyncContext context = event.getAsyncContext();
-			runIfAsyncNotComplete(context, this.isCompleted, context::complete);
+			runIfAsyncNotComplete(context, context::complete);
 		}
 
 		@Override
 		public void onError(AsyncEvent event) {
-			Throwable ex = event.getThrowable();
-			logger.debug(this.logPrefix + "Error notification: " + (ex != null ? ex : "<no Throwable>"));
 			AsyncContext context = event.getAsyncContext();
-			runIfAsyncNotComplete(context, this.isCompleted, context::complete);
+			runIfAsyncNotComplete(context, context::complete);
 		}
 
 		@Override
@@ -274,23 +235,15 @@ public class ServletHttpHandlerAdapter implements Servlet {
 		public void onComplete(AsyncEvent event) {
 			// no-op
 		}
-	}
+	};
 
 
 	private class HandlerResultSubscriber implements Subscriber<Void> {
 
 		private final AsyncContext asyncContext;
 
-		private final AtomicBoolean isCompleted;
-
-		private final String logPrefix;
-
-		public HandlerResultSubscriber(
-				AsyncContext asyncContext, AtomicBoolean isCompleted, ServletServerHttpRequest httpRequest) {
-
+		public HandlerResultSubscriber(AsyncContext asyncContext) {
 			this.asyncContext = asyncContext;
-			this.isCompleted = isCompleted;
-			this.logPrefix = httpRequest.getLogPrefix();
 		}
 
 		@Override
@@ -305,30 +258,20 @@ public class ServletHttpHandlerAdapter implements Servlet {
 
 		@Override
 		public void onError(Throwable ex) {
-			logger.trace(this.logPrefix + "Failed to complete: " + ex.getMessage());
-			runIfAsyncNotComplete(this.asyncContext, this.isCompleted, () -> {
-				if (this.asyncContext.getResponse().isCommitted()) {
-					logger.trace(this.logPrefix + "Dispatch to container, to raise the error on servlet thread");
-					this.asyncContext.getRequest().setAttribute(WRITE_ERROR_ATTRIBUTE_NAME, ex);
-					this.asyncContext.dispatch();
-				}
-				else {
-					try {
-						logger.trace(this.logPrefix + "Setting ServletResponse status to 500 Server Error");
-						this.asyncContext.getResponse().resetBuffer();
-						((HttpServletResponse) this.asyncContext.getResponse()).setStatus(500);
-					}
-					finally {
-						this.asyncContext.complete();
-					}
-				}
+			runIfAsyncNotComplete(this.asyncContext, () -> {
+				logger.error("Could not complete request", ex);
+				HttpServletResponse response = (HttpServletResponse) this.asyncContext.getResponse();
+				response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				this.asyncContext.complete();
 			});
 		}
 
 		@Override
 		public void onComplete() {
-			logger.trace(this.logPrefix + "Handling completed");
-			runIfAsyncNotComplete(this.asyncContext, this.isCompleted, this.asyncContext::complete);
+			runIfAsyncNotComplete(this.asyncContext, () -> {
+				logger.debug("Successfully completed request");
+				this.asyncContext.complete();
+			});
 		}
 	}
 

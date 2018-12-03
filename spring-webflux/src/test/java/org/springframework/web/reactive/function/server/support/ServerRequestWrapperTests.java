@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,12 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
+import org.junit.Before;
 import org.junit.Test;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.ReactiveHttpInputMessage;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.reactive.function.BodyExtractor;
-import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.server.ServerRequest;
 
 import static org.junit.Assert.*;
@@ -43,18 +37,23 @@ import static org.mockito.Mockito.*;
  */
 public class ServerRequestWrapperTests {
 
-	private final ServerRequest mockRequest = mock(ServerRequest.class);
+	private ServerRequest mockRequest;
 
-	private final ServerRequestWrapper wrapper = new ServerRequestWrapper(mockRequest);
+	private ServerRequestWrapper wrapper;
 
+	@Before
+	public void createWrapper() {
+		mockRequest = mock(ServerRequest.class);
+		wrapper = new ServerRequestWrapper(mockRequest);
+	}
 
 	@Test
-	public void request() {
+	public void request() throws Exception {
 		assertSame(mockRequest, wrapper.request());
 	}
 
 	@Test
-	public void method() {
+	public void method() throws Exception {
 		HttpMethod method = HttpMethod.POST;
 		when(mockRequest.method()).thenReturn(method);
 
@@ -62,7 +61,7 @@ public class ServerRequestWrapperTests {
 	}
 
 	@Test
-	public void uri() {
+	public void uri() throws Exception {
 		URI uri = URI.create("https://example.com");
 		when(mockRequest.uri()).thenReturn(uri);
 
@@ -70,7 +69,7 @@ public class ServerRequestWrapperTests {
 	}
 
 	@Test
-	public void path() {
+	public void path() throws Exception {
 		String path = "/foo/bar";
 		when(mockRequest.path()).thenReturn(path);
 
@@ -78,7 +77,7 @@ public class ServerRequestWrapperTests {
 	}
 
 	@Test
-	public void headers() {
+	public void headers() throws Exception {
 		ServerRequest.Headers headers = mock(ServerRequest.Headers.class);
 		when(mockRequest.headers()).thenReturn(headers);
 
@@ -86,7 +85,7 @@ public class ServerRequestWrapperTests {
 	}
 
 	@Test
-	public void attribute() {
+	public void attribute() throws Exception {
 		String name = "foo";
 		String value = "bar";
 		when(mockRequest.attribute(name)).thenReturn(Optional.of(value));
@@ -95,7 +94,7 @@ public class ServerRequestWrapperTests {
 	}
 
 	@Test
-	public void queryParam() {
+	public void queryParam() throws Exception {
 		String name = "foo";
 		String value = "bar";
 		when(mockRequest.queryParam(name)).thenReturn(Optional.of(value));
@@ -104,7 +103,7 @@ public class ServerRequestWrapperTests {
 	}
 
 	@Test
-	public void queryParams() {
+	public void queryParams() throws Exception {
 		MultiValueMap<String, String> value = new LinkedMultiValueMap<>();
 		value.add("foo", "bar");
 		when(mockRequest.queryParams()).thenReturn(value);
@@ -113,7 +112,7 @@ public class ServerRequestWrapperTests {
 	}
 
 	@Test
-	public void pathVariable() {
+	public void pathVariable() throws Exception {
 		String name = "foo";
 		String value = "bar";
 		when(mockRequest.pathVariable(name)).thenReturn(value);
@@ -122,63 +121,11 @@ public class ServerRequestWrapperTests {
 	}
 
 	@Test
-	public void pathVariables() {
+	public void pathVariables() throws Exception {
 		Map<String, String> pathVariables = Collections.singletonMap("foo", "bar");
 		when(mockRequest.pathVariables()).thenReturn(pathVariables);
 
 		assertSame(pathVariables, wrapper.pathVariables());
-	}
-
-	@Test
-	@SuppressWarnings("unchecked")
-	public void cookies() {
-		MultiValueMap<String, HttpCookie> cookies = mock(MultiValueMap.class);
-		when(mockRequest.cookies()).thenReturn(cookies);
-
-		assertSame(cookies, wrapper.cookies());
-	}
-
-	@Test
-	public void bodyExtractor() {
-		Mono<String> result = Mono.just("foo");
-		BodyExtractor<Mono<String>, ReactiveHttpInputMessage> extractor = BodyExtractors.toMono(String.class);
-		when(mockRequest.body(extractor)).thenReturn(result);
-
-		assertSame(result, wrapper.body(extractor));
-	}
-
-	@Test
-	public void bodyToMonoClass() {
-		Mono<String> result = Mono.just("foo");
-		when(mockRequest.bodyToMono(String.class)).thenReturn(result);
-
-		assertSame(result, wrapper.bodyToMono(String.class));
-	}
-
-	@Test
-	public void bodyToMonoParameterizedTypeReference() {
-		Mono<String> result = Mono.just("foo");
-		ParameterizedTypeReference<String> reference = new ParameterizedTypeReference<String>() {};
-		when(mockRequest.bodyToMono(reference)).thenReturn(result);
-
-		assertSame(result, wrapper.bodyToMono(reference));
-	}
-
-	@Test
-	public void bodyToFluxClass() {
-		Flux<String> result = Flux.just("foo");
-		when(mockRequest.bodyToFlux(String.class)).thenReturn(result);
-
-		assertSame(result, wrapper.bodyToFlux(String.class));
-	}
-
-	@Test
-	public void bodyToFluxParameterizedTypeReference() {
-		Flux<String> result = Flux.just("foo");
-		ParameterizedTypeReference<String> reference = new ParameterizedTypeReference<String>() {};
-		when(mockRequest.bodyToFlux(reference)).thenReturn(result);
-
-		assertSame(result, wrapper.bodyToFlux(reference));
 	}
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,7 +217,7 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 	 * <p>Specify an alternative {@code TaskExecutor} for integration with an existing
 	 * thread pool. Note that this really only adds value if the threads are
 	 * managed in a specific fashion, for example within a Java EE environment.
-	 * A plain thread pool does not add much value, as this listener container
+	 * AppConfig plain thread pool does not add much value, as this listener container
 	 * will occupy a number of threads for its entire lifetime.
 	 * @see #setConcurrentConsumers
 	 * @see org.springframework.core.task.SimpleAsyncTaskExecutor
@@ -563,32 +563,21 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 		logger.debug("Waiting for shutdown of message listener invokers");
 		try {
 			synchronized (this.lifecycleMonitor) {
-				long receiveTimeout = getReceiveTimeout();
-				long waitStartTime = System.currentTimeMillis();
-				int waitCount = 0;
+				// Waiting for AsyncMessageListenerInvokers to deactivate themselves...
 				while (this.activeInvokerCount > 0) {
-					if (waitCount > 0 && !isAcceptMessagesWhileStopping() &&
-							System.currentTimeMillis() - waitStartTime >= receiveTimeout) {
-						// Unexpectedly some invokers are still active after the receive timeout period
-						// -> interrupt remaining receive attempts since we'd reject the messages anyway
-						for (AsyncMessageListenerInvoker scheduledInvoker : this.scheduledInvokers) {
-							scheduledInvoker.interruptIfNecessary();
-						}
-					}
 					if (logger.isDebugEnabled()) {
 						logger.debug("Still waiting for shutdown of " + this.activeInvokerCount +
-								" message listener invokers (iteration " + waitCount + ")");
+								" message listener invokers");
 					}
-					// Wait for AsyncMessageListenerInvokers to deactivate themselves...
-					if (receiveTimeout > 0) {
-						this.lifecycleMonitor.wait(receiveTimeout);
+					long timeout = getReceiveTimeout();
+					if (timeout > 0) {
+						this.lifecycleMonitor.wait(timeout);
 					}
 					else {
 						this.lifecycleMonitor.wait();
 					}
-					waitCount++;
 				}
-				// Clear remaining scheduled invokers, possibly left over as paused tasks
+				// Clear remaining scheduled invokers, possibly left over as paused tasks...
 				for (AsyncMessageListenerInvoker scheduledInvoker : this.scheduledInvokers) {
 					scheduledInvoker.clearResources();
 				}
@@ -875,7 +864,7 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 		}
 		if (ex instanceof SharedConnectionNotInitializedException) {
 			if (!alreadyRecovered) {
-				logger.debug("JMS message listener invoker needs to establish shared Connection");
+				logger.info("JMS message listener invoker needs to establish shared Connection");
 			}
 		}
 		else {
@@ -943,7 +932,7 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 					Connection con = createConnection();
 					JmsUtils.closeConnection(con);
 				}
-				logger.debug("Successfully refreshed JMS Connection");
+				logger.info("Successfully refreshed JMS Connection");
 				break;
 			}
 			catch (Exception ex) {
@@ -1060,9 +1049,6 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 		private int idleTaskExecutionCount = 0;
 
 		private volatile boolean idle = true;
-
-		@Nullable
-		private volatile Thread currentReceiveThread;
 
 		@Override
 		public void run() {
@@ -1183,16 +1169,10 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 		}
 
 		private boolean invokeListener() throws JMSException {
-			this.currentReceiveThread = Thread.currentThread();
-			try {
-				initResourcesIfNecessary();
-				boolean messageReceived = receiveAndExecute(this, this.session, this.consumer);
-				this.lastMessageSucceeded = true;
-				return messageReceived;
-			}
-			finally {
-				this.currentReceiveThread = null;
-			}
+			initResourcesIfNecessary();
+			boolean messageReceived = receiveAndExecute(this, this.session, this.consumer);
+			this.lastMessageSucceeded = true;
+			return messageReceived;
 		}
 
 		private void decreaseActiveInvokerCount() {
@@ -1224,13 +1204,6 @@ public class DefaultMessageListenerContainer extends AbstractPollingMessageListe
 		private void updateRecoveryMarker() {
 			synchronized (recoveryMonitor) {
 				this.lastRecoveryMarker = currentRecoveryMarker;
-			}
-		}
-
-		private void interruptIfNecessary() {
-			Thread currentReceiveThread = this.currentReceiveThread;
-			if (currentReceiveThread != null && !currentReceiveThread.isInterrupted()) {
-				currentReceiveThread.interrupt();
 			}
 		}
 

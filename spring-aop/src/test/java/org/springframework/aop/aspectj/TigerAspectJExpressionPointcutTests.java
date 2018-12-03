@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,30 +26,30 @@ import org.junit.Test;
 import test.annotation.EmptySpringAnnotation;
 import test.annotation.transaction.Tx;
 
-import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.tests.sample.beans.TestBean;
 
 import static org.junit.Assert.*;
 
 /**
- * Java 5 specific {@link AspectJExpressionPointcutTests}.
+ * Java5-specific {@link AspectJExpressionPointcutTests}.
  *
  * @author Rod Johnson
  * @author Chris Beams
  */
 public class TigerAspectJExpressionPointcutTests {
 
+	// TODO factor into static in AspectJExpressionPointcut
 	private Method getAge;
 
-	private final Map<String, Method> methodsOnHasGeneric = new HashMap<>();
+	private Map<String,Method> methodsOnHasGeneric = new HashMap<>();
 
 
 	@Before
-	public void setup() throws NoSuchMethodException {
+	public void setUp() throws NoSuchMethodException {
 		getAge = TestBean.class.getMethod("getAge");
 		// Assumes no overloading
-		for (Method method : HasGeneric.class.getMethods()) {
-			methodsOnHasGeneric.put(method.getName(), method);
+		for (Method m : HasGeneric.class.getMethods()) {
+			methodsOnHasGeneric.put(m.getName(), m);
 		}
 	}
 
@@ -74,7 +74,7 @@ public class TigerAspectJExpressionPointcutTests {
 	}
 
 	@Test
-	public void testMatchVarargs() throws Exception {
+	public void testMatchVarargs() throws SecurityException, NoSuchMethodException {
 
 		@SuppressWarnings("unused")
 		class MyTemplate {
@@ -86,6 +86,11 @@ public class TigerAspectJExpressionPointcutTests {
 		String expression = "execution(int *.*(String, Object...))";
 		AspectJExpressionPointcut jdbcVarArgs = new AspectJExpressionPointcut();
 		jdbcVarArgs.setExpression(expression);
+
+		// TODO: the expression above no longer matches Object[]
+		// assertFalse(jdbcVarArgs.matches(
+		//	JdbcTemplate.class.getMethod("queryForInt", String.class, Object[].class),
+		//	JdbcTemplate.class));
 
 		assertTrue(jdbcVarArgs.matches(
 				MyTemplate.class.getMethod("queryForInt", String.class, Object[].class),
@@ -100,19 +105,19 @@ public class TigerAspectJExpressionPointcutTests {
 	}
 
 	@Test
-	public void testMatchAnnotationOnClassWithAtWithin() throws Exception {
+	public void testMatchAnnotationOnClassWithAtWithin() throws SecurityException, NoSuchMethodException {
 		String expression = "@within(test.annotation.transaction.Tx)";
 		testMatchAnnotationOnClass(expression);
 	}
 
 	@Test
-	public void testMatchAnnotationOnClassWithoutBinding() throws Exception {
+	public void testMatchAnnotationOnClassWithoutBinding() throws SecurityException, NoSuchMethodException {
 		String expression = "within(@test.annotation.transaction.Tx *)";
 		testMatchAnnotationOnClass(expression);
 	}
 
 	@Test
-	public void testMatchAnnotationOnClassWithSubpackageWildcard() throws Exception {
+	public void testMatchAnnotationOnClassWithSubpackageWildcard() throws SecurityException, NoSuchMethodException {
 		String expression = "within(@(test.annotation..*) *)";
 		AspectJExpressionPointcut springAnnotatedPc = testMatchAnnotationOnClass(expression);
 		assertFalse(springAnnotatedPc.matches(TestBean.class.getMethod("setName", String.class), TestBean.class));
@@ -124,12 +129,12 @@ public class TigerAspectJExpressionPointcutTests {
 	}
 
 	@Test
-	public void testMatchAnnotationOnClassWithExactPackageWildcard() throws Exception {
+	public void testMatchAnnotationOnClassWithExactPackageWildcard() throws SecurityException, NoSuchMethodException {
 		String expression = "within(@(test.annotation.transaction.*) *)";
 		testMatchAnnotationOnClass(expression);
 	}
 
-	private AspectJExpressionPointcut testMatchAnnotationOnClass(String expression) throws Exception {
+	private AspectJExpressionPointcut testMatchAnnotationOnClass(String expression) throws SecurityException, NoSuchMethodException {
 		AspectJExpressionPointcut ajexp = new AspectJExpressionPointcut();
 		ajexp.setExpression(expression);
 
@@ -142,7 +147,7 @@ public class TigerAspectJExpressionPointcutTests {
 	}
 
 	@Test
-	public void testAnnotationOnMethodWithFQN() throws Exception {
+	public void testAnnotationOnMethodWithFQN() throws SecurityException, NoSuchMethodException {
 		String expression = "@annotation(test.annotation.transaction.Tx)";
 		AspectJExpressionPointcut ajexp = new AspectJExpressionPointcut();
 		ajexp.setExpression(expression);
@@ -156,56 +161,28 @@ public class TigerAspectJExpressionPointcutTests {
 	}
 
 	@Test
-	public void testAnnotationOnCglibProxyMethod() throws Exception {
-		String expression = "@annotation(test.annotation.transaction.Tx)";
-		AspectJExpressionPointcut ajexp = new AspectJExpressionPointcut();
-		ajexp.setExpression(expression);
-
-		ProxyFactory factory = new ProxyFactory(new BeanA());
-		factory.setProxyTargetClass(true);
-		BeanA proxy = (BeanA) factory.getProxy();
-		assertTrue(ajexp.matches(BeanA.class.getMethod("getAge"), proxy.getClass()));
-	}
-
-	@Test
-	public void testAnnotationOnDynamicProxyMethod() throws Exception {
-		String expression = "@annotation(test.annotation.transaction.Tx)";
-		AspectJExpressionPointcut ajexp = new AspectJExpressionPointcut();
-		ajexp.setExpression(expression);
-
-		ProxyFactory factory = new ProxyFactory(new BeanA());
-		factory.setProxyTargetClass(false);
-		IBeanA proxy = (IBeanA) factory.getProxy();
-		assertTrue(ajexp.matches(IBeanA.class.getMethod("getAge"), proxy.getClass()));
-	}
-
-	@Test
-	public void testAnnotationOnMethodWithWildcard() throws Exception {
+	public void testAnnotationOnMethodWithWildcard() throws SecurityException, NoSuchMethodException {
 		String expression = "execution(@(test.annotation..*) * *(..))";
 		AspectJExpressionPointcut anySpringMethodAnnotation = new AspectJExpressionPointcut();
 		anySpringMethodAnnotation.setExpression(expression);
 
 		assertFalse(anySpringMethodAnnotation.matches(getAge, TestBean.class));
-		assertFalse(anySpringMethodAnnotation.matches(
-				HasTransactionalAnnotation.class.getMethod("foo"), HasTransactionalAnnotation.class));
-		assertFalse(anySpringMethodAnnotation.matches(
-				HasTransactionalAnnotation.class.getMethod("bar", String.class), HasTransactionalAnnotation.class));
+		assertFalse(anySpringMethodAnnotation.matches(HasTransactionalAnnotation.class.getMethod("foo"), HasTransactionalAnnotation.class));
+		assertFalse(anySpringMethodAnnotation.matches(HasTransactionalAnnotation.class.getMethod("bar", String.class), HasTransactionalAnnotation.class));
 		assertFalse(anySpringMethodAnnotation.matches(BeanA.class.getMethod("setName", String.class), BeanA.class));
 		assertTrue(anySpringMethodAnnotation.matches(BeanA.class.getMethod("getAge"), BeanA.class));
 		assertFalse(anySpringMethodAnnotation.matches(BeanA.class.getMethod("setName", String.class), BeanA.class));
 	}
 
 	@Test
-	public void testAnnotationOnMethodArgumentsWithFQN() throws Exception {
+	public void testAnnotationOnMethodArgumentsWithFQN() throws SecurityException, NoSuchMethodException {
 		String expression = "@args(*, test.annotation.EmptySpringAnnotation))";
 		AspectJExpressionPointcut takesSpringAnnotatedArgument2 = new AspectJExpressionPointcut();
 		takesSpringAnnotatedArgument2.setExpression(expression);
 
 		assertFalse(takesSpringAnnotatedArgument2.matches(getAge, TestBean.class));
-		assertFalse(takesSpringAnnotatedArgument2.matches(
-				HasTransactionalAnnotation.class.getMethod("foo"), HasTransactionalAnnotation.class));
-		assertFalse(takesSpringAnnotatedArgument2.matches(
-				HasTransactionalAnnotation.class.getMethod("bar", String.class), HasTransactionalAnnotation.class));
+		assertFalse(takesSpringAnnotatedArgument2.matches(HasTransactionalAnnotation.class.getMethod("foo"), HasTransactionalAnnotation.class));
+		assertFalse(takesSpringAnnotatedArgument2.matches(HasTransactionalAnnotation.class.getMethod("bar", String.class), HasTransactionalAnnotation.class));
 		assertFalse(takesSpringAnnotatedArgument2.matches(BeanA.class.getMethod("setName", String.class), BeanA.class));
 		assertFalse(takesSpringAnnotatedArgument2.matches(BeanA.class.getMethod("getAge"), BeanA.class));
 		assertFalse(takesSpringAnnotatedArgument2.matches(BeanA.class.getMethod("setName", String.class), BeanA.class));
@@ -226,16 +203,14 @@ public class TigerAspectJExpressionPointcutTests {
 	}
 
 	@Test
-	public void testAnnotationOnMethodArgumentsWithWildcards() throws Exception {
+	public void testAnnotationOnMethodArgumentsWithWildcards() throws SecurityException, NoSuchMethodException {
 		String expression = "execution(* *(*, @(test..*) *))";
 		AspectJExpressionPointcut takesSpringAnnotatedArgument2 = new AspectJExpressionPointcut();
 		takesSpringAnnotatedArgument2.setExpression(expression);
 
 		assertFalse(takesSpringAnnotatedArgument2.matches(getAge, TestBean.class));
-		assertFalse(takesSpringAnnotatedArgument2.matches(
-				HasTransactionalAnnotation.class.getMethod("foo"), HasTransactionalAnnotation.class));
-		assertFalse(takesSpringAnnotatedArgument2.matches(
-				HasTransactionalAnnotation.class.getMethod("bar", String.class), HasTransactionalAnnotation.class));
+		assertFalse(takesSpringAnnotatedArgument2.matches(HasTransactionalAnnotation.class.getMethod("foo"), HasTransactionalAnnotation.class));
+		assertFalse(takesSpringAnnotatedArgument2.matches(HasTransactionalAnnotation.class.getMethod("bar", String.class), HasTransactionalAnnotation.class));
 		assertFalse(takesSpringAnnotatedArgument2.matches(BeanA.class.getMethod("setName", String.class), BeanA.class));
 		assertFalse(takesSpringAnnotatedArgument2.matches(BeanA.class.getMethod("getAge"), BeanA.class));
 		assertFalse(takesSpringAnnotatedArgument2.matches(BeanA.class.getMethod("setName", String.class), BeanA.class));
@@ -285,21 +260,12 @@ public class TigerAspectJExpressionPointcutTests {
 
 	@EmptySpringAnnotation
 	public static class SpringAnnotated {
-
 		public void foo() {
 		}
 	}
 
 
-	interface IBeanA {
-
-		@Tx
-		int getAge();
-	}
-
-
-	static class BeanA implements IBeanA {
-
+	static class BeanA {
 		private String name;
 
 		private int age;
@@ -309,7 +275,6 @@ public class TigerAspectJExpressionPointcutTests {
 		}
 
 		@Tx
-		@Override
 		public int getAge() {
 			return age;
 		}
@@ -318,7 +283,6 @@ public class TigerAspectJExpressionPointcutTests {
 
 	@Tx
 	static class BeanB {
-
 		private String name;
 
 		public void setName(String name) {

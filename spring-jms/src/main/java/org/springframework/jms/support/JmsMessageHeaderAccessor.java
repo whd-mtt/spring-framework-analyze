@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.NativeMessageHeaderAccessor;
 
 /**
- * A {@link org.springframework.messaging.support.MessageHeaderAccessor}
+ * AppConfig {@link org.springframework.messaging.support.MessageHeaderAccessor}
  * implementation giving access to JMS-specific headers.
  *
  * @author Stephane Nicoll
@@ -88,7 +88,7 @@ public class JmsMessageHeaderAccessor extends NativeMessageHeaderAccessor {
 	}
 
 	/**
-	 * Return the {@link JmsHeaders#PRIORITY priority}.
+	 * Return the {@link JmsHeaders#PRIORITY}.
 	 * @see JmsHeaders#PRIORITY
 	 */
 	@Nullable
@@ -127,7 +127,6 @@ public class JmsMessageHeaderAccessor extends NativeMessageHeaderAccessor {
 	 * Return the {@link JmsHeaders#TIMESTAMP timestamp}.
 	 * @see JmsHeaders#TIMESTAMP
 	 */
-	@Override
 	@Nullable
 	public Long getTimestamp() {
 		return (Long) getHeader(JmsHeaders.TIMESTAMP);

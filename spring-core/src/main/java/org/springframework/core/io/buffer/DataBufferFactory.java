@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,9 @@
 package org.springframework.core.io.buffer;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 /**
- * A factory for {@link DataBuffer DataBuffers}, allowing for allocation and wrapping of
+ * A factory for {@link DataBuffer}s, allowing for allocation and wrapping of
  * data buffers.
  *
  * @author Arjen Poutsma
@@ -62,16 +61,4 @@ public interface DataBufferFactory {
 	 */
 	DataBuffer wrap(byte[] bytes);
 
-	/**
-	 * Return a new {@code DataBuffer} composed of the {@code dataBuffers} elements joined together.
-	 * Depending on the implementation, the returned buffer may be a single buffer containing all
-	 * data of the provided buffers, or it may be a true composite that contains references to the
-	 * buffers.
-	 * <p>Note that the given data buffers do <strong>not</strong> have to be released, as they are
-	 * released as part of the returned composite.
-	 * @param dataBuffers the data buffers to be composed
-	 * @return a buffer that is composed from the {@code dataBuffers} argument
-	 * @since 5.0.3
-	 */
-	DataBuffer join(List<? extends DataBuffer> dataBuffers);
 }

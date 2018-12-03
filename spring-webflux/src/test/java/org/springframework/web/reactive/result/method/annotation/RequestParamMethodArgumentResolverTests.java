@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,14 +133,14 @@ public class RequestParamMethodArgumentResolverTests {
 	}
 
 	@Test
-	public void resolveWithQueryString() {
+	public void resolveWithQueryString() throws Exception {
 		MethodParameter param = this.testMethod.annot(requestParam().notRequired("bar")).arg(String.class);
 		MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/path?name=foo"));
 		assertEquals("foo", resolve(param, exchange));
 	}
 
 	@Test
-	public void resolveStringArray() {
+	public void resolveStringArray() throws Exception {
 		MethodParameter param = this.testMethod.annotPresent(RequestParam.class).arg(String[].class);
 		MockServerHttpRequest request = MockServerHttpRequest.get("/path?name=foo&name=bar").build();
 		Object result = resolve(param, MockServerWebExchange.from(request));
@@ -149,21 +149,13 @@ public class RequestParamMethodArgumentResolverTests {
 	}
 
 	@Test
-	public void resolveDefaultValue() {
+	public void resolveDefaultValue() throws Exception {
 		MethodParameter param = this.testMethod.annot(requestParam().notRequired("bar")).arg(String.class);
 		assertEquals("bar", resolve(param, MockServerWebExchange.from(MockServerHttpRequest.get("/"))));
 	}
 
-	@Test // SPR-17050
-	public void resolveAndConvertNullValue() {
-		MethodParameter param = this.testMethod
-				.annot(requestParam().notRequired())
-				.arg(Integer.class);
-		assertNull(resolve(param, MockServerWebExchange.from(MockServerHttpRequest.get("/?nullParam="))));
-	}
-
 	@Test
-	public void missingRequestParam() {
+	public void missingRequestParam() throws Exception {
 
 		MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/"));
 		MethodParameter param = this.testMethod.annotPresent(RequestParam.class).arg(String[].class);
@@ -176,7 +168,7 @@ public class RequestParamMethodArgumentResolverTests {
 	}
 
 	@Test
-	public void resolveSimpleTypeParam() {
+	public void resolveSimpleTypeParam() throws Exception {
 		MockServerHttpRequest request = MockServerHttpRequest.get("/path?stringNotAnnot=plainValue").build();
 		ServerWebExchange exchange = MockServerWebExchange.from(request);
 		MethodParameter param = this.testMethod.annotNotPresent(RequestParam.class).arg(String.class);
@@ -185,13 +177,13 @@ public class RequestParamMethodArgumentResolverTests {
 	}
 
 	@Test  // SPR-8561
-	public void resolveSimpleTypeParamToNull() {
+	public void resolveSimpleTypeParamToNull() throws Exception {
 		MethodParameter param = this.testMethod.annotNotPresent(RequestParam.class).arg(String.class);
 		assertNull(resolve(param, MockServerWebExchange.from(MockServerHttpRequest.get("/"))));
 	}
 
 	@Test  // SPR-10180
-	public void resolveEmptyValueToDefault() {
+	public void resolveEmptyValueToDefault() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/path?name="));
 		MethodParameter param = this.testMethod.annot(requestParam().notRequired("bar")).arg(String.class);
 		Object result = resolve(param, exchange);
@@ -199,21 +191,21 @@ public class RequestParamMethodArgumentResolverTests {
 	}
 
 	@Test
-	public void resolveEmptyValueWithoutDefault() {
+	public void resolveEmptyValueWithoutDefault() throws Exception {
 		MethodParameter param = this.testMethod.annotNotPresent(RequestParam.class).arg(String.class);
 		MockServerHttpRequest request = MockServerHttpRequest.get("/path?stringNotAnnot=").build();
 		assertEquals("", resolve(param, MockServerWebExchange.from(request)));
 	}
 
 	@Test
-	public void resolveEmptyValueRequiredWithoutDefault() {
+	public void resolveEmptyValueRequiredWithoutDefault() throws Exception {
 		MethodParameter param = this.testMethod.annot(requestParam()).arg(String.class);
 		MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/path?name="));
 		assertEquals("", resolve(param, exchange));
 	}
 
 	@Test
-	public void resolveOptionalParamValue() {
+	public void resolveOptionalParamValue() throws Exception {
 		ServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/"));
 		MethodParameter param = this.testMethod.arg(forClassWithGenerics(Optional.class, Integer.class));
 		Object result = resolve(param, exchange);
@@ -245,8 +237,7 @@ public class RequestParamMethodArgumentResolverTests {
 			@RequestParam("name") String paramRequired,
 			@RequestParam(name = "name", required = false) String paramNotRequired,
 			@RequestParam("name") Optional<Integer> paramOptional,
-			@RequestParam Mono<String> paramMono,
-			@RequestParam(required = false) Integer nullParam) {
+			@RequestParam Mono<String> paramMono) {
 	}
 
 }

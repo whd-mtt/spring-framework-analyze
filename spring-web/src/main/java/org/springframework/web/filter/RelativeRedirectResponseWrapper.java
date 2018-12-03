@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,14 @@
  */
 package org.springframework.web.filter;
 
+import java.io.IOException;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Assert;
-import org.springframework.web.util.WebUtils;
 
 /**
  * A response wrapper used for the implementation of
@@ -30,7 +31,7 @@ import org.springframework.web.util.WebUtils;
  * @author Rossen Stoyanchev
  * @since 4.3.10
  */
-final class RelativeRedirectResponseWrapper extends HttpServletResponseWrapper {
+class RelativeRedirectResponseWrapper extends HttpServletResponseWrapper {
 
 	private final HttpStatus redirectStatus;
 
@@ -43,7 +44,7 @@ final class RelativeRedirectResponseWrapper extends HttpServletResponseWrapper {
 
 
 	@Override
-	public void sendRedirect(String location) {
+	public void sendRedirect(String location) throws IOException {
 		setStatus(this.redirectStatus.value());
 		setHeader(HttpHeaders.LOCATION, location);
 	}
@@ -52,11 +53,20 @@ final class RelativeRedirectResponseWrapper extends HttpServletResponseWrapper {
 	public static HttpServletResponse wrapIfNecessary(HttpServletResponse response,
 			HttpStatus redirectStatus) {
 
-		RelativeRedirectResponseWrapper wrapper =
-				WebUtils.getNativeResponse(response, RelativeRedirectResponseWrapper.class);
+		return (hasWrapper(response) ? response : new RelativeRedirectResponseWrapper(response, redirectStatus));
+	}
 
-		return (wrapper != null ? response :
-				new RelativeRedirectResponseWrapper(response, redirectStatus));
+	private static boolean hasWrapper(ServletResponse response) {
+		if (response instanceof RelativeRedirectResponseWrapper) {
+			return true;
+		}
+		while (response instanceof HttpServletResponseWrapper) {
+			response = ((HttpServletResponseWrapper) response).getResponse();
+			if (response instanceof RelativeRedirectResponseWrapper) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,10 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpInputMessage;
-import org.springframework.http.HttpLogging;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
 import org.springframework.http.StreamingHttpOutputMessage;
@@ -46,12 +46,11 @@ import org.springframework.util.Assert;
  * @author Juergen Hoeller
  * @author Sebastien Deleuze
  * @since 3.0
- * @param <T> the converted object type
  */
 public abstract class AbstractHttpMessageConverter<T> implements HttpMessageConverter<T> {
 
-	/** Logger available to subclasses. */
-	protected final Log logger = HttpLogging.forLogName(getClass());
+	/** Logger available to subclasses */
+	protected final Log logger = LogFactory.getLog(getClass());
 
 	private List<MediaType> supportedMediaTypes = Collections.emptyList();
 
@@ -193,9 +192,7 @@ public abstract class AbstractHttpMessageConverter<T> implements HttpMessageConv
 	 * Future implementations might add some default behavior, however.
 	 */
 	@Override
-	public final T read(Class<? extends T> clazz, HttpInputMessage inputMessage)
-			throws IOException, HttpMessageNotReadableException {
-
+	public final T read(Class<? extends T> clazz, HttpInputMessage inputMessage) throws IOException {
 		return readInternal(clazz, inputMessage);
 	}
 
@@ -211,17 +208,23 @@ public abstract class AbstractHttpMessageConverter<T> implements HttpMessageConv
 		addDefaultHeaders(headers, t, contentType);
 
 		if (outputMessage instanceof StreamingHttpOutputMessage) {
-			StreamingHttpOutputMessage streamingOutputMessage = (StreamingHttpOutputMessage) outputMessage;
-			streamingOutputMessage.setBody(outputStream -> writeInternal(t, new HttpOutputMessage() {
+			StreamingHttpOutputMessage streamingOutputMessage =
+					(StreamingHttpOutputMessage) outputMessage;
+			streamingOutputMessage.setBody(new StreamingHttpOutputMessage.Body() {
 				@Override
-				public OutputStream getBody() {
-					return outputStream;
+				public void writeTo(final OutputStream outputStream) throws IOException {
+					writeInternal(t, new HttpOutputMessage() {
+						@Override
+						public OutputStream getBody() throws IOException {
+							return outputStream;
+						}
+						@Override
+						public HttpHeaders getHeaders() {
+							return headers;
+						}
+					});
 				}
-				@Override
-				public HttpHeaders getHeaders() {
-					return headers;
-				}
-			}));
+			});
 		}
 		else {
 			writeInternal(t, outputMessage);
@@ -236,7 +239,7 @@ public abstract class AbstractHttpMessageConverter<T> implements HttpMessageConv
 	 * {@link #getContentLength}, and sets the corresponding headers.
 	 * @since 4.2
 	 */
-	protected void addDefaultHeaders(HttpHeaders headers, T t, @Nullable MediaType contentType) throws IOException {
+	protected void addDefaultHeaders(HttpHeaders headers, T t, @Nullable MediaType contentType) throws IOException{
 		if (headers.getContentType() == null) {
 			MediaType contentTypeToUse = contentType;
 			if (contentType == null || contentType.isWildcardType() || contentType.isWildcardSubtype()) {

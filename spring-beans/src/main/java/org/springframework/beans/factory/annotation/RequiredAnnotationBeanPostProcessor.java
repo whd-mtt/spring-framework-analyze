@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,7 @@
 
 package org.springframework.beans.factory.annotation;
 
-import java.beans.PropertyDescriptor;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
+import org.springframework.beans.BeansException;
 import org.springframework.beans.PropertyValues;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -41,6 +33,15 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
+import java.beans.PropertyDescriptor;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * {@link org.springframework.beans.factory.config.BeanPostProcessor} implementation
  * that enforces required JavaBean properties to have been configured.
@@ -55,8 +56,8 @@ import org.springframework.util.Assert;
  * and obviates the need (<b>in part</b>) for a developer to code a method that
  * simply checks that all required properties have actually been set.
  *
- * <p>Please note that an 'init' method may still need to be implemented (and may
- * still be desirable), because all that this class does is enforcing that a
+ * <p>Please note that an 'init' method may still need to implemented (and may
+ * still be desirable), because all that this class does is enforce that a
  * 'required' property has actually been configured with a value. It does
  * <b>not</b> check anything else... In particular, it does not check that a
  * configured value is not {@code null}.
@@ -71,10 +72,7 @@ import org.springframework.util.Assert;
  * @since 2.0
  * @see #setRequiredAnnotationType
  * @see Required
- * @deprecated as of 5.1, in favor of using constructor injection for required settings
- * (or a custom {@link org.springframework.beans.factory.InitializingBean} implementation)
  */
-@Deprecated
 public class RequiredAnnotationBeanPostProcessor extends InstantiationAwareBeanPostProcessorAdapter
 		implements MergedBeanDefinitionPostProcessor, PriorityOrdered, BeanFactoryAware {
 
@@ -95,7 +93,7 @@ public class RequiredAnnotationBeanPostProcessor extends InstantiationAwareBeanP
 	private ConfigurableListableBeanFactory beanFactory;
 
 	/**
-	 * Cache for validated bean names, skipping re-validation for the same bean.
+	 * Cache for validated bean names, skipping re-validation for the same bean
 	 */
 	private final Set<String> validatedBeanNames = Collections.newSetFromMap(new ConcurrentHashMap<>(64));
 
@@ -142,24 +140,33 @@ public class RequiredAnnotationBeanPostProcessor extends InstantiationAwareBeanP
 	public void postProcessMergedBeanDefinition(RootBeanDefinition beanDefinition, Class<?> beanType, String beanName) {
 	}
 
+	//注入属性
 	@Override
 	public PropertyValues postProcessPropertyValues(
-			PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) {
+			PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) throws BeansException {
 
+		//如果容器缓存中没有指定Bean名称
 		if (!this.validatedBeanNames.contains(beanName)) {
+			//如果指定Bean定义中没有设置skipRequiredCheck属性
 			if (!shouldSkip(this.beanFactory, beanName)) {
 				List<String> invalidProperties = new ArrayList<>();
+				//遍历所有属性
 				for (PropertyDescriptor pd : pds) {
+					//如果属性添加了@Required注解，且属性集合中不包含指定名称的属性
 					if (isRequiredProperty(pd) && !pvs.contains(pd.getName())) {
+						//当前属性为无效的属性
 						invalidProperties.add(pd.getName());
 					}
 				}
+				//如果无效属性集合不为空
 				if (!invalidProperties.isEmpty()) {
 					throw new BeanInitializationException(buildExceptionMessage(invalidProperties, beanName));
 				}
 			}
+			//将Bean名称缓存到容器中
 			this.validatedBeanNames.add(beanName);
 		}
+		//返回经过验证的属性值
 		return pvs;
 	}
 
@@ -195,8 +202,11 @@ public class RequiredAnnotationBeanPostProcessor extends InstantiationAwareBeanP
 	 * @return {@code true} if the supplied property has been marked as being required;
 	 * {@code false} if not, or if the supplied property does not have a setter method
 	 */
+	//检查给定属性上是否添加了@Required注解
 	protected boolean isRequiredProperty(PropertyDescriptor propertyDescriptor) {
+		//获取给定属性的写方法(setter方法)
 		Method setter = propertyDescriptor.getWriteMethod();
+		//检查给定属性方法上是否存在指定类型的注解
 		return (setter != null && AnnotationUtils.getAnnotation(setter, getRequiredAnnotationType()) != null);
 	}
 

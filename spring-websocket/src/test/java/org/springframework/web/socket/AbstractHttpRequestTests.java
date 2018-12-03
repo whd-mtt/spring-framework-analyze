@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,14 +45,13 @@ public abstract class AbstractHttpRequestTests {
 
 
 	@Before
-	public void setup() {
+	public void setUp() {
 		resetRequestAndResponse();
 	}
 
 	protected void setRequest(String method, String requestUri) {
 		this.servletRequest.setMethod(method);
 		this.servletRequest.setRequestURI(requestUri);
-		this.request = new ServletServerHttpRequest(this.servletRequest);
 	}
 
 	protected void resetRequestAndResponse() {

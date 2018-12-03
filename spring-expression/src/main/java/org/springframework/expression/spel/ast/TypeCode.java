@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,50 +24,23 @@ package org.springframework.expression.spel.ast;
  */
 public enum TypeCode {
 
-	/**
-	 * An {@link Object}.
-	 */
 	OBJECT(Object.class),
 
-	/**
-	 * A {@code boolean}.
-	 */
 	BOOLEAN(Boolean.TYPE),
 
-	/**
-	 * A {@code byte}.
-	 */
 	BYTE(Byte.TYPE),
 
-	/**
-	 * A {@code char}.
-	 */
 	CHAR(Character.TYPE),
 
-	/**
-	 * A {@code double}.
-	 */
-	DOUBLE(Double.TYPE),
+	SHORT(Short.TYPE),
 
-	/**
-	 * A {@code float}.
-	 */
-	FLOAT(Float.TYPE),
-
-	/**
-	 * An {@code int}.
-	 */
 	INT(Integer.TYPE),
 
-	/**
-	 * A {@code long}.
-	 */
 	LONG(Long.TYPE),
 
-	/**
-	 * An {@link Object}.
-	 */
-	SHORT(Short.TYPE);
+	FLOAT(Float.TYPE),
+
+	DOUBLE(Double.TYPE);
 
 
 	private Class<?> type;
@@ -91,7 +64,7 @@ public enum TypeCode {
 				return tcs[i];
 			}
 		}
-		return OBJECT;
+		return TypeCode.OBJECT;
 	}
 
 	public static TypeCode forClass(Class<?> clazz) {

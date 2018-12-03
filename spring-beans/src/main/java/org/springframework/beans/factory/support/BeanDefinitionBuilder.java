@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import org.springframework.util.ObjectUtils;
  * @author Juergen Hoeller
  * @since 2.0
  */
-public final class BeanDefinitionBuilder {
+public class BeanDefinitionBuilder {
 
 	/**
 	 * Create a new {@code BeanDefinitionBuilder} used to construct a {@link GenericBeanDefinition}.
@@ -69,7 +69,9 @@ public final class BeanDefinitionBuilder {
 	 * @param instanceSupplier a callback for creating an instance of the bean
 	 * @since 5.0
 	 */
-	public static <T> BeanDefinitionBuilder genericBeanDefinition(Class<T> beanClass, Supplier<T> instanceSupplier) {
+	public static <T> BeanDefinitionBuilder genericBeanDefinition(
+			@Nullable Class<T> beanClass, Supplier<T> instanceSupplier) {
+
 		BeanDefinitionBuilder builder = new BeanDefinitionBuilder(new GenericBeanDefinition());
 		builder.beanDefinition.setBeanClass(beanClass);
 		builder.beanDefinition.setInstanceSupplier(instanceSupplier);
@@ -273,7 +275,7 @@ public final class BeanDefinitionBuilder {
 	 * Set the autowire mode for this definition.
 	 */
 	public BeanDefinitionBuilder setAutowireMode(int autowireMode) {
-		this.beanDefinition.setAutowireMode(autowireMode);
+		beanDefinition.setAutowireMode(autowireMode);
 		return this;
 	}
 
@@ -281,7 +283,7 @@ public final class BeanDefinitionBuilder {
 	 * Set the depency check mode for this definition.
 	 */
 	public BeanDefinitionBuilder setDependencyCheck(int dependencyCheck) {
-		this.beanDefinition.setDependencyCheck(dependencyCheck);
+		beanDefinition.setDependencyCheck(dependencyCheck);
 		return this;
 	}
 
@@ -314,7 +316,7 @@ public final class BeanDefinitionBuilder {
 	 */
 	public BeanDefinitionBuilder applyCustomizers(BeanDefinitionCustomizer... customizers) {
 		for (BeanDefinitionCustomizer customizer : customizers) {
-			customizer.customize(this.beanDefinition);
+			customizer.customize(beanDefinition);
 		}
 		return this;
 	}

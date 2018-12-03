@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,19 +29,34 @@ import org.springframework.lang.Nullable;
  *
  * @author Rossen Stoyanchev
  * @since 4.0
- * @param <T> the kind of condition that this condition can be combined with or compared to
  */
-public abstract class AbstractMessageCondition<T extends AbstractMessageCondition<T>> implements MessageCondition<T> {
+public abstract class AbstractMessageCondition<T extends AbstractMessageCondition<T>>
+		implements MessageCondition<T> {
+
+
+	/**
+	 * Return the collection of objects the message condition is composed of
+	 * (e.g. destination patterns), never {@code null}.
+	 */
+	protected abstract Collection<?> getContent();
+
+	/**
+	 * The notation to use when printing discrete items of content.
+	 * For example " || " for URL patterns or " && " for param expressions.
+	 */
+	protected abstract String getToStringInfix();
+
 
 	@Override
-	public boolean equals(@Nullable Object other) {
-		if (this == other) {
+	public boolean equals(@Nullable Object obj) {
+		if (this == obj) {
 			return true;
 		}
-		if (other == null || getClass() != other.getClass()) {
-			return false;
+		if (obj != null && getClass() == obj.getClass()) {
+			AbstractMessageCondition<?> other = (AbstractMessageCondition<?>) obj;
+			return getContent().equals(other.getContent());
 		}
-		return getContent().equals(((AbstractMessageCondition<?>) other).getContent());
+		return false;
 	}
 
 	@Override
@@ -62,18 +77,5 @@ public abstract class AbstractMessageCondition<T extends AbstractMessageConditio
 		builder.append("]");
 		return builder.toString();
 	}
-
-
-	/**
-	 * Return the collection of objects the message condition is composed of
-	 * (e.g. destination patterns), never {@code null}.
-	 */
-	protected abstract Collection<?> getContent();
-
-	/**
-	 * The notation to use when printing discrete items of content.
-	 * For example " || " for URL patterns or " && " for param expressions.
-	 */
-	protected abstract String getToStringInfix();
 
 }

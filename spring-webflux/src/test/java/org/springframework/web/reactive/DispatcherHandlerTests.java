@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.web.reactive;
 
 import java.nio.charset.StandardCharsets;
@@ -33,9 +32,11 @@ import org.springframework.mock.web.test.server.MockServerWebExchange;
 import org.springframework.web.method.ResolvableMethod;
 import org.springframework.web.server.ServerWebExchange;
 
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 /**
  * Unit tests for {@link DispatcherHandler}.
@@ -48,7 +49,8 @@ public class DispatcherHandlerTests {
 
 
 	@Test
-	public void handlerMappingOrder() {
+	public void handlerMappingOrder() throws Exception {
+
 		HandlerMapping hm1 = mock(HandlerMapping.class, withSettings().extraInterfaces(Ordered.class));
 		HandlerMapping hm2 = mock(HandlerMapping.class, withSettings().extraInterfaces(Ordered.class));
 		when(((Ordered) hm1).getOrder()).thenReturn(1);
@@ -88,7 +90,6 @@ public class DispatcherHandlerTests {
 		}
 	}
 
-
 	private static class StringHandlerResultHandler implements HandlerResultHandler {
 
 		@Override
@@ -104,5 +105,4 @@ public class DispatcherHandlerTests {
 			return exchange.getResponse().writeWith(Mono.just(dataBuffer));
 		}
 	}
-
 }

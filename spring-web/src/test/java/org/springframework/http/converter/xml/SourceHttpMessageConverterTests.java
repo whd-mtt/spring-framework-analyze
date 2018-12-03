@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,13 @@ import org.springframework.http.MockHttpOutputMessage;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.util.FileCopyUtils;
 
-import static org.junit.Assert.*;
-import static org.xmlunit.matchers.CompareMatcher.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.xmlunit.matchers.CompareMatcher.isSimilarTo;
+
+// Do NOT statically import org.junit.Assert.*, since XMLAssert extends junit.framework.Assert
 
 /**
  * @author Arjen Poutsma
@@ -68,7 +73,7 @@ public class SourceHttpMessageConverterTests {
 
 
 	@Before
-	public void setup() throws IOException {
+	public void setUp() throws IOException {
 		converter = new SourceHttpMessageConverter<>();
 		Resource external = new ClassPathResource("external.txt", getClass());
 
@@ -158,7 +163,7 @@ public class SourceHttpMessageConverterTests {
 		XMLReader reader = result.getXMLReader();
 		reader.setContentHandler(new DefaultHandler() {
 			@Override
-			public void characters(char[] ch, int start, int length) {
+			public void characters(char[] ch, int start, int length) throws SAXException {
 				String s = new String(ch, start, length);
 				assertNotEquals("Invalid result", "Foo Bar", s);
 			}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import org.springframework.lang.Nullable;
  *
  * <p>Requires a ConnectionFactory or a JmsTemplate instance to be set.
  * It will create its own JmsTemplate if a ConnectionFactory is passed in.
- * A custom JmsTemplate instance can be created for a given ConnectionFactory
+ * AppConfig custom JmsTemplate instance can be created for a given ConnectionFactory
  * through overriding the {@link #createJmsTemplate} method.
  *
  * @author Mark Pollack
@@ -43,7 +43,7 @@ import org.springframework.lang.Nullable;
  */
 public abstract class JmsGatewaySupport implements InitializingBean {
 
-	/** Logger available to subclasses. */
+	/** Logger available to subclasses */
 	protected final Log logger = LogFactory.getLog(getClass());
 
 	@Nullable

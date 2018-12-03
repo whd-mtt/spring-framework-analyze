@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,16 @@ import java.util.List;
 import java.util.Map;
 
 import com.jayway.jsonpath.JsonPath;
-import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
-import org.hamcrest.MatcherAssert;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
+
+import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.core.IsInstanceOf.*;
+import static org.springframework.test.util.AssertionErrors.*;
 
 /**
  * A helper class for applying assertions via JSON path expressions.
@@ -70,7 +72,7 @@ public class JsonPathExpectationsHelper {
 	@SuppressWarnings("unchecked")
 	public <T> void assertValue(String content, Matcher<T> matcher) {
 		T value = (T) evaluateJsonPath(content);
-		MatcherAssert.assertThat("JSON path \"" + this.expression + "\"", value, matcher);
+		assertThat("JSON path \"" + this.expression + "\"", value, matcher);
 	}
 
 	/**
@@ -85,7 +87,7 @@ public class JsonPathExpectationsHelper {
 	@SuppressWarnings("unchecked")
 	public <T> void assertValue(String content, Matcher<T> matcher, Class<T> targetType) {
 		T value = (T) evaluateJsonPath(content, targetType);
-		MatcherAssert.assertThat("JSON path \"" + this.expression + "\"", value, matcher);
+		assertThat("JSON path \"" + this.expression + "\"", value, matcher);
 	}
 
 	/**
@@ -100,11 +102,10 @@ public class JsonPathExpectationsHelper {
 			@SuppressWarnings("rawtypes")
 			List actualValueList = (List) actualValue;
 			if (actualValueList.isEmpty()) {
-				AssertionErrors.fail("No matching value at JSON path \"" + this.expression + "\"");
+				fail("No matching value at JSON path \"" + this.expression + "\"");
 			}
 			if (actualValueList.size() != 1) {
-				AssertionErrors.fail("Got a list of values " + actualValue +
-						" instead of the expected single value " + expectedValue);
+				fail("Got a list of values " + actualValue + " instead of the expected single value " + expectedValue);
 			}
 			actualValue = actualValueList.get(0);
 		}
@@ -113,7 +114,7 @@ public class JsonPathExpectationsHelper {
 				actualValue = evaluateJsonPath(content, expectedValue.getClass());
 			}
 		}
-		AssertionErrors.assertEquals("JSON path \"" + this.expression + "\"", expectedValue, actualValue);
+		assertEquals("JSON path \"" + this.expression + "\"", expectedValue, actualValue);
 	}
 
 	/**
@@ -124,7 +125,7 @@ public class JsonPathExpectationsHelper {
 	 */
 	public void assertValueIsString(String content) {
 		Object value = assertExistsAndReturn(content);
-		MatcherAssert.assertThat(failureReason("a string", value), value, CoreMatchers.instanceOf(String.class));
+		assertThat(failureReason("a string", value), value, instanceOf(String.class));
 	}
 
 	/**
@@ -135,7 +136,7 @@ public class JsonPathExpectationsHelper {
 	 */
 	public void assertValueIsBoolean(String content) {
 		Object value = assertExistsAndReturn(content);
-		MatcherAssert.assertThat(failureReason("a boolean", value), value, CoreMatchers.instanceOf(Boolean.class));
+		assertThat(failureReason("a boolean", value), value, instanceOf(Boolean.class));
 	}
 
 	/**
@@ -146,7 +147,7 @@ public class JsonPathExpectationsHelper {
 	 */
 	public void assertValueIsNumber(String content) {
 		Object value = assertExistsAndReturn(content);
-		MatcherAssert.assertThat(failureReason("a number", value), value, CoreMatchers.instanceOf(Number.class));
+		assertThat(failureReason("a number", value), value, instanceOf(Number.class));
 	}
 
 	/**
@@ -156,7 +157,7 @@ public class JsonPathExpectationsHelper {
 	 */
 	public void assertValueIsArray(String content) {
 		Object value = assertExistsAndReturn(content);
-		MatcherAssert.assertThat(failureReason("an array", value), value, CoreMatchers.instanceOf(List.class));
+		assertThat(failureReason("an array", value), value, instanceOf(List.class));
 	}
 
 	/**
@@ -167,16 +168,15 @@ public class JsonPathExpectationsHelper {
 	 */
 	public void assertValueIsMap(String content) {
 		Object value = assertExistsAndReturn(content);
-		MatcherAssert.assertThat(failureReason("a map", value), value, CoreMatchers.instanceOf(Map.class));
+		assertThat(failureReason("a map", value), value, instanceOf(Map.class));
 	}
 
 	/**
 	 * Evaluate the JSON path expression against the supplied {@code content}
-	 * and assert that a non-null value, possibly an empty array or map, exists
-	 * at the given path.
-	 * <p>Note that if the JSON path expression is not
+	 * and assert that a non-null value exists at the given path.
+	 * <p>If the JSON path expression is not
 	 * {@linkplain JsonPath#isDefinite() definite}, this method asserts
-	 * that the list of values at the given path is not <em>empty</em>.
+	 * that the value at the given path is not <em>empty</em>.
 	 * @param content the JSON content
 	 */
 	public void exists(String content) {
@@ -185,10 +185,10 @@ public class JsonPathExpectationsHelper {
 
 	/**
 	 * Evaluate the JSON path expression against the supplied {@code content}
-	 * and assert that a non-null value does not exist at the given path.
-	 * <p>Note that if the JSON path expression is not
+	 * and assert that a value does not exist at the given path.
+	 * <p>If the JSON path expression is not
 	 * {@linkplain JsonPath#isDefinite() definite}, this method asserts
-	 * that the list of values at the given path is <em>empty</em>.
+	 * that the value at the given path is <em>empty</em>.
 	 * @param content the JSON content
 	 */
 	public void doesNotExist(String content) {
@@ -201,10 +201,10 @@ public class JsonPathExpectationsHelper {
 		}
 		String reason = failureReason("no value", value);
 		if (pathIsIndefinite() && value instanceof List) {
-			AssertionErrors.assertTrue(reason, ((List<?>) value).isEmpty());
+			assertTrue(reason, ((List<?>) value).isEmpty());
 		}
 		else {
-			AssertionErrors.assertTrue(reason, (value == null));
+			assertTrue(reason, (value == null));
 		}
 	}
 
@@ -217,7 +217,7 @@ public class JsonPathExpectationsHelper {
 	 */
 	public void assertValueIsEmpty(String content) {
 		Object value = evaluateJsonPath(content);
-		AssertionErrors.assertTrue(failureReason("an empty value", value), ObjectUtils.isEmpty(value));
+		assertTrue(failureReason("an empty value", value), ObjectUtils.isEmpty(value));
 	}
 
 	/**
@@ -229,50 +229,7 @@ public class JsonPathExpectationsHelper {
 	 */
 	public void assertValueIsNotEmpty(String content) {
 		Object value = evaluateJsonPath(content);
-		AssertionErrors.assertTrue(failureReason("a non-empty value", value), !ObjectUtils.isEmpty(value));
-	}
-
-	/**
-	 * Evaluate the JSON path expression against the supplied {@code content}
-	 * and assert that a value, possibly {@code null}, exists.
-	 * <p>If the JSON path expression is not
-	 * {@linkplain JsonPath#isDefinite() definite}, this method asserts
-	 * that the list of values at the given path is not <em>empty</em>.
-	 * @param content the JSON content
-	 * @since 5.0.3
-	 */
-	public void hasJsonPath(String content) {
-		Object value = evaluateJsonPath(content);
-		if (pathIsIndefinite() && value instanceof List) {
-			String message = "No values for JSON path \"" + this.expression + "\"";
-			AssertionErrors.assertTrue(message, !((List<?>) value).isEmpty());
-		}
-	}
-
-	/**
-	 * Evaluate the JSON path expression against the supplied {@code content}
-	 * and assert that a value, including {@code null} values, does not exist
-	 * at the given path.
-	 * <p>If the JSON path expression is not
-	 * {@linkplain JsonPath#isDefinite() definite}, this method asserts
-	 * that the list of values at the given path is <em>empty</em>.
-	 * @param content the JSON content
-	 * @since 5.0.3
-	 */
-	public void doesNotHaveJsonPath(String content) {
-		Object value;
-		try {
-			value = evaluateJsonPath(content);
-		}
-		catch (AssertionError ex) {
-			return;
-		}
-		if (pathIsIndefinite() && value instanceof List) {
-			AssertionErrors.assertTrue(failureReason("no values", value), ((List<?>) value).isEmpty());
-		}
-		else {
-			AssertionErrors.fail(failureReason("no value", value));
-		}
+		assertTrue(failureReason("a non-empty value", value), !ObjectUtils.isEmpty(value));
 	}
 
 	private String failureReason(String expectedDescription, @Nullable Object value) {
@@ -280,36 +237,23 @@ public class JsonPathExpectationsHelper {
 				ObjectUtils.nullSafeToString(StringUtils.quoteIfString(value)));
 	}
 
-	/**
-	 * Evaluate the JSON path and return the resulting value.
-	 * @param content the content to evaluate against
-	 * @return the result of the evaluation
-	 * @throws AssertionError if the evaluation fails
-	 */
 	@Nullable
-	public Object evaluateJsonPath(String content) {
+	private Object evaluateJsonPath(String content) {
+		String message = "No value at JSON path \"" + this.expression + "\"";
 		try {
 			return this.jsonPath.read(content);
 		}
 		catch (Throwable ex) {
-			throw new AssertionError("No value at JSON path \"" + this.expression + "\"", ex);
+			throw new AssertionError(message, ex);
 		}
 	}
 
-	/**
-	 * Variant of {@link #evaluateJsonPath(String)} with a target type.
-	 * This can be useful for matching numbers reliably for example coercing an
-	 * integer into a double.
-	 * @param content the content to evaluate against
-	 * @return the result of the evaluation
-	 * @throws AssertionError if the evaluation fails
-	 */
-	public Object evaluateJsonPath(String content, Class<?> targetType) {
+	private Object evaluateJsonPath(String content, Class<?> targetType) {
+		String message = "No value at JSON path \"" + this.expression + "\"";
 		try {
 			return JsonPath.parse(content).read(this.expression, targetType);
 		}
 		catch (Throwable ex) {
-			String message = "No value at JSON path \"" + this.expression + "\"";
 			throw new AssertionError(message, ex);
 		}
 	}
@@ -318,9 +262,9 @@ public class JsonPathExpectationsHelper {
 	private Object assertExistsAndReturn(String content) {
 		Object value = evaluateJsonPath(content);
 		String reason = "No value at JSON path \"" + this.expression + "\"";
-		AssertionErrors.assertTrue(reason, value != null);
+		assertTrue(reason, value != null);
 		if (pathIsIndefinite() && value instanceof List) {
-			AssertionErrors.assertTrue(reason, !((List<?>) value).isEmpty());
+			assertTrue(reason, !((List<?>) value).isEmpty());
 		}
 		return value;
 	}

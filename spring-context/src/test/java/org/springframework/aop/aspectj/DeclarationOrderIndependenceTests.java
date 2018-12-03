@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,13 +39,13 @@ public class DeclarationOrderIndependenceTests {
 
 
 	@Before
-	public void setup() {
+	@SuppressWarnings("resource")
+	public void setUp() {
 		ClassPathXmlApplicationContext ctx =
-				new ClassPathXmlApplicationContext(getClass().getSimpleName() + ".xml", getClass());
+			new ClassPathXmlApplicationContext(getClass().getSimpleName() + ".xml", getClass());
 		aspect = (TopsyTurvyAspect) ctx.getBean("topsyTurvyAspect");
 		target = (TopsyTurvyTarget) ctx.getBean("topsyTurvyTarget");
 	}
-
 
 	@Test
 	public void testTargetIsSerializable() {
@@ -135,9 +135,10 @@ class TopsyTurvyAspect {
 
 interface TopsyTurvyTarget {
 
-	void doSomething();
+	public abstract void doSomething();
 
-	int getX();
+	public abstract int getX();
+
 }
 
 
@@ -154,6 +155,7 @@ class TopsyTurvyTargetImpl implements TopsyTurvyTarget {
 	public int getX() {
 		return x;
 	}
+
 }
 
 
@@ -177,4 +179,5 @@ class AspectCollaborator implements TopsyTurvyAspect.Collaborator {
 	public void beforeAdviceFired() {
 		this.beforeFired = true;
 	}
+
 }

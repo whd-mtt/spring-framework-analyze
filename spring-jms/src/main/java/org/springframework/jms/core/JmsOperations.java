@@ -376,7 +376,7 @@ public interface JmsOperations {
 
 	/**
 	 * Send a request message and receive the reply from a default destination. The
-	 * {@link MessageCreator} callback creates the message given a Session. A temporary
+	 * {@link MessageCreator} callback creates the message given a Session. AppConfig temporary
 	 * queue is created as part of this operation and is set in the {@code JMSReplyTO}
 	 * header of the message.
 	 * <p>This will only work with a default destination specified!
@@ -391,7 +391,7 @@ public interface JmsOperations {
 
 	/**
 	 * Send a message and receive the reply from the specified destination. The
-	 * {@link MessageCreator} callback creates the message given a Session. A temporary
+	 * {@link MessageCreator} callback creates the message given a Session. AppConfig temporary
 	 * queue is created as part of this operation and is set in the {@code JMSReplyTO}
 	 * header of the message.
 	 * @param destination the destination to send this message to
@@ -406,7 +406,7 @@ public interface JmsOperations {
 
 	/**
 	 * Send a message and receive the reply from the specified destination. The
-	 * {@link MessageCreator} callback creates the message given a Session. A temporary
+	 * {@link MessageCreator} callback creates the message given a Session. AppConfig temporary
 	 * queue is created as part of this operation and is set in the {@code JMSReplyTO}
 	 * header of the message.
 	 * @param destinationName the name of the destination to send this message to

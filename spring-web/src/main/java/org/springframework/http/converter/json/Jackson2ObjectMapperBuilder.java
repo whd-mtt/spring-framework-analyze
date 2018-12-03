@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.springframework.http.converter.json;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,10 +27,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -53,12 +52,12 @@ import com.fasterxml.jackson.dataformat.xml.JacksonXmlModule;
 import com.fasterxml.jackson.dataformat.xml.XmlFactory;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.FatalBeanException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.KotlinDetector;
-import org.springframework.http.HttpLogging;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -92,7 +91,6 @@ import org.springframework.util.xml.StaxUtils;
  * @author Sebastien Deleuze
  * @author Juergen Hoeller
  * @author Tadaya Tsuyukubo
- * @author Eddú Meléndez
  * @since 4.1.1
  * @see #build()
  * @see #configure(ObjectMapper)
@@ -100,19 +98,15 @@ import org.springframework.util.xml.StaxUtils;
  */
 public class Jackson2ObjectMapperBuilder {
 
-	private static volatile boolean kotlinWarningLogged = false;
+	private final Log logger = LogFactory.getLog(getClass());
 
-	private final Log logger = HttpLogging.forLogName(getClass());
-
-	private final Map<Class<?>, Class<?>> mixIns = new LinkedHashMap<>();
+	private final Map<Class<?>, Class<?>> mixIns = new HashMap<>();
 
 	private final Map<Class<?>, JsonSerializer<?>> serializers = new LinkedHashMap<>();
 
 	private final Map<Class<?>, JsonDeserializer<?>> deserializers = new LinkedHashMap<>();
 
-	private final Map<PropertyAccessor, JsonAutoDetect.Visibility> visibilities = new LinkedHashMap<>();
-
-	private final Map<Object, Boolean> features = new LinkedHashMap<>();
+	private final Map<Object, Boolean> features = new HashMap<>();
 
 	private boolean createXmlMapper = false;
 
@@ -224,7 +218,7 @@ public class Jackson2ObjectMapperBuilder {
 	 * @since 4.1.5
 	 */
 	public Jackson2ObjectMapperBuilder locale(String localeString) {
-		this.locale = StringUtils.parseLocale(localeString);
+		this.locale = StringUtils.parseLocaleString(localeString);
 		return this;
 	}
 
@@ -309,7 +303,7 @@ public class Jackson2ObjectMapperBuilder {
 
 	/**
 	 * Add mix-in annotations to use for augmenting specified class or interface.
-	 * @param mixIns a Map of entries with target classes (or interface) whose annotations
+	 * @param mixIns Map of entries with target classes (or interface) whose annotations
 	 * to effectively override as key and mix-in classes (or interface) whose
 	 * annotations are to be "added" to target's annotations as value.
 	 * @since 4.1.2
@@ -338,8 +332,8 @@ public class Jackson2ObjectMapperBuilder {
 
 	/**
 	 * Configure a custom serializer for the given type.
-	 * @since 4.1.2
 	 * @see #serializers(JsonSerializer...)
+	 * @since 4.1.2
 	 */
 	public Jackson2ObjectMapperBuilder serializerByType(Class<?> type, JsonSerializer<?> serializer) {
 		this.serializers.put(type, serializer);
@@ -452,17 +446,6 @@ public class Jackson2ObjectMapperBuilder {
 	}
 
 	/**
-	 * Specify visibility to limit what kind of properties are auto-detected.
-	 * @since 5.1
-	 * @see com.fasterxml.jackson.annotation.PropertyAccessor
-	 * @see com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility
-	 */
-	public Jackson2ObjectMapperBuilder visibility(PropertyAccessor accessor, JsonAutoDetect.Visibility visibility) {
-		this.visibilities.put(accessor, visibility);
-		return this;
-	}
-
-	/**
 	 * Specify features to enable.
 	 * @see com.fasterxml.jackson.core.JsonParser.Feature
 	 * @see com.fasterxml.jackson.core.JsonGenerator.Feature
@@ -560,7 +543,7 @@ public class Jackson2ObjectMapperBuilder {
 
 	/**
 	 * Set whether to let Jackson find available modules via the JDK ServiceLoader,
-	 * based on META-INF metadata in the classpath.
+	 * based on META-INF metadata in the classpath. Requires Jackson 2.2 or higher.
 	 * <p>If this mode is not set, Spring's Jackson2ObjectMapperBuilder itself
 	 * will try to find the JSR-310 and Joda-Time support modules on the classpath -
 	 * provided that Java 8 and Joda-Time themselves are available, respectively.
@@ -633,6 +616,7 @@ public class Jackson2ObjectMapperBuilder {
 		Assert.notNull(objectMapper, "ObjectMapper must not be null");
 
 		if (this.findModulesViaServiceLoader) {
+			// Jackson 2.2+
 			objectMapper.registerModules(ObjectMapper.findModules(this.moduleClassLoader));
 		}
 		else if (this.findWellKnownModules) {
@@ -640,7 +624,10 @@ public class Jackson2ObjectMapperBuilder {
 		}
 
 		if (this.modules != null) {
-			objectMapper.registerModules(this.modules);
+			for (Module module : this.modules) {
+				// Using Jackson 2.0+ registerModule method, not Jackson 2.2+ registerModules
+				objectMapper.registerModule(module);
+			}
 		}
 		if (this.moduleClasses != null) {
 			for (Class<? extends Module> module : this.moduleClasses) {
@@ -675,7 +662,9 @@ public class Jackson2ObjectMapperBuilder {
 			objectMapper.setFilterProvider(this.filters);
 		}
 
-		this.mixIns.forEach(objectMapper::addMixIn);
+		for (Class<?> target : this.mixIns.keySet()) {
+			objectMapper.addMixIn(target, this.mixIns.get(target));
+		}
 
 		if (!this.serializers.isEmpty() || !this.deserializers.isEmpty()) {
 			SimpleModule module = new SimpleModule();
@@ -684,10 +673,10 @@ public class Jackson2ObjectMapperBuilder {
 			objectMapper.registerModule(module);
 		}
 
-		this.visibilities.forEach(objectMapper::setVisibility);
-
 		customizeDefaultFeatures(objectMapper);
-		this.features.forEach((feature, enabled) -> configureFeature(objectMapper, feature, enabled));
+		for (Object feature : this.features.keySet()) {
+			configureFeature(objectMapper, feature, this.features.get(feature));
+		}
 
 		if (this.handlerInstantiator != null) {
 			objectMapper.setHandlerInstantiator(this.handlerInstantiator);
@@ -712,14 +701,16 @@ public class Jackson2ObjectMapperBuilder {
 
 	@SuppressWarnings("unchecked")
 	private <T> void addSerializers(SimpleModule module) {
-		this.serializers.forEach((type, serializer) ->
-				module.addSerializer((Class<? extends T>) type, (JsonSerializer<T>) serializer));
+		for (Class<?> type : this.serializers.keySet()) {
+			module.addSerializer((Class<? extends T>) type, (JsonSerializer<T>) this.serializers.get(type));
+		}
 	}
 
 	@SuppressWarnings("unchecked")
 	private <T> void addDeserializers(SimpleModule module) {
-		this.deserializers.forEach((type, deserializer) ->
-				module.addDeserializer((Class<T>) type, (JsonDeserializer<? extends T>) deserializer));
+		for (Class<?> type : this.deserializers.keySet()) {
+			module.addDeserializer((Class<T>) type, (JsonDeserializer<? extends T>) this.deserializers.get(type));
+		}
 	}
 
 	private void configureFeature(ObjectMapper objectMapper, Object feature, boolean enabled) {
@@ -779,15 +770,13 @@ public class Jackson2ObjectMapperBuilder {
 		if (KotlinDetector.isKotlinPresent()) {
 			try {
 				Class<? extends Module> kotlinModule = (Class<? extends Module>)
-						ClassUtils.forName("com.fasterxml.jackson.module.kotlin.KotlinModule", this.moduleClassLoader);
+						ClassUtils.forName("com.fasterxml.jackson.module.kotlin.KotlinModule",
+								this.moduleClassLoader);
 				objectMapper.registerModule(BeanUtils.instantiateClass(kotlinModule));
 			}
 			catch (ClassNotFoundException ex) {
-				if (!kotlinWarningLogged) {
-					kotlinWarningLogged = true;
-					logger.warn("For Jackson Kotlin classes support please add " +
-							"\"com.fasterxml.jackson.module:jackson-module-kotlin\" to the classpath");
-				}
+				logger.warn("For Jackson Kotlin classes support please add " +
+						"\"com.fasterxml.jackson.module:jackson-module-kotlin\" to the classpath");
 			}
 		}
 	}

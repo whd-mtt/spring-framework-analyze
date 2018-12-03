@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.apache.commons.logging.LogFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.ReactiveAdapter;
@@ -45,29 +44,26 @@ import org.springframework.web.server.ServerWebExchange;
  * @author Rossen Stoyanchev
  * @since 5.0
  */
-public abstract class AbstractView implements View, BeanNameAware, ApplicationContextAware {
+public abstract class AbstractView implements View, ApplicationContextAware {
 
-	/** Well-known name for the RequestDataValueProcessor in the bean factory. */
+	/** Well-known name for the RequestDataValueProcessor in the bean factory */
 	public static final String REQUEST_DATA_VALUE_PROCESSOR_BEAN_NAME = "requestDataValueProcessor";
 
 
-	/** Logger that is available to subclasses. */
+	/** Logger that is available to subclasses */
 	protected final Log logger = LogFactory.getLog(getClass());
 
 	private static final Object NO_VALUE = new Object();
 
 
-	private final ReactiveAdapterRegistry reactiveAdapterRegistry;
-
 	private final List<MediaType> mediaTypes = new ArrayList<>(4);
+
+	private final ReactiveAdapterRegistry adapterRegistry;
 
 	private Charset defaultCharset = StandardCharsets.UTF_8;
 
 	@Nullable
 	private String requestContextAttribute;
-
-	@Nullable
-	private String beanName;
 
 	@Nullable
 	private ApplicationContext applicationContext;
@@ -77,9 +73,9 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 		this(ReactiveAdapterRegistry.getSharedInstance());
 	}
 
-	public AbstractView(ReactiveAdapterRegistry reactiveAdapterRegistry) {
-		this.reactiveAdapterRegistry = reactiveAdapterRegistry;
+	public AbstractView(ReactiveAdapterRegistry registry) {
 		this.mediaTypes.add(ViewResolverSupport.DEFAULT_CONTENT_TYPE);
+		this.adapterRegistry = registry;
 	}
 
 
@@ -87,10 +83,12 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	 * Set the supported media types for this view.
 	 * Default is "text/html;charset=UTF-8".
 	 */
-	public void setSupportedMediaTypes(List<MediaType> supportedMediaTypes) {
+	public void setSupportedMediaTypes(@Nullable List<MediaType> supportedMediaTypes) {
 		Assert.notEmpty(supportedMediaTypes, "MediaType List must not be empty");
 		this.mediaTypes.clear();
-		this.mediaTypes.addAll(supportedMediaTypes);
+		if (supportedMediaTypes != null) {
+			this.mediaTypes.addAll(supportedMediaTypes);
+		}
 	}
 
 	/**
@@ -135,24 +133,6 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 		return this.requestContextAttribute;
 	}
 
-	/**
-	 * Set the view's name. Helpful for traceability.
-	 * <p>Framework code must call this when constructing views.
-	 */
-	@Override
-	public void setBeanName(@Nullable String beanName) {
-		this.beanName = beanName;
-	}
-
-	/**
-	 * Return the view's name. Should never be {@code null}, if the view was
-	 * correctly configured.
-	 */
-	@Nullable
-	public String getBeanName() {
-		return this.beanName;
-	}
-
 	@Override
 	public void setApplicationContext(@Nullable ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
@@ -177,7 +157,7 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 
 	/**
 	 * Prepare the model to render.
-	 * @param model a Map with name Strings as keys and corresponding model
+	 * @param model Map with name Strings as keys and corresponding model
 	 * objects as values (Map can also be {@code null} in case of empty model)
 	 * @param contentType the content type selected to render with which should
 	 * match one of the {@link #getSupportedMediaTypes() supported media types}.
@@ -188,9 +168,8 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	public Mono<Void> render(@Nullable Map<String, ?> model, @Nullable MediaType contentType,
 			ServerWebExchange exchange) {
 
-		if (logger.isDebugEnabled()) {
-			logger.debug(exchange.getLogPrefix() + "View " + formatViewName() +
-					", model " + (model != null ? model : Collections.emptyMap()));
+		if (logger.isTraceEnabled()) {
+			logger.trace("Rendering view with model " + model);
 		}
 
 		if (contentType != null) {
@@ -232,6 +211,7 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 	 * @return {@code Mono} for the completion of async attributes resolution
 	 */
 	protected Mono<Void> resolveAsyncAttributes(Map<String, Object> model) {
+
 		List<String> names = new ArrayList<>();
 		List<Mono<?>> valueMonos = new ArrayList<>();
 
@@ -240,7 +220,7 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 			if (value == null) {
 				continue;
 			}
-			ReactiveAdapter adapter = this.reactiveAdapterRegistry.getAdapter(null, value);
+			ReactiveAdapter adapter = this.adapterRegistry.getAdapter(null, value);
 			if (adapter != null) {
 				names.add(entry.getKey());
 				if (adapter.isMultiValue()) {
@@ -320,12 +300,7 @@ public abstract class AbstractView implements View, BeanNameAware, ApplicationCo
 
 	@Override
 	public String toString() {
-		return getClass().getName() + ": " + formatViewName();
-	}
-
-	protected String formatViewName() {
-		return (getBeanName() != null ?
-				"name '" + getBeanName() + "'" : "[" + getClass().getSimpleName() + "]");
+		return getClass().getName();
 	}
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.PingMessage;
@@ -54,7 +55,8 @@ import org.springframework.web.socket.adapter.AbstractWebSocketSession;
  */
 public class JettyWebSocketSession extends AbstractWebSocketSession<Session> {
 
-	private final String id;
+	@Nullable
+	private String id;
 
 	@Nullable
 	private URI uri;
@@ -89,13 +91,13 @@ public class JettyWebSocketSession extends AbstractWebSocketSession<Session> {
 	 */
 	public JettyWebSocketSession(Map<String, Object> attributes, @Nullable Principal user) {
 		super(attributes);
-		this.id = idGenerator.generateId().toString();
 		this.user = user;
 	}
 
 
 	@Override
 	public String getId() {
+		Assert.state(this.id != null, "WebSocket session is not yet initialized");
 		return this.id;
 	}
 
@@ -175,6 +177,7 @@ public class JettyWebSocketSession extends AbstractWebSocketSession<Session> {
 	public void initializeNativeSession(Session session) {
 		super.initializeNativeSession(session);
 
+		this.id = ObjectUtils.getIdentityHexString(getNativeSession());
 		this.uri = session.getUpgradeRequest().getRequestURI();
 
 		HttpHeaders headers = new HttpHeaders();

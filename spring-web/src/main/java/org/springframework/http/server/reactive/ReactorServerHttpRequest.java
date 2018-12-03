@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import javax.net.ssl.SSLSession;
 
+import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.cookie.Cookie;
 import io.netty.handler.ssl.SslHandler;
 import reactor.core.publisher.Flux;
-import reactor.netty.Connection;
-import reactor.netty.http.server.HttpServerRequest;
+import reactor.ipc.netty.http.server.HttpServerRequest;
 
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.NettyDataBufferFactory;
@@ -55,14 +55,14 @@ class ReactorServerHttpRequest extends AbstractServerHttpRequest {
 			throws URISyntaxException {
 
 		super(initUri(request), "", initHeaders(request));
-		Assert.notNull(bufferFactory, "DataBufferFactory must not be null");
+		Assert.notNull(bufferFactory, "'bufferFactory' must not be null");
 		this.request = request;
 		this.bufferFactory = bufferFactory;
 	}
 
 	private static URI initUri(HttpServerRequest request) throws URISyntaxException {
-		Assert.notNull(request, "HttpServerRequest must not be null");
-		return new URI(resolveBaseUrl(request).toString() + resolveRequestUri(request));
+		Assert.notNull(request, "'request' must not be null");
+		return new URI(resolveBaseUrl(request).toString() + request.uri());
 	}
 
 	private static URI resolveBaseUrl(HttpServerRequest request) throws URISyntaxException {
@@ -90,41 +90,24 @@ class ReactorServerHttpRequest extends AbstractServerHttpRequest {
 			}
 		}
 		else {
-			InetSocketAddress localAddress = request.hostAddress();
+			InetSocketAddress localAddress = (InetSocketAddress) request.context().channel().localAddress();
 			return new URI(scheme, null, localAddress.getHostString(),
 					localAddress.getPort(), null, null, null);
 		}
 	}
 
 	private static String getScheme(HttpServerRequest request) {
-		return request.scheme();
-	}
-
-	private static String resolveRequestUri(HttpServerRequest request) {
-		String uri = request.uri();
-		for (int i = 0; i < uri.length(); i++) {
-			char c = uri.charAt(i);
-			if (c == '/' || c == '?' || c == '#') {
-				break;
-			}
-			if (c == ':' && (i + 2 < uri.length())) {
-				if (uri.charAt(i + 1) == '/' && uri.charAt(i + 2) == '/') {
-					for (int j = i + 3; j < uri.length(); j++) {
-						c = uri.charAt(j);
-						if (c == '/' || c == '?' || c == '#') {
-							return uri.substring(j);
-						}
-					}
-					return "";
-				}
-			}
-		}
-		return uri;
+		ChannelPipeline pipeline = request.context().channel().pipeline();
+		boolean ssl = pipeline.get(SslHandler.class) != null;
+		return ssl ? "https" : "http";
 	}
 
 	private static HttpHeaders initHeaders(HttpServerRequest channel) {
-		NettyHeadersAdapter headersMap = new NettyHeadersAdapter(channel.requestHeaders());
-		return new HttpHeaders(headersMap);
+		HttpHeaders headers = new HttpHeaders();
+		for (String name : channel.requestHeaders().names()) {
+			headers.put(name, channel.requestHeaders().getAll(name));
+		}
+		return headers;
 	}
 
 
@@ -150,10 +133,9 @@ class ReactorServerHttpRequest extends AbstractServerHttpRequest {
 		return this.request.remoteAddress();
 	}
 
-	@Override
 	@Nullable
 	protected SslInfo initSslInfo() {
-		SslHandler sslHandler = ((Connection) this.request).channel().pipeline().get(SslHandler.class);
+		SslHandler sslHandler = this.request.context().channel().pipeline().get(SslHandler.class);
 		if (sslHandler != null) {
 			SSLSession session = sslHandler.engine().getSession();
 			return new DefaultSslInfo(session);
@@ -170,13 +152,6 @@ class ReactorServerHttpRequest extends AbstractServerHttpRequest {
 	@Override
 	public <T> T getNativeRequest() {
 		return (T) this.request;
-	}
-
-	@Override
-	@Nullable
-	protected String initId() {
-		return this.request instanceof Connection ?
-				((Connection) this.request).channel().id().asShortText() : null;
 	}
 
 }

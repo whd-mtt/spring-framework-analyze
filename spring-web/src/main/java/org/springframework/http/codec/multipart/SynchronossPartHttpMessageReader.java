@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 
 package org.springframework.http.codec.multipart;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.List;
@@ -32,30 +32,25 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import org.synchronoss.cloud.nio.multipart.DefaultPartBodyStreamStorageFactory;
 import org.synchronoss.cloud.nio.multipart.Multipart;
 import org.synchronoss.cloud.nio.multipart.MultipartContext;
 import org.synchronoss.cloud.nio.multipart.MultipartUtils;
 import org.synchronoss.cloud.nio.multipart.NioMultipartParser;
 import org.synchronoss.cloud.nio.multipart.NioMultipartParserListener;
-import org.synchronoss.cloud.nio.multipart.PartBodyStreamStorageFactory;
 import org.synchronoss.cloud.nio.stream.storage.StreamStorage;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 
 import org.springframework.core.ResolvableType;
-import org.springframework.core.codec.Hints;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
-import org.springframework.core.log.LogFormatUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ReactiveHttpInputMessage;
 import org.springframework.http.codec.HttpMessageReader;
-import org.springframework.http.codec.LoggingCodecSupport;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
@@ -73,11 +68,9 @@ import org.springframework.util.Assert;
  * @see <a href="https://github.com/synchronoss/nio-multipart">Synchronoss NIO Multipart</a>
  * @see MultipartHttpMessageReader
  */
-public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implements HttpMessageReader<Part> {
+public class SynchronossPartHttpMessageReader implements HttpMessageReader<Part> {
 
 	private final DataBufferFactory bufferFactory = new DefaultDataBufferFactory();
-
-	private final PartBodyStreamStorageFactory streamStorageFactory = new DefaultPartBodyStreamStorageFactory();
 
 
 	@Override
@@ -87,34 +80,31 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 
 	@Override
 	public boolean canRead(ResolvableType elementType, @Nullable MediaType mediaType) {
-		return Part.class.equals(elementType.toClass()) &&
+		return Part.class.equals(elementType.resolve(Object.class)) &&
 				(mediaType == null || MediaType.MULTIPART_FORM_DATA.isCompatibleWith(mediaType));
 	}
 
 
 	@Override
-	public Flux<Part> read(ResolvableType elementType, ReactiveHttpInputMessage message, Map<String, Object> hints) {
-		return Flux.create(new SynchronossPartGenerator(message, this.bufferFactory, this.streamStorageFactory))
-				.doOnNext(part -> {
-					if (!Hints.isLoggingSuppressed(hints)) {
-						LogFormatUtils.traceDebug(logger, traceOn -> Hints.getLogPrefix(hints) + "Parsed " +
-								(isEnableLoggingRequestDetails() ?
-										LogFormatUtils.formatValue(part, !traceOn) :
-										"parts '" + part.name() + "' (content masked)"));
-					}
-				});
+	public Flux<Part> read(ResolvableType elementType, ReactiveHttpInputMessage message,
+			Map<String, Object> hints) {
+
+		return Flux.create(new SynchronossPartGenerator(message, this.bufferFactory));
 	}
 
 
 	@Override
-	public Mono<Part> readMono(ResolvableType elementType, ReactiveHttpInputMessage message, Map<String, Object> hints) {
-		return Mono.error(new UnsupportedOperationException("Cannot read multipart request body into single Part"));
+	public Mono<Part> readMono(ResolvableType elementType, ReactiveHttpInputMessage message,
+			Map<String, Object> hints) {
+
+		return Mono.error(new UnsupportedOperationException(
+				"This reader does not support reading a single element."));
 	}
 
 
 	/**
-	 * Consume and feed input to the Synchronoss parser, then listen for parser
-	 * output events and adapt to {@code Flux<Sink<Part>>}.
+	 * Consume and feed input to the Synchronoss parser, then adapt parser
+	 * output events to {@code Flux<Sink<Part>>}.
 	 */
 	private static class SynchronossPartGenerator implements Consumer<FluxSink<Part>> {
 
@@ -122,14 +112,9 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 
 		private final DataBufferFactory bufferFactory;
 
-		private final PartBodyStreamStorageFactory streamStorageFactory;
-
-		SynchronossPartGenerator(ReactiveHttpInputMessage inputMessage, DataBufferFactory bufferFactory,
-				PartBodyStreamStorageFactory streamStorageFactory) {
-
+		SynchronossPartGenerator(ReactiveHttpInputMessage inputMessage, DataBufferFactory factory) {
 			this.inputMessage = inputMessage;
-			this.bufferFactory = bufferFactory;
-			this.streamStorageFactory = streamStorageFactory;
+			this.bufferFactory = factory;
 		}
 
 		@Override
@@ -138,15 +123,12 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 			MediaType mediaType = headers.getContentType();
 			Assert.state(mediaType != null, "No content type set");
 
-			int length = getContentLength(headers);
+			int length = Math.toIntExact(headers.getContentLength());
 			Charset charset = Optional.ofNullable(mediaType.getCharset()).orElse(StandardCharsets.UTF_8);
 			MultipartContext context = new MultipartContext(mediaType.toString(), length, charset.name());
 
 			NioMultipartParserListener listener = new FluxSinkAdapterListener(emitter, this.bufferFactory, context);
-			NioMultipartParser parser = Multipart
-					.multipart(context)
-					.usePartBodyStreamStorageFactory(this.streamStorageFactory)
-					.forNIO(listener);
+			NioMultipartParser parser = Multipart.multipart(context).forNIO(listener);
 
 			this.inputMessage.getBody().subscribe(buffer -> {
 				byte[] resultBytes = new byte[buffer.readableByteCount()];
@@ -160,7 +142,7 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 				finally {
 					DataBufferUtils.release(buffer);
 				}
-			}, ex -> {
+			}, (ex) -> {
 				try {
 					listener.onError("Request body input error", ex);
 					parser.close();
@@ -176,12 +158,7 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 					listener.onError("Exception thrown while closing the parser", ex);
 				}
 			});
-		}
 
-		private int getContentLength(HttpHeaders headers) {
-			// Until this is fixed https://github.com/synchronoss/nio-multipart/issues/10
-			long length = headers.getContentLength();
-			return (int) length == length ? (int) length : -1;
 		}
 	}
 
@@ -199,9 +176,9 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 
 		private final AtomicInteger terminated = new AtomicInteger(0);
 
-		FluxSinkAdapterListener(FluxSink<Part> sink, DataBufferFactory factory, MultipartContext context) {
+		FluxSinkAdapterListener(FluxSink<Part> sink, DataBufferFactory bufferFactory, MultipartContext context) {
 			this.sink = sink;
-			this.bufferFactory = factory;
+			this.bufferFactory = bufferFactory;
 			this.context = context;
 		}
 
@@ -215,14 +192,14 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 		private Part createPart(StreamStorage storage, HttpHeaders httpHeaders) {
 			String filename = MultipartUtils.getFileName(httpHeaders);
 			if (filename != null) {
-				return new SynchronossFilePart(httpHeaders, filename, storage, this.bufferFactory);
+				return new SynchronossFilePart(httpHeaders, storage, this.bufferFactory, filename);
 			}
 			else if (MultipartUtils.isFormField(httpHeaders, this.context)) {
 				String value = MultipartUtils.readFormParameterValue(storage, httpHeaders);
 				return new SynchronossFormFieldPart(httpHeaders, this.bufferFactory, value);
 			}
 			else {
-				return new SynchronossPart(httpHeaders, storage, this.bufferFactory);
+				return new DefaultSynchronossPart(httpHeaders, storage, this.bufferFactory);
 			}
 		}
 
@@ -250,9 +227,7 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 	}
 
 
-	private abstract static class AbstractSynchronossPart implements Part {
-
-		private final String name;
+	private static abstract class AbstractSynchronossPart implements Part {
 
 		private final HttpHeaders headers;
 
@@ -260,15 +235,14 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 
 		AbstractSynchronossPart(HttpHeaders headers, DataBufferFactory bufferFactory) {
 			Assert.notNull(headers, "HttpHeaders is required");
-			Assert.notNull(bufferFactory, "DataBufferFactory is required");
-			this.name = MultipartUtils.getFieldName(headers);
+			Assert.notNull(bufferFactory, "'bufferFactory' is required");
 			this.headers = headers;
 			this.bufferFactory = bufferFactory;
 		}
 
 		@Override
 		public String name() {
-			return this.name;
+			return MultipartUtils.getFieldName(this.headers);
 		}
 
 		@Override
@@ -276,30 +250,26 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 			return this.headers;
 		}
 
-		DataBufferFactory getBufferFactory() {
+		protected DataBufferFactory getBufferFactory() {
 			return this.bufferFactory;
-		}
-
-		@Override
-		public String toString() {
-			return "Part '" + this.name + "', headers=" + this.headers;
 		}
 	}
 
 
-	private static class SynchronossPart extends AbstractSynchronossPart {
+	private static class DefaultSynchronossPart extends AbstractSynchronossPart {
 
 		private final StreamStorage storage;
 
-		SynchronossPart(HttpHeaders headers, StreamStorage storage, DataBufferFactory factory) {
+		DefaultSynchronossPart(HttpHeaders headers, StreamStorage storage, DataBufferFactory factory) {
 			super(headers, factory);
-			Assert.notNull(storage, "StreamStorage is required");
+			Assert.notNull(storage, "'storage' is required");
 			this.storage = storage;
 		}
 
 		@Override
 		public Flux<DataBuffer> content() {
-			return DataBufferUtils.readInputStream(getStorage()::getInputStream, getBufferFactory(), 4096);
+			InputStream inputStream = this.storage.getInputStream();
+			return DataBufferUtils.read(inputStream, getBufferFactory(), 4096);
 		}
 
 		protected StreamStorage getStorage() {
@@ -308,14 +278,13 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 	}
 
 
-	private static class SynchronossFilePart extends SynchronossPart implements FilePart {
-
-		private static final OpenOption[] FILE_CHANNEL_OPTIONS =
-				{StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE};
+	private static class SynchronossFilePart extends DefaultSynchronossPart implements FilePart {
 
 		private final String filename;
 
-		SynchronossFilePart(HttpHeaders headers, String filename, StreamStorage storage, DataBufferFactory factory) {
+		public SynchronossFilePart(
+				HttpHeaders headers, StreamStorage storage, DataBufferFactory factory, String filename) {
+
 			super(headers, storage, factory);
 			this.filename = filename;
 		}
@@ -326,12 +295,12 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 		}
 
 		@Override
-		public Mono<Void> transferTo(Path dest) {
+		public Mono<Void> transferTo(File destination) {
 			ReadableByteChannel input = null;
 			FileChannel output = null;
 			try {
 				input = Channels.newChannel(getStorage().getInputStream());
-				output = FileChannel.open(dest, FILE_CHANNEL_OPTIONS);
+				output = FileChannel.open(destination.toPath(), StandardOpenOption.WRITE);
 				long size = (input instanceof FileChannel ? ((FileChannel) input).size() : Long.MAX_VALUE);
 				long totalWritten = 0;
 				while (totalWritten < size) {
@@ -363,11 +332,6 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 			}
 			return Mono.empty();
 		}
-
-		@Override
-		public String toString() {
-			return "Part '" + name() + "', filename='" + this.filename + "'";
-		}
 	}
 
 
@@ -394,13 +358,8 @@ public class SynchronossPartHttpMessageReader extends LoggingCodecSupport implem
 		}
 
 		private Charset getCharset() {
-			String name = MultipartUtils.getCharEncoding(headers());
-			return (name != null ? Charset.forName(name) : StandardCharsets.UTF_8);
-		}
-
-		@Override
-		public String toString() {
-			return "Part '" + name() + "=" + this.content + "'";
+			return Optional.ofNullable(MultipartUtils.getCharEncoding(headers()))
+					.map(Charset::forName).orElse(StandardCharsets.UTF_8);
 		}
 	}
 

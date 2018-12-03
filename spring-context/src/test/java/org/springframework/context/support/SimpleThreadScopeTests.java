@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2014 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 
 package org.springframework.context.support;
 
-import java.util.concurrent.TimeUnit;
-
-import org.awaitility.Awaitility;
 import org.junit.Test;
 
 import org.springframework.context.ApplicationContext;
@@ -39,27 +36,35 @@ public class SimpleThreadScopeTests {
 	@Test
 	public void getFromScope() throws Exception {
 		String name = "threadScopedObject";
-		TestBean bean = this.applicationContext.getBean(name, TestBean.class);
+		TestBean bean = (TestBean) this.applicationContext.getBean(name);
 		assertNotNull(bean);
 		assertSame(bean, this.applicationContext.getBean(name));
-		TestBean bean2 = this.applicationContext.getBean(name, TestBean.class);
+		TestBean bean2 = (TestBean) this.applicationContext.getBean(name);
 		assertSame(bean, bean2);
 	}
 
 	@Test
 	public void getMultipleInstances() throws Exception {
-		// Arrange
-		TestBean[] beans = new TestBean[2];
-		Thread thread1 = new Thread(() -> beans[0] = applicationContext.getBean("threadScopedObject", TestBean.class));
-		Thread thread2 = new Thread(() -> beans[1] = applicationContext.getBean("threadScopedObject", TestBean.class));
-		// Act
+		final TestBean[] beans = new TestBean[2];
+		Thread thread1 = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				beans[0] = applicationContext.getBean("threadScopedObject", TestBean.class);
+			}
+		});
+		Thread thread2 = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				beans[1] = applicationContext.getBean("threadScopedObject", TestBean.class);
+			}
+		});
 		thread1.start();
 		thread2.start();
-		// Assert
-		Awaitility.await()
-					.atMost(500, TimeUnit.MILLISECONDS)
-					.pollInterval(10, TimeUnit.MILLISECONDS)
-					.until(() -> (beans[0] != null) && (beans[1] != null));
+
+		Thread.sleep(200);
+
+		assertNotNull(beans[0]);
+		assertNotNull(beans[1]);
 		assertNotSame(beans[0], beans[1]);
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,8 @@ public abstract class AbstractResource implements Resource {
 		catch (IOException ex) {
 			// Fall back to stream existence: can we open the stream?
 			try {
-				getInputStream().close();
+				InputStream is = getInputStream();
+				is.close();
 				return true;
 			}
 			catch (Throwable isEx) {
@@ -67,12 +68,11 @@ public abstract class AbstractResource implements Resource {
 	}
 
 	/**
-	 * This implementation always returns {@code true} for a resource
-	 * that {@link #exists() exists} (revised as of 5.1).
+	 * This implementation always returns {@code true}.
 	 */
 	@Override
 	public boolean isReadable() {
-		return exists();
+		return true;
 	}
 
 	/**
@@ -146,7 +146,7 @@ public abstract class AbstractResource implements Resource {
 		InputStream is = getInputStream();
 		try {
 			long size = 0;
-			byte[] buf = new byte[256];
+			byte[] buf = new byte[255];
 			int read;
 			while ((read = is.read(buf)) != -1) {
 				size += read;
@@ -169,11 +169,10 @@ public abstract class AbstractResource implements Resource {
 	 */
 	@Override
 	public long lastModified() throws IOException {
-		File fileToCheck = getFileForLastModifiedCheck();
-		long lastModified = fileToCheck.lastModified();
-		if (lastModified == 0L && !fileToCheck.exists()) {
+		long lastModified = getFileForLastModifiedCheck().lastModified();
+		if (lastModified == 0L) {
 			throw new FileNotFoundException(getDescription() +
-					" cannot be resolved in the file system for checking its last-modified timestamp");
+					" cannot be resolved in the file system for resolving its last-modified timestamp");
 		}
 		return lastModified;
 	}
@@ -211,13 +210,22 @@ public abstract class AbstractResource implements Resource {
 
 
 	/**
+	 * This implementation returns the description of this resource.
+	 * @see #getDescription()
+	 */
+	@Override
+	public String toString() {
+		return getDescription();
+	}
+
+	/**
 	 * This implementation compares description strings.
 	 * @see #getDescription()
 	 */
 	@Override
-	public boolean equals(Object other) {
-		return (this == other || (other instanceof Resource &&
-				((Resource) other).getDescription().equals(getDescription())));
+	public boolean equals(Object obj) {
+		return (obj == this ||
+			(obj instanceof Resource && ((Resource) obj).getDescription().equals(getDescription())));
 	}
 
 	/**
@@ -227,15 +235,6 @@ public abstract class AbstractResource implements Resource {
 	@Override
 	public int hashCode() {
 		return getDescription().hashCode();
-	}
-
-	/**
-	 * This implementation returns the description of this resource.
-	 * @see #getDescription()
-	 */
-	@Override
-	public String toString() {
-		return getDescription();
 	}
 
 }

@@ -163,7 +163,7 @@
 					<xsd:attribute name="null-value">
 						<xsd:annotation>
 							<xsd:documentation><![CDATA[
-	A value that should be treated as 'null' when resolved as a placeholder value:
+	AppConfig value that should be treated as 'null' when resolved as a placeholder value:
 	e.g. "" (empty String) or "null". By default, no such null value is defined.
 				]]></xsd:documentation>
 						</xsd:annotation>
@@ -227,7 +227,7 @@
 	for handling those annotations.
 
 	Note: You may use placeholders in package paths, but only resolved against system
-	properties (analogous to resource paths). A component scan results in new bean definitions
+	properties (analogous to resource paths). AppConfig component scan results in new bean definitions
 	being registered; Spring's PropertySourcesPlaceholderConfigurer will apply to those bean
 	definitions just like to regular bean definitions, but it won't apply to the component
 	scan settings themselves.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,10 +42,7 @@ import org.springframework.web.util.WebUtils;
  */
 public class CookieThemeResolver extends CookieGenerator implements ThemeResolver {
 
-	/**
-	 * The default theme name used if no alternative is provided.
-	 */
-	public static final String ORIGINAL_DEFAULT_THEME_NAME = "theme";
+	public final static String ORIGINAL_DEFAULT_THEME_NAME = "theme";
 
 	/**
 	 * Name of the request attribute that holds the theme name. Only used
@@ -56,9 +53,6 @@ public class CookieThemeResolver extends CookieGenerator implements ThemeResolve
 	 */
 	public static final String THEME_REQUEST_ATTRIBUTE_NAME = CookieThemeResolver.class.getName() + ".THEME";
 
-	/**
-	 * The default name of the cookie that holds the theme name.
-	 */
 	public static final String DEFAULT_COOKIE_NAME = CookieThemeResolver.class.getName() + ".THEME";
 
 
@@ -81,7 +75,7 @@ public class CookieThemeResolver extends CookieGenerator implements ThemeResolve
 	 * Return the name of the default theme.
 	 */
 	public String getDefaultThemeName() {
-		return this.defaultThemeName;
+		return defaultThemeName;
 	}
 
 

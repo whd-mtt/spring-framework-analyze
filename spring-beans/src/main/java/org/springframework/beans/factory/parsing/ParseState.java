@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 
 package org.springframework.beans.factory.parsing;
 
-import java.util.LinkedList;
+import java.util.Stack;
 
 import org.springframework.lang.Nullable;
 
 /**
- * Simple {@link LinkedList}-based structure for tracking the logical position during
- * a parsing process. {@link Entry entries} are added to the LinkedList at
+ * Simple {@link Stack}-based structure for tracking the logical position during
+ * a parsing process. {@link Entry entries} are added to the stack at
  * each point during the parse phase in a reader-specific manner.
  *
  * <p>Calling {@link #toString()} will render a tree-style view of the current logical
@@ -40,49 +40,49 @@ public final class ParseState {
 	private static final char TAB = '\t';
 
 	/**
-	 * Internal {@link LinkedList} storage.
+	 * Internal {@link Stack} storage.
 	 */
-	private final LinkedList<Entry> state;
+	private final Stack<Entry> state;
 
 
 	/**
-	 * Create a new {@code ParseState} with an empty {@link LinkedList}.
+	 * Create a new {@code ParseState} with an empty {@link Stack}.
 	 */
 	public ParseState() {
-		this.state = new LinkedList<>();
+		this.state = new Stack<>();
 	}
 
 	/**
-	 * Create a new {@code ParseState} whose {@link LinkedList} is a {@link Object#clone clone}
+	 * Create a new {@code ParseState} whose {@link Stack} is a {@link Object#clone clone}
 	 * of that of the passed in {@code ParseState}.
 	 */
 	@SuppressWarnings("unchecked")
 	private ParseState(ParseState other) {
-		this.state = (LinkedList<Entry>) other.state.clone();
+		this.state = (Stack<Entry>) other.state.clone();
 	}
 
 
 	/**
-	 * Add a new {@link Entry} to the {@link LinkedList}.
+	 * Add a new {@link Entry} to the {@link Stack}.
 	 */
 	public void push(Entry entry) {
 		this.state.push(entry);
 	}
 
 	/**
-	 * Remove an {@link Entry} from the {@link LinkedList}.
+	 * Remove an {@link Entry} from the {@link Stack}.
 	 */
 	public void pop() {
 		this.state.pop();
 	}
 
 	/**
-	 * Return the {@link Entry} currently at the top of the {@link LinkedList} or
-	 * {@code null} if the {@link LinkedList} is empty.
+	 * Return the {@link Entry} currently at the top of the {@link Stack} or
+	 * {@code null} if the {@link Stack} is empty.
 	 */
 	@Nullable
 	public Entry peek() {
-		return this.state.peek();
+		return this.state.empty() ? null : this.state.peek();
 	}
 
 	/**

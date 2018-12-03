@@ -47,7 +47,7 @@ import org.springframework.web.socket.server.HandshakeFailureException;
  */
 public class WebSphereRequestUpgradeStrategy extends AbstractStandardUpgradeStrategy {
 
-	private static final Method upgradeMethod;
+	private final static Method upgradeMethod;
 
 	static {
 		ClassLoader loader = WebSphereRequestUpgradeStrategy.class.getClassLoader();

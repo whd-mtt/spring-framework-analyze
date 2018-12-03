@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,9 @@
 package org.springframework.core.annotation;
 
 import java.lang.annotation.Annotation;
-import java.util.Map;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
-import org.springframework.util.ConcurrentReferenceHashMap;
 
 /**
  * General utility for determining the order of an object based on its type declaration.
@@ -36,10 +34,6 @@ import org.springframework.util.ConcurrentReferenceHashMap;
 @SuppressWarnings("unchecked")
 public abstract class OrderUtils {
 
-	/** Cache marker for a non-annotated Class. */
-	private static final Object NOT_ANNOTATED = new Object();
-
-
 	@Nullable
 	private static Class<? extends Annotation> priorityAnnotationType;
 
@@ -49,17 +43,10 @@ public abstract class OrderUtils {
 					ClassUtils.forName("javax.annotation.Priority", OrderUtils.class.getClassLoader());
 		}
 		catch (Throwable ex) {
-			// javax.annotation.Priority not available
+			// javax.annotation.Priority not available, or present but not loadable (on JDK 6)
 			priorityAnnotationType = null;
 		}
 	}
-
-
-	/** Cache for @Order value (or NOT_ANNOTATED marker) per Class. */
-	private static final Map<Class<?>, Object> orderCache = new ConcurrentReferenceHashMap<>(64);
-
-	/** Cache for @Priority value (or NOT_ANNOTATED marker) per Class. */
-	private static final Map<Class<?>, Object> priorityCache = new ConcurrentReferenceHashMap<>();
 
 
 	/**
@@ -99,20 +86,15 @@ public abstract class OrderUtils {
 	 */
 	@Nullable
 	public static Integer getOrder(Class<?> type) {
-		Object cached = orderCache.get(type);
-		if (cached != null) {
-			return (cached instanceof Integer ? (Integer) cached : null);
-		}
 		Order order = AnnotationUtils.findAnnotation(type, Order.class);
-		Integer result;
 		if (order != null) {
-			result = order.value();
+			return order.value();
 		}
-		else {
-			result = getPriority(type);
+		Integer priorityOrder = getPriority(type);
+		if (priorityOrder != null) {
+			return priorityOrder;
 		}
-		orderCache.put(type, (result != null ? result : NOT_ANNOTATED));
-		return result;
+		return null;
 	}
 
 	/**
@@ -123,20 +105,13 @@ public abstract class OrderUtils {
 	 */
 	@Nullable
 	public static Integer getPriority(Class<?> type) {
-		if (priorityAnnotationType == null) {
-			return null;
+		if (priorityAnnotationType != null) {
+			Annotation priority = AnnotationUtils.findAnnotation(type, priorityAnnotationType);
+			if (priority != null) {
+				return (Integer) AnnotationUtils.getValue(priority);
+			}
 		}
-		Object cached = priorityCache.get(type);
-		if (cached != null) {
-			return (cached instanceof Integer ? (Integer) cached : null);
-		}
-		Annotation priority = AnnotationUtils.findAnnotation(type, priorityAnnotationType);
-		Integer result = null;
-		if (priority != null) {
-			result = (Integer) AnnotationUtils.getValue(priority);
-		}
-		priorityCache.put(type, (result != null ? result : NOT_ANNOTATED));
-		return result;
+		return null;
 	}
 
 }

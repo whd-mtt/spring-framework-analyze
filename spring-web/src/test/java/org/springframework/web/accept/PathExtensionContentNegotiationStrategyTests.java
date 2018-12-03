@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,8 @@ import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.context.request.ServletWebRequest;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * A test fixture for PathExtensionContentNegotiationStrategy.
@@ -88,12 +89,10 @@ public class PathExtensionContentNegotiationStrategyTests {
 
 		this.servletRequest.setContextPath("/project-1.0.0.M3");
 		this.servletRequest.setRequestURI("/project-1.0.0.M3/");
-		assertEquals("Context path should be excluded", ContentNegotiationStrategy.MEDIA_TYPE_ALL_LIST,
-				strategy.resolveMediaTypes(webRequest));
+		assertTrue("Context path should be excluded", strategy.resolveMediaTypes(webRequest).isEmpty());
 
 		this.servletRequest.setRequestURI("/project-1.0.0.M3");
-		assertEquals("Context path should be excluded", ContentNegotiationStrategy.MEDIA_TYPE_ALL_LIST,
-				strategy.resolveMediaTypes(webRequest));
+		assertTrue("Context path should be excluded", strategy.resolveMediaTypes(webRequest).isEmpty());
 	}
 
 	// SPR-9390
@@ -119,7 +118,7 @@ public class PathExtensionContentNegotiationStrategyTests {
 		PathExtensionContentNegotiationStrategy strategy = new PathExtensionContentNegotiationStrategy();
 		List<MediaType> mediaTypes = strategy.resolveMediaTypes(this.webRequest);
 
-		assertEquals(ContentNegotiationStrategy.MEDIA_TYPE_ALL_LIST, mediaTypes);
+		assertEquals(Collections.<MediaType>emptyList(), mediaTypes);
 	}
 
 	@Test(expected = HttpMediaTypeNotAcceptableException.class)

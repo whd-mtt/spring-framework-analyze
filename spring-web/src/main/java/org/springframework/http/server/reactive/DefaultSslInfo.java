@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * Default implementation of {@link SslInfo}.
+ * The default holder for SSL session information.
  *
  * @author Rossen Stoyanchev
  * @since 5.0.2
@@ -36,11 +36,10 @@ final class DefaultSslInfo implements SslInfo {
 	@Nullable
 	private final String sessionId;
 
-	@Nullable
 	private final X509Certificate[] peerCertificates;
 
 
-	DefaultSslInfo(@Nullable String sessionId, X509Certificate[] peerCertificates) {
+	DefaultSslInfo(String sessionId, X509Certificate[] peerCertificates) {
 		Assert.notNull(peerCertificates, "No SSL certificates");
 		this.sessionId = sessionId;
 		this.peerCertificates = peerCertificates;
@@ -60,7 +59,6 @@ final class DefaultSslInfo implements SslInfo {
 	}
 
 	@Override
-	@Nullable
 	public X509Certificate[] getPeerCertificates() {
 		return this.peerCertificates;
 	}
@@ -87,14 +85,13 @@ final class DefaultSslInfo implements SslInfo {
 		return sb.toString();
 	}
 
-	@Nullable
 	private static X509Certificate[] initCertificates(SSLSession session) {
 		Certificate[] certificates;
 		try {
 			certificates = session.getPeerCertificates();
 		}
 		catch (Throwable ex) {
-			return null;
+			throw new IllegalStateException("Failed to get SSL certificates", ex);
 		}
 
 		List<X509Certificate> result = new ArrayList<>(certificates.length);
@@ -103,7 +100,7 @@ final class DefaultSslInfo implements SslInfo {
 				result.add((X509Certificate) certificate);
 			}
 		}
-		return (!result.isEmpty() ? result.toArray(new X509Certificate[0]) : null);
+		return result.toArray(new X509Certificate[result.size()]);
 	}
 
 }

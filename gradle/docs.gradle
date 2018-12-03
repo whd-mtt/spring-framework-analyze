@@ -27,7 +27,6 @@ task api(type: Javadoc) {
 	options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PROTECTED
 	options.author = true
 	options.header = rootProject.description
-	options.use = true
 	options.overview = "src/docs/api/overview.html"
 	options.stylesheetFile = file("src/docs/api/stylesheet.css")
 	options.splitIndex = true
@@ -50,9 +49,12 @@ task api(type: Javadoc) {
 	}
 }
 
+// Need https://github.com/Kotlin/dokka/issues/184 to be fixed to avoid "Can't find node by signature" log spam
 dokka {
 	dependsOn {
-		tasks.getByName("api")
+		subprojects.collect {
+			it.tasks.getByName("jar")
+		}
 	}
 	doFirst {
 		classpath = subprojects.collect { project -> project.jar.outputs.files.getFiles() }.flatten()
@@ -64,12 +66,10 @@ dokka {
 	outputDirectory = "$buildDir/docs/kdoc"
 
 	sourceDirs = files(subprojects.collect { project ->
-		def kotlinDirs = project.sourceSets.main.kotlin.srcDirs.collect()
-		kotlinDirs -= project.sourceSets.main.java.srcDirs
+		project.sourceSets.main.kotlin.srcDirs
 	})
 	externalDocumentationLink {
-		url = new URL("https://docs.spring.io/spring-framework/docs/$version/javadoc-api/")
-		packageListUrl = new File(buildDir, "api/package-list").toURI().toURL()
+		url = new URL("http://docs.spring.io/spring-framework/docs/${version}/javadoc-api/")
 	}
 	externalDocumentationLink {
 		url = new URL("http://projectreactor.io/docs/core/release/api/")
@@ -124,12 +124,8 @@ task docsZip(type: Zip, dependsOn: ['api', 'asciidoctor', 'dokka']) {
 		into "javadoc-api"
 	}
 
-	from ("$asciidoctor.outputDir/html5") {
+	from (asciidoctor) {
 		into "spring-framework-reference"
-	}
-
-	from ("$asciidoctor.outputDir/pdf") {
-		into "spring-framework-reference/pdf"
 	}
 
 	from (dokka) {

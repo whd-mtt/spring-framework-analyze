@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,22 +57,22 @@ public interface DataBuffer {
 	DataBufferFactory factory();
 
 	/**
-	 * Return the index of the first byte in this buffer that matches
-	 * the given predicate.
+	 * Return the index of the first byte in this buffer that matches the given
+	 * predicate.
 	 * @param predicate the predicate to match
 	 * @param fromIndex the index to start the search from
-	 * @return the index of the first byte that matches {@code predicate};
-	 * or {@code -1} if none match
+	 * @return the index of the first byte that matches {@code predicate}; or {@code -1}
+	 * if none match
 	 */
 	int indexOf(IntPredicate predicate, int fromIndex);
 
 	/**
-	 * Return the index of the last byte in this buffer that matches
-	 * the given predicate.
+	 * Return the index of the last byte in this buffer that matches the given
+	 * predicate.
 	 * @param predicate the predicate to match
 	 * @param fromIndex the index to start the search from
-	 * @return the index of the last byte that matches {@code predicate};
-	 * or {@code -1} if none match
+	 * @return the index of the last byte that matches {@code predicate}; or {@code -1}
+	 * if none match
 	 */
 	int lastIndexOf(IntPredicate predicate, int fromIndex);
 
@@ -97,10 +97,9 @@ public interface DataBuffer {
 	int capacity();
 
 	/**
-	 * Set the number of bytes that this buffer can contain.
-	 * <p>If the new capacity is lower than the current capacity, the contents
-	 * of this buffer will be truncated. If the new capacity is higher than
-	 * the current capacity, it will be expanded.
+	 * Sets the number of bytes that this buffer can contain. If the new capacity is lower than
+	 * the current capacity, the contents of this buffer will be truncated. If the new capacity
+	 * is higher than the current capacity, it will be expanded.
 	 * @param capacity the new capacity
 	 * @return this buffer
 	 */
@@ -117,8 +116,8 @@ public interface DataBuffer {
 	 * Set the position from which this buffer will read.
 	 * @param readPosition the new read position
 	 * @return this buffer
-	 * @throws IndexOutOfBoundsException if {@code readPosition} is smaller than 0
-	 * or greater than {@link #writePosition()}
+	 * @throws IndexOutOfBoundsException if {@code readPosition} is smaller than 0 or greater than
+	 * {@link #writePosition()}
 	 * @since 5.0.1
 	 */
 	DataBuffer readPosition(int readPosition);
@@ -141,16 +140,7 @@ public interface DataBuffer {
 	DataBuffer writePosition(int writePosition);
 
 	/**
-	 * Read a single byte at the given index from this data buffer.
-	 * @param index the index at which the byte will be read
-	 * @return the byte at the given index
-	 * @throws IndexOutOfBoundsException when {@code index} is out of bounds
-	 * @since 5.0.4
-	 */
-	byte getByte(int index);
-
-	/**
-	 * Read a single byte from the current reading position from this data buffer.
+	 * Read a single byte from the current reading position of this data buffer.
 	 * @return the byte at this buffer's current reading position
 	 */
 	byte read();
@@ -192,7 +182,7 @@ public interface DataBuffer {
 	 * Write at most {@code length} bytes of the given source into this buffer, starting
 	 * at the current writing position of this buffer.
 	 * @param source the bytes to be written into this buffer
-	 * @param offset the index within {@code source} to start writing from
+	 * @param offset the index withing {@code source} to start writing from
 	 * @param length the maximum number of bytes to be written from {@code source}
 	 * @return this buffer
 	 */
@@ -200,8 +190,7 @@ public interface DataBuffer {
 
 	/**
 	 * Write one or more {@code DataBuffer}s to this buffer, starting at the current
-	 * writing position. It is the responsibility of the caller to
-	 * {@linkplain DataBufferUtils#release(DataBuffer) release} the given data buffers.
+	 * writing position.
 	 * @param buffers the byte buffers to write into this buffer
 	 * @return this buffer
 	 */
@@ -220,9 +209,6 @@ public interface DataBuffer {
 	 * data buffer's content.  Data between this data buffer and the returned buffer is
 	 * shared; though changes in the returned buffer's position will not be reflected
 	 * in the reading nor writing position of this data buffer.
-	 * <p><strong>Note</strong> that this method will <strong>not</strong> call
-	 * {@link DataBufferUtils#retain(DataBuffer)} on the resulting slice: the reference
-	 * count will not be increased.
 	 * @param index the index at which to start the slice
 	 * @param length the length of the slice
 	 * @return the specified slice of this data buffer
@@ -252,24 +238,10 @@ public interface DataBuffer {
 
 	/**
 	 * Expose this buffer's data as an {@link InputStream}. Both data and read position are
-	 * shared between the returned stream and this data buffer. The underlying buffer will
-	 * <strong>not</strong> be {@linkplain DataBufferUtils#release(DataBuffer) released} when the
-	 * input stream is {@linkplain InputStream#close() closed}.
+	 * shared between the returned stream and this data buffer.
 	 * @return this data buffer as an input stream
-	 * @see #asInputStream(boolean)
 	 */
 	InputStream asInputStream();
-
-	/**
-	 * Expose this buffer's data as an {@link InputStream}. Both data and read position are
-	 * shared between the returned stream and this data buffer.
-	 * @param releaseOnClose whether the underlying buffer will be
-	 * {@linkplain DataBufferUtils#release(DataBuffer) released} when the input stream is
-	 * {@linkplain InputStream#close() closed}.
-	 * @return this data buffer as an input stream
-	 * @since 5.0.4
-	 */
-	InputStream asInputStream(boolean releaseOnClose);
 
 	/**
 	 * Expose this buffer's data as an {@link OutputStream}. Both data and write position are

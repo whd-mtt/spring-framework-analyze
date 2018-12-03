@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.SessionAttributes;
 import org.springframework.web.bind.support.ConfigurableWebBindingInitializer;
 import org.springframework.web.bind.support.WebBindingInitializer;
@@ -60,7 +61,6 @@ import static org.mockito.Mockito.mock;
 
 /**
  * Unit tests for {@link ModelInitializer}.
- *
  * @author Rossen Stoyanchev
  */
 public class ModelInitializerTests {
@@ -79,7 +79,7 @@ public class ModelInitializerTests {
 		resolverConfigurer.addCustomResolver(new ModelArgumentResolver(adapterRegistry));
 
 		ControllerMethodResolver methodResolver = new ControllerMethodResolver(
-				resolverConfigurer, adapterRegistry, new StaticApplicationContext(), Collections.emptyList());
+				resolverConfigurer, Collections.emptyList(), adapterRegistry, new StaticApplicationContext());
 
 		this.modelInitializer = new ModelInitializer(methodResolver, adapterRegistry);
 	}
@@ -214,7 +214,7 @@ public class ModelInitializerTests {
 				MethodIntrospector.selectMethods(controller.getClass(), BINDER_METHODS)
 						.stream()
 						.map(method -> new SyncInvocableHandlerMethod(controller, method))
-						.collect(Collectors.toList());
+						.collect(Collectors.toList());;
 
 		WebBindingInitializer bindingInitializer = new ConfigurableWebBindingInitializer();
 		return new InitBinderBindingContext(bindingInitializer, binderMethods);
@@ -298,4 +298,7 @@ public class ModelInitializerTests {
 	private static final ReflectionUtils.MethodFilter BINDER_METHODS = method ->
 			AnnotationUtils.findAnnotation(method, InitBinder.class) != null;
 
+	private static final ReflectionUtils.MethodFilter ATTRIBUTE_METHODS = method ->
+			(AnnotationUtils.findAnnotation(method, RequestMapping.class) == null) &&
+					(AnnotationUtils.findAnnotation(method, ModelAttribute.class) != null);
 }

@@ -30,8 +30,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.accept.ContentNegotiationManager;
 import org.springframework.web.accept.FixedContentNegotiationStrategy;
 import org.springframework.web.accept.HeaderContentNegotiationStrategy;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.view.ContentNegotiatingViewResolver;
 import org.springframework.web.servlet.view.InternalResourceViewResolver;
@@ -135,7 +136,7 @@ public class ViewResolutionTests {
 	@Controller
 	private static class PersonController {
 
-		@GetMapping("/person/{name}")
+		@RequestMapping(value="/person/{name}", method=RequestMethod.GET)
 		public String show(@PathVariable String name, Model model) {
 			Person person = new Person(name);
 			model.addAttribute(person);

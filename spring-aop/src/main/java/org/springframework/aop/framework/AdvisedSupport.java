@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,8 @@
 
 package org.springframework.aop.framework;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.aopalliance.aop.Advice;
-
-import org.springframework.aop.Advisor;
-import org.springframework.aop.DynamicIntroductionAdvice;
-import org.springframework.aop.IntroductionAdvisor;
-import org.springframework.aop.IntroductionInfo;
-import org.springframework.aop.TargetSource;
+import org.springframework.aop.*;
 import org.springframework.aop.support.DefaultIntroductionAdvisor;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.aop.target.EmptyTargetSource;
@@ -41,6 +26,12 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Base class for AOP proxy configuration managers.
@@ -60,9 +51,8 @@ import org.springframework.util.CollectionUtils;
  */
 public class AdvisedSupport extends ProxyConfig implements Advised {
 
-	/** use serialVersionUID from Spring 2.0 for interoperability. */
+	/** use serialVersionUID from Spring 2.0 for interoperability */
 	private static final long serialVersionUID = 2651364800145442165L;
-
 
 	/**
 	 * Canonical TargetSource when there's no target, and behavior is
@@ -71,16 +61,16 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	public static final TargetSource EMPTY_TARGET_SOURCE = EmptyTargetSource.INSTANCE;
 
 
-	/** Package-protected to allow direct access for efficiency. */
+	/** Package-protected to allow direct access for efficiency */
 	TargetSource targetSource = EMPTY_TARGET_SOURCE;
 
-	/** Whether the Advisors are already filtered for the specific target class. */
+	/** Whether the Advisors are already filtered for the specific target class */
 	private boolean preFiltered = false;
 
-	/** The AdvisorChainFactory to use. */
+	/** The AdvisorChainFactory to use */
 	AdvisorChainFactory advisorChainFactory = new DefaultAdvisorChainFactory();
 
-	/** Cache with Method as key and advisor chain List as value. */
+	/** Cache with Method as key and advisor chain List as value */
 	private transient Map<MethodCacheKey, List<Object>> methodCache;
 
 	/**
@@ -93,7 +83,7 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	 * List of Advisors. If an Advice is added, it will be wrapped
 	 * in an Advisor before being added to this List.
 	 */
-	private List<Advisor> advisors = new ArrayList<>();
+	private List<Advisor> advisors = new LinkedList<>();
 
 	/**
 	 * Array updated on changes to the advisors list, which is easier
@@ -152,12 +142,11 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	 * @see #setTargetSource
 	 * @see #setTarget
 	 */
-	public void setTargetClass(@Nullable Class<?> targetClass) {
+	public void setTargetClass(Class<?> targetClass) {
 		this.targetSource = EmptyTargetSource.forClass(targetClass);
 	}
 
 	@Override
-	@Nullable
 	public Class<?> getTargetClass() {
 		return this.targetSource.getTargetClass();
 	}
@@ -228,7 +217,7 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 
 	@Override
 	public Class<?>[] getProxiedInterfaces() {
-		return ClassUtils.toClassArray(this.interfaces);
+		return this.interfaces.toArray(new Class<?>[this.interfaces.size()]);
 	}
 
 	@Override
@@ -372,7 +361,7 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	 * Bring the array up to date with the list.
 	 */
 	protected final void updateAdvisorArray() {
-		this.advisorArray = this.advisors.toArray(new Advisor[0]);
+		this.advisorArray = this.advisors.toArray(new Advisor[this.advisors.size()]);
 	}
 
 	/**
@@ -474,7 +463,7 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 	 * for the given method, based on this configuration.
 	 * @param method the proxied method
 	 * @param targetClass the target class
-	 * @return a List of MethodInterceptors (may also include InterceptorAndDynamicMethodMatchers)
+	 * @return List of MethodInterceptors (may also include InterceptorAndDynamicMethodMatchers)
 	 */
 	public List<Object> getInterceptorsAndDynamicInterceptionAdvice(Method method, @Nullable Class<?> targetClass) {
 		MethodCacheKey cacheKey = new MethodCacheKey(method);
@@ -528,7 +517,7 @@ public class AdvisedSupport extends ProxyConfig implements Advised {
 
 	/**
 	 * Build a configuration-only copy of this AdvisedSupport,
-	 * replacing the TargetSource.
+	 * replacing the TargetSource
 	 */
 	AdvisedSupport getConfigurationOnlyCopy() {
 		AdvisedSupport copy = new AdvisedSupport();

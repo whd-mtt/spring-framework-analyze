@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package org.springframework.web.reactive.function.server;
 
 import java.util.Optional;
+
+import org.springframework.util.Assert;
 
 /**
  * Represents a function that evaluates on a given {@link ServerRequest}.
@@ -47,6 +49,7 @@ public interface RequestPredicate {
 	 * @return a predicate composed of this predicate AND the {@code other} predicate
 	 */
 	default RequestPredicate and(RequestPredicate other) {
+		Assert.notNull(other, "'other' must not be null");
 		return new RequestPredicates.AndRequestPredicate(this, other);
 	}
 
@@ -55,7 +58,7 @@ public interface RequestPredicate {
 	 * @return a predicate that represents the logical negation of this predicate
 	 */
 	default RequestPredicate negate() {
-		return new RequestPredicates.NegateRequestPredicate(this);
+		return (t) -> !test(t);
 	}
 
 	/**
@@ -66,6 +69,7 @@ public interface RequestPredicate {
 	 * @return a predicate composed of this predicate OR the {@code other} predicate
 	 */
 	default RequestPredicate or(RequestPredicate other) {
+		Assert.notNull(other, "'other' must not be null");
 		return new RequestPredicates.OrRequestPredicate(this, other);
 	}
 

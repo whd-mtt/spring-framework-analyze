@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.tomcat.websocket.WsWebSocketContainer;
 import org.apache.tomcat.websocket.server.WsContextListener;
 import org.junit.After;
 import org.junit.Before;
@@ -114,6 +115,7 @@ public abstract class AbstractWebSocketIntegrationTests {
 
 	@Before
 	public void setup() throws Exception {
+
 		this.server.setHandler(createHttpHandler());
 		this.server.afterPropertiesSet();
 		this.server.start();
@@ -127,7 +129,7 @@ public abstract class AbstractWebSocketIntegrationTests {
 	}
 
 	@After
-	public void stop() {
+	public void stop() throws Exception {
 		if (this.client instanceof Lifecycle) {
 			((Lifecycle) this.client).stop();
 		}

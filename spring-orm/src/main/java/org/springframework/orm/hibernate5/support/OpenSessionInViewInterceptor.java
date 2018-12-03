@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,15 +112,18 @@ public class OpenSessionInViewInterceptor implements AsyncWebRequestInterceptor 
 	 */
 	@Override
 	public void preHandle(WebRequest request) throws DataAccessException {
-		String key = getParticipateAttributeName();
+		String participateAttributeName = getParticipateAttributeName();
+
 		WebAsyncManager asyncManager = WebAsyncUtils.getAsyncManager(request);
-		if (asyncManager.hasConcurrentResult() && applySessionBindingInterceptor(asyncManager, key)) {
-			return;
+		if (asyncManager.hasConcurrentResult()) {
+			if (applySessionBindingInterceptor(asyncManager, participateAttributeName)) {
+				return;
+			}
 		}
 
 		if (TransactionSynchronizationManager.hasResource(obtainSessionFactory())) {
 			// Do not modify the Session: just mark the request accordingly.
-			Integer count = (Integer) request.getAttribute(key, WebRequest.SCOPE_REQUEST);
+			Integer count = (Integer) request.getAttribute(participateAttributeName, WebRequest.SCOPE_REQUEST);
 			int newCount = (count != null ? count + 1 : 1);
 			request.setAttribute(getParticipateAttributeName(), newCount, WebRequest.SCOPE_REQUEST);
 		}
@@ -132,8 +135,8 @@ public class OpenSessionInViewInterceptor implements AsyncWebRequestInterceptor 
 
 			AsyncRequestInterceptor asyncRequestInterceptor =
 					new AsyncRequestInterceptor(obtainSessionFactory(), sessionHolder);
-			asyncManager.registerCallableInterceptor(key, asyncRequestInterceptor);
-			asyncManager.registerDeferredResultInterceptor(key, asyncRequestInterceptor);
+			asyncManager.registerCallableInterceptor(participateAttributeName, asyncRequestInterceptor);
+			asyncManager.registerDeferredResultInterceptor(participateAttributeName, asyncRequestInterceptor);
 		}
 	}
 

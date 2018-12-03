@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.Trigger;
+import org.springframework.scheduling.TriggerContext;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.config.IntervalTask;
 import org.springframework.scheduling.config.ScheduledTaskHolder;
@@ -455,8 +457,19 @@ public class EnableSchedulingTests {
 		public TaskScheduler scheduler() {
 			ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
 			scheduler.initialize();
-			scheduler.schedule(() -> counter().incrementAndGet(),
-					triggerContext -> new Date(new Date().getTime()+10));
+			scheduler.schedule(
+				new Runnable() {
+					@Override
+					public void run() {
+						counter().incrementAndGet();
+					}
+				},
+				new Trigger() {
+					@Override
+					public Date nextExecutionTime(TriggerContext triggerContext) {
+						return new Date(new Date().getTime()+10);
+					}
+				});
 			return scheduler;
 		}
 	}

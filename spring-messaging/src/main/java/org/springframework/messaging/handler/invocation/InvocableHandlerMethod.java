@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,14 @@ import org.springframework.core.ResolvableType;
 import org.springframework.lang.Nullable;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.HandlerMethod;
-import org.springframework.util.ObjectUtils;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 
 /**
- * Extension of {@link HandlerMethod} that invokes the underlying method with
- * argument values resolved from the current HTTP request through a list of
- * {@link HandlerMethodArgumentResolver}.
+ * Provides a method for invoking the handler method for a given message after resolving its
+ * method argument values through registered {@link HandlerMethodArgumentResolver}s.
+ *
+ * <p>Use {@link #setMessageMethodArgumentResolvers} to customize the list of argument resolvers.
  *
  * @author Rossen Stoyanchev
  * @author Juergen Hoeller
@@ -42,10 +43,7 @@ import org.springframework.util.ReflectionUtils;
  */
 public class InvocableHandlerMethod extends HandlerMethod {
 
-	private static final Object[] EMPTY_ARGS = new Object[0];
-
-
-	private HandlerMethodArgumentResolverComposite resolvers = new HandlerMethodArgumentResolverComposite();
+	private HandlerMethodArgumentResolverComposite argumentResolvers = new HandlerMethodArgumentResolverComposite();
 
 	private ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
 
@@ -79,10 +77,10 @@ public class InvocableHandlerMethod extends HandlerMethod {
 
 
 	/**
-	 * Set {@link HandlerMethodArgumentResolver HandlerMethodArgumentResolvers} to use to use for resolving method argument values.
+	 * Set {@link HandlerMethodArgumentResolver}s to use to use for resolving method argument values.
 	 */
 	public void setMessageMethodArgumentResolvers(HandlerMethodArgumentResolverComposite argumentResolvers) {
-		this.resolvers = argumentResolvers;
+		this.argumentResolvers = argumentResolvers;
 	}
 
 	/**
@@ -97,68 +95,81 @@ public class InvocableHandlerMethod extends HandlerMethod {
 
 	/**
 	 * Invoke the method after resolving its argument values in the context of the given message.
-	 * <p>Argument values are commonly resolved through
-	 * {@link HandlerMethodArgumentResolver HandlerMethodArgumentResolvers}.
+	 * <p>Argument values are commonly resolved through {@link HandlerMethodArgumentResolver}s.
 	 * The {@code providedArgs} parameter however may supply argument values to be used directly,
 	 * i.e. without argument resolution.
-	 * <p>Delegates to {@link #getMethodArgumentValues} and calls {@link #doInvoke} with the
-	 * resolved arguments.
 	 * @param message the current message being processed
 	 * @param providedArgs "given" arguments matched by type, not resolved
 	 * @return the raw value returned by the invoked method
-	 * @throws Exception raised if no suitable argument resolver can be found,
+	 * @exception Exception raised if no suitable argument resolver can be found,
 	 * or if the method raised an exception
-	 * @see #getMethodArgumentValues
-	 * @see #doInvoke
 	 */
 	@Nullable
 	public Object invoke(Message<?> message, Object... providedArgs) throws Exception {
 		Object[] args = getMethodArgumentValues(message, providedArgs);
 		if (logger.isTraceEnabled()) {
-			logger.trace("Arguments: " + Arrays.toString(args));
+			logger.trace("Invoking '" + ClassUtils.getQualifiedMethodName(getMethod(), getBeanType()) +
+					"' with arguments " + Arrays.toString(args));
 		}
-		return doInvoke(args);
+		Object returnValue = doInvoke(args);
+		if (logger.isTraceEnabled()) {
+			logger.trace("Method [" + ClassUtils.getQualifiedMethodName(getMethod(), getBeanType()) +
+					"] returned [" + returnValue + "]");
+		}
+		return returnValue;
 	}
 
 	/**
-	 * Get the method argument values for the current message, checking the provided
-	 * argument values and falling back to the configured argument resolvers.
-	 * <p>The resulting array will be passed into {@link #doInvoke}.
-	 * @since 5.1.2
+	 * Get the method argument values for the current request.
 	 */
-	protected Object[] getMethodArgumentValues(Message<?> message, Object... providedArgs) throws Exception {
-		if (ObjectUtils.isEmpty(getMethodParameters())) {
-			return EMPTY_ARGS;
-		}
+	private Object[] getMethodArgumentValues(Message<?> message, Object... providedArgs) throws Exception {
 		MethodParameter[] parameters = getMethodParameters();
 		Object[] args = new Object[parameters.length];
 		for (int i = 0; i < parameters.length; i++) {
 			MethodParameter parameter = parameters[i];
 			parameter.initParameterNameDiscovery(this.parameterNameDiscoverer);
-			args[i] = findProvidedArgument(parameter, providedArgs);
+			args[i] = resolveProvidedArgument(parameter, providedArgs);
 			if (args[i] != null) {
 				continue;
 			}
-			if (!this.resolvers.supportsParameter(parameter)) {
-				throw new MethodArgumentResolutionException(
-						message, parameter, formatArgumentError(parameter, "No suitable resolver"));
-			}
-			try {
-				args[i] = this.resolvers.resolveArgument(parameter, message);
-			}
-			catch (Exception ex) {
-				// Leave stack trace for later, exception may actually be resolved and handled..
-				if (logger.isDebugEnabled()) {
-					String error = ex.getMessage();
-					if (error != null && !error.contains(parameter.getExecutable().toGenericString())) {
-						logger.debug(formatArgumentError(parameter, error));
-					}
+			if (this.argumentResolvers.supportsParameter(parameter)) {
+				try {
+					args[i] = this.argumentResolvers.resolveArgument(parameter, message);
+					continue;
 				}
-				throw ex;
+				catch (Exception ex) {
+					if (logger.isDebugEnabled()) {
+						logger.debug(getArgumentResolutionErrorMessage("Failed to resolve", i), ex);
+					}
+					throw ex;
+				}
+			}
+			if (args[i] == null) {
+				throw new MethodArgumentResolutionException(message, parameter,
+						getArgumentResolutionErrorMessage("No suitable resolver for", i));
 			}
 		}
 		return args;
 	}
+
+	private String getArgumentResolutionErrorMessage(String text, int index) {
+		Class<?> paramType = getMethodParameters()[index].getParameterType();
+		return text + " argument " + index + " of type '" + paramType.getName() + "'";
+	}
+
+	/**
+	 * Attempt to resolve a method parameter from the list of provided argument values.
+	 */
+	@Nullable
+	private Object resolveProvidedArgument(MethodParameter parameter, Object... providedArgs) {
+		for (Object providedArg : providedArgs) {
+			if (parameter.getParameterType().isInstance(providedArg)) {
+				return providedArg;
+			}
+		}
+		return null;
+	}
+
 
 	/**
 	 * Invoke the handler method with the given argument values.
@@ -172,7 +183,7 @@ public class InvocableHandlerMethod extends HandlerMethod {
 		catch (IllegalArgumentException ex) {
 			assertTargetBean(getBridgedMethod(), getBean(), args);
 			String text = (ex.getMessage() != null ? ex.getMessage() : "Illegal argument");
-			throw new IllegalStateException(formatInvokeError(text, args), ex);
+			throw new IllegalStateException(getInvocationErrorMessage(text, args), ex);
 		}
 		catch (InvocationTargetException ex) {
 			// Unwrap for HandlerExceptionResolvers ...
@@ -187,10 +198,59 @@ public class InvocableHandlerMethod extends HandlerMethod {
 				throw (Exception) targetException;
 			}
 			else {
-				throw new IllegalStateException(formatInvokeError("Invocation failure", args), targetException);
+				String text = getInvocationErrorMessage("Failed to invoke handler method", args);
+				throw new IllegalStateException(text, targetException);
 			}
 		}
 	}
+
+	/**
+	 * Assert that the target bean class is an instance of the class where the given
+	 * method is declared. In some cases the actual endpoint instance at request-
+	 * processing time may be a JDK dynamic proxy (lazy initialization, prototype
+	 * beans, and others). Endpoint classes that require proxying should prefer
+	 * class-based proxy mechanisms.
+	 */
+	private void assertTargetBean(Method method, Object targetBean, Object[] args) {
+		Class<?> methodDeclaringClass = method.getDeclaringClass();
+		Class<?> targetBeanClass = targetBean.getClass();
+		if (!methodDeclaringClass.isAssignableFrom(targetBeanClass)) {
+			String text = "The mapped handler method class '" + methodDeclaringClass.getName() +
+					"' is not an instance of the actual endpoint bean class '" +
+					targetBeanClass.getName() + "'. If the endpoint requires proxying " +
+					"(e.g. due to @Transactional), please use class-based proxying.";
+			throw new IllegalStateException(getInvocationErrorMessage(text, args));
+		}
+	}
+
+	private String getInvocationErrorMessage(String text, Object[] resolvedArgs) {
+		StringBuilder sb = new StringBuilder(getDetailedErrorMessage(text));
+		sb.append("Resolved arguments: \n");
+		for (int i = 0; i < resolvedArgs.length; i++) {
+			sb.append("[").append(i).append("] ");
+			if (resolvedArgs[i] == null) {
+				sb.append("[null] \n");
+			}
+			else {
+				sb.append("[type=").append(resolvedArgs[i].getClass().getName()).append("] ");
+				sb.append("[value=").append(resolvedArgs[i]).append("]\n");
+			}
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * Adds HandlerMethod details such as the bean type and method signature to the message.
+	 * @param text error message to append the HandlerMethod details to
+	 */
+	protected String getDetailedErrorMessage(String text) {
+		StringBuilder sb = new StringBuilder(text).append("\n");
+		sb.append("HandlerMethod details: \n");
+		sb.append("Endpoint [").append(getBeanType().getName()).append("]\n");
+		sb.append("Method [").append(getBridgedMethod().toGenericString()).append("]\n");
+		return sb.toString();
+	}
+
 
 	MethodParameter getAsyncReturnValueType(@Nullable Object returnValue) {
 		return new AsyncResultMethodParameter(returnValue);
@@ -222,7 +282,7 @@ public class InvocableHandlerMethod extends HandlerMethod {
 				return this.returnValue.getClass();
 			}
 			if (!ResolvableType.NONE.equals(this.returnType)) {
-				return this.returnType.toClass();
+				return this.returnType.resolve(Object.class);
 			}
 			return super.getParameterType();
 		}

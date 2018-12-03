@@ -25,7 +25,7 @@ import org.springframework.jms.support.destination.DestinationResolver;
 import org.springframework.lang.Nullable;
 
 /**
- * A {@link JmsListenerContainerFactory} implementation to build a
+ * AppConfig {@link JmsListenerContainerFactory} implementation to build a
  * JCA-based {@link JmsMessageEndpointManager}.
  *
  * @author Stephane Nicoll

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.springframework.util.Assert;
  * invocation context.
  *
  * @author Stephane Nicoll
- * @author Juergen Hoeller
  * @since 4.1
  */
 public abstract class AbstractCacheResolver implements CacheResolver, InitializingBean {
@@ -41,17 +40,9 @@ public abstract class AbstractCacheResolver implements CacheResolver, Initializi
 	private CacheManager cacheManager;
 
 
-	/**
-	 * Construct a new {@code AbstractCacheResolver}.
-	 * @see #setCacheManager
-	 */
 	protected AbstractCacheResolver() {
 	}
 
-	/**
-	 * Construct a new {@code AbstractCacheResolver} for the given {@link CacheManager}.
-	 * @param cacheManager the CacheManager to use
-	 */
 	protected AbstractCacheResolver(CacheManager cacheManager) {
 		this.cacheManager = cacheManager;
 	}
@@ -84,16 +75,18 @@ public abstract class AbstractCacheResolver implements CacheResolver, Initializi
 		if (cacheNames == null) {
 			return Collections.emptyList();
 		}
-		Collection<Cache> result = new ArrayList<>(cacheNames.size());
-		for (String cacheName : cacheNames) {
-			Cache cache = getCacheManager().getCache(cacheName);
-			if (cache == null) {
-				throw new IllegalArgumentException("Cannot find cache named '" +
-						cacheName + "' for " + context.getOperation());
+		else {
+			Collection<Cache> result = new ArrayList<>();
+			for (String cacheName : cacheNames) {
+				Cache cache = getCacheManager().getCache(cacheName);
+				if (cache == null) {
+					throw new IllegalArgumentException("Cannot find cache named '" +
+							cacheName + "' for " + context.getOperation());
+				}
+				result.add(cache);
 			}
-			result.add(cache);
+			return result;
 		}
-		return result;
 	}
 
 	/**

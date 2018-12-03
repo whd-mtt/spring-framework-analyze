@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.springframework.core.io.buffer;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 import org.springframework.util.Assert;
 
@@ -98,27 +97,9 @@ public class DefaultDataBufferFactory implements DataBufferFactory {
 	}
 
 	@Override
-	public DefaultDataBuffer wrap(byte[] bytes) {
+	public DataBuffer wrap(byte[] bytes) {
 		ByteBuffer wrapper = ByteBuffer.wrap(bytes);
 		return DefaultDataBuffer.fromFilledByteBuffer(this, wrapper);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 * <p>This implementation creates a single {@link DefaultDataBuffer} to contain the data
-	 * in {@code dataBuffers}.
-	 */
-	@Override
-	public DefaultDataBuffer join(List<? extends DataBuffer> dataBuffers) {
-		Assert.notEmpty(dataBuffers, "'dataBuffers' must not be empty");
-
-		int capacity = dataBuffers.stream()
-				.mapToInt(DataBuffer::readableByteCount)
-				.sum();
-		DefaultDataBuffer result = allocateBuffer(capacity);
-		dataBuffers.forEach(result::write);
-		dataBuffers.forEach(DataBufferUtils::release);
-		return result;
 	}
 
 	@Override

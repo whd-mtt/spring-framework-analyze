@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import org.springframework.web.util.HtmlUtils;
  * tags and macros, the same status class is used for both scenarios.
  *
  * @author Rossen Stoyanchev
- * @author Juergen Hoeller
  * @since 5.0
  * @see RequestContext#getBindStatus
  */
@@ -59,13 +58,9 @@ public class BindStatus {
 	@Nullable
 	private final Errors errors;
 
-	private final String[] errorCodes;
 
 	@Nullable
-	private String[] errorMessages;
-
-	@Nullable
-	private List<? extends ObjectError> objectErrors;
+	private BindingResult bindingResult;
 
 	@Nullable
 	private Object value;
@@ -80,7 +75,12 @@ public class BindStatus {
 	private PropertyEditor editor;
 
 	@Nullable
-	private BindingResult bindingResult;
+	private List<? extends ObjectError> objectErrors;
+
+	private String[] errorCodes = new String[0];
+
+	@Nullable
+	private String[] errorMessages;
 
 
 	/**
@@ -91,7 +91,9 @@ public class BindStatus {
 	 * @param htmlEscape whether to HTML-escape error messages and string values
 	 * @throws IllegalStateException if no corresponding Errors object found
 	 */
-	public BindStatus(RequestContext requestContext, String path, boolean htmlEscape) throws IllegalStateException {
+	public BindStatus(RequestContext requestContext, String path, boolean htmlEscape)
+			throws IllegalStateException {
+
 		this.requestContext = requestContext;
 		this.path = path;
 		this.htmlEscape = htmlEscape;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.springframework.web.servlet.mvc.condition;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -47,13 +48,13 @@ import org.springframework.web.servlet.mvc.condition.HeadersRequestCondition.Hea
  */
 public final class ProducesRequestCondition extends AbstractRequestCondition<ProducesRequestCondition> {
 
-	private static final ProducesRequestCondition PRE_FLIGHT_MATCH = new ProducesRequestCondition();
+	private final static ProducesRequestCondition PRE_FLIGHT_MATCH = new ProducesRequestCondition();
 
 	private static final ProducesRequestCondition EMPTY_CONDITION = new ProducesRequestCondition();
 
-	private static final List<ProduceMediaTypeExpression> MEDIA_TYPE_ALL_LIST =
-			Collections.singletonList(new ProduceMediaTypeExpression(MediaType.ALL_VALUE));
 
+	private final List<ProduceMediaTypeExpression> MEDIA_TYPE_ALL_LIST =
+			Collections.singletonList(new ProduceMediaTypeExpression("*/*"));
 
 	private final List<ProduceMediaTypeExpression> expressions;
 
@@ -149,7 +150,6 @@ public final class ProducesRequestCondition extends AbstractRequestCondition<Pro
 	/**
 	 * Whether the condition has any media type expressions.
 	 */
-	@Override
 	public boolean isEmpty() {
 		return this.expressions.isEmpty();
 	}
@@ -193,7 +193,6 @@ public final class ProducesRequestCondition extends AbstractRequestCondition<Pro
 		if (isEmpty()) {
 			return this;
 		}
-
 		List<MediaType> acceptedMediaTypes;
 		try {
 			acceptedMediaTypes = getAcceptedMediaTypes(request);
@@ -201,9 +200,13 @@ public final class ProducesRequestCondition extends AbstractRequestCondition<Pro
 		catch (HttpMediaTypeException ex) {
 			return null;
 		}
-
-		Set<ProduceMediaTypeExpression> result = new LinkedHashSet<>(this.expressions);
-		result.removeIf(expression -> !expression.match(acceptedMediaTypes));
+		Set<ProduceMediaTypeExpression> result = new LinkedHashSet<>(expressions);
+		for (Iterator<ProduceMediaTypeExpression> iterator = result.iterator(); iterator.hasNext();) {
+			ProduceMediaTypeExpression expression = iterator.next();
+			if (!expression.match(acceptedMediaTypes)) {
+				iterator.remove();
+			}
+		}
 		if (!result.isEmpty()) {
 			return new ProducesRequestCondition(result, this.contentNegotiationManager);
 		}
@@ -259,7 +262,8 @@ public final class ProducesRequestCondition extends AbstractRequestCondition<Pro
 	}
 
 	private List<MediaType> getAcceptedMediaTypes(HttpServletRequest request) throws HttpMediaTypeNotAcceptableException {
-		return this.contentNegotiationManager.resolveMediaTypes(new ServletWebRequest(request));
+		List<MediaType> mediaTypes = this.contentNegotiationManager.resolveMediaTypes(new ServletWebRequest(request));
+		return mediaTypes.isEmpty() ? Collections.singletonList(MediaType.ALL) : mediaTypes;
 	}
 
 	private int indexOfEqualMediaType(MediaType mediaType) {
@@ -300,7 +304,7 @@ public final class ProducesRequestCondition extends AbstractRequestCondition<Pro
 
 	/**
 	 * Return the contained "produces" expressions or if that's empty, a list
-	 * with a {@value MediaType#ALL_VALUE} expression.
+	 * with a {@code MediaType_ALL} expression.
 	 */
 	private List<ProduceMediaTypeExpression> getExpressionsToCompare() {
 		return (this.expressions.isEmpty() ? MEDIA_TYPE_ALL_LIST : this.expressions);
@@ -310,7 +314,7 @@ public final class ProducesRequestCondition extends AbstractRequestCondition<Pro
 	/**
 	 * Parses and matches a single media type expression to a request's 'Accept' header.
 	 */
-	static class ProduceMediaTypeExpression extends AbstractMediaTypeExpression {
+	class ProduceMediaTypeExpression extends AbstractMediaTypeExpression {
 
 		ProduceMediaTypeExpression(MediaType mediaType, boolean negated) {
 			super(mediaType, negated);

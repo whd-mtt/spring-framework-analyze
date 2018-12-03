@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,10 +127,12 @@ public class SockJsClient implements WebSocketClient, Lifecycle {
 	 * of each call to {@link SockJsClient#doHandshake(WebSocketHandler, WebSocketHttpHeaders, URI)}
 	 * and also used with other HTTP requests issued as part of that SockJS
 	 * connection, e.g. the initial info request, XHR send or receive requests.
+	 *
 	 * <p>By default if this property is not set, all handshake headers are also
 	 * used for other HTTP requests. Set it if you want only a subset of handshake
 	 * headers (e.g. auth headers) to be used for other HTTP requests.
-	 * @param httpHeaderNames the HTTP header names
+	 *
+	 * @param httpHeaderNames HTTP header names
 	 */
 	public void setHttpHeaderNames(@Nullable String... httpHeaderNames) {
 		this.httpHeaderNames = httpHeaderNames;
@@ -203,9 +205,8 @@ public class SockJsClient implements WebSocketClient, Lifecycle {
 			this.running = true;
 			for (Transport transport : this.transports) {
 				if (transport instanceof Lifecycle) {
-					Lifecycle lifecycle = (Lifecycle) transport;
-					if (!lifecycle.isRunning()) {
-						lifecycle.start();
+					if (!((Lifecycle) transport).isRunning()) {
+						((Lifecycle) transport).start();
 					}
 				}
 			}
@@ -218,9 +219,8 @@ public class SockJsClient implements WebSocketClient, Lifecycle {
 			this.running = false;
 			for (Transport transport : this.transports) {
 				if (transport instanceof Lifecycle) {
-					Lifecycle lifecycle = (Lifecycle) transport;
-					if (lifecycle.isRunning()) {
-						lifecycle.stop();
+					if (((Lifecycle) transport).isRunning()) {
+						((Lifecycle) transport).stop();
 					}
 				}
 			}

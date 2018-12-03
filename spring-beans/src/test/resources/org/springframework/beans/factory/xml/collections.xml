@@ -161,7 +161,7 @@
 		<property name="map">
 			<map>
 				<entry key="e1">
-					<description>A map entry with a description</description>
+					<description>AppConfig map entry with a description</description>
 					<value>v1</value>
 				</entry>
 			</map>

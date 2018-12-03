@@ -132,7 +132,7 @@ public class ViewResolverTests {
 		request.setAttribute(DispatcherServlet.WEB_APPLICATION_CONTEXT_ATTRIBUTE, wac);
 		request.setAttribute(DispatcherServlet.LOCALE_RESOLVER_ATTRIBUTE, new AcceptHeaderLocaleResolver());
 		request.setAttribute(DispatcherServlet.THEME_RESOLVER_ATTRIBUTE, new FixedThemeResolver());
-		Map<String, Object> model = new HashMap<>();
+		Map model = new HashMap();
 		TestBean tb = new TestBean();
 		model.put("tb", tb);
 		view.render(model, request, response);
@@ -184,7 +184,7 @@ public class ViewResolverTests {
 		Properties props = new Properties();
 		props.setProperty("key1", "value1");
 		vr.setAttributes(props);
-		Map<String, Object> map = new HashMap<>();
+		Map map = new HashMap();
 		map.put("key2", new Integer(2));
 		vr.setAttributesMap(map);
 		vr.setApplicationContext(wac);
@@ -192,7 +192,7 @@ public class ViewResolverTests {
 		View view = vr.resolveViewName("example1", Locale.getDefault());
 		assertEquals("Correct view class", JstlView.class, view.getClass());
 		assertEquals("Correct URL", "example1", ((InternalResourceView) view).getUrl());
-		Map<String, Object> attributes = ((InternalResourceView) view).getStaticAttributes();
+		Map attributes = ((InternalResourceView) view).getStaticAttributes();
 		assertEquals("value1", attributes.get("key1"));
 		assertEquals(new Integer(2), attributes.get("key2"));
 
@@ -207,7 +207,7 @@ public class ViewResolverTests {
 		HttpServletResponse response = new MockHttpServletResponse();
 		request.setAttribute(DispatcherServlet.WEB_APPLICATION_CONTEXT_ATTRIBUTE, wac);
 		request.setAttribute(DispatcherServlet.LOCALE_RESOLVER_ATTRIBUTE, new AcceptHeaderLocaleResolver());
-		Map<String, Object> model = new HashMap<>();
+		Map model = new HashMap();
 		TestBean tb = new TestBean();
 		model.put("tb", tb);
 		view.render(model, request, response);
@@ -230,7 +230,7 @@ public class ViewResolverTests {
 		Properties props = new Properties();
 		props.setProperty("key1", "value1");
 		vr.setAttributes(props);
-		Map<String, Object> map = new HashMap<>();
+		Map map = new HashMap();
 		map.put("key2", new Integer(2));
 		vr.setAttributesMap(map);
 		vr.setExposeContextBeansAsAttributes(true);
@@ -255,7 +255,7 @@ public class ViewResolverTests {
 		request.setAttribute(DispatcherServlet.WEB_APPLICATION_CONTEXT_ATTRIBUTE, wac);
 		request.setAttribute(DispatcherServlet.LOCALE_RESOLVER_ATTRIBUTE, new AcceptHeaderLocaleResolver());
 		View view = vr.resolveViewName("example1", Locale.getDefault());
-		view.render(new HashMap<String, Object>(), request, response);
+		view.render(new HashMap(), request, response);
 	}
 
 	@Test
@@ -270,7 +270,7 @@ public class ViewResolverTests {
 		Properties props = new Properties();
 		props.setProperty("key1", "value1");
 		vr.setAttributes(props);
-		Map<String, Object> map = new HashMap<>();
+		Map map = new HashMap();
 		map.put("key2", new Integer(2));
 		vr.setAttributesMap(map);
 		vr.setExposedContextBeanNames(new String[] {"myBean2"});
@@ -295,7 +295,7 @@ public class ViewResolverTests {
 		request.setAttribute(DispatcherServlet.WEB_APPLICATION_CONTEXT_ATTRIBUTE, wac);
 		request.setAttribute(DispatcherServlet.LOCALE_RESOLVER_ATTRIBUTE, new AcceptHeaderLocaleResolver());
 		View view = vr.resolveViewName("example1", Locale.getDefault());
-		view.render(new HashMap<String, Object>(), request, response);
+		view.render(new HashMap(), request, response);
 	}
 
 	@Test
@@ -323,7 +323,7 @@ public class ViewResolverTests {
 		HttpServletResponse response = new MockHttpServletResponse();
 		request.setAttribute(DispatcherServlet.WEB_APPLICATION_CONTEXT_ATTRIBUTE, wac);
 		request.setAttribute(DispatcherServlet.LOCALE_RESOLVER_ATTRIBUTE, new FixedLocaleResolver(locale));
-		Map<String, Object> model = new HashMap<>();
+		Map model = new HashMap();
 		TestBean tb = new TestBean();
 		model.put("tb", tb);
 		view.render(model, request, response);
@@ -362,7 +362,7 @@ public class ViewResolverTests {
 		HttpServletResponse response = new MockHttpServletResponse();
 		request.setAttribute(DispatcherServlet.WEB_APPLICATION_CONTEXT_ATTRIBUTE, wac);
 		request.setAttribute(DispatcherServlet.LOCALE_RESOLVER_ATTRIBUTE, new FixedLocaleResolver(locale));
-		Map<String, Object> model = new HashMap<>();
+		Map model = new HashMap();
 		TestBean tb = new TestBean();
 		model.put("tb", tb);
 		view.render(model, request, response);
@@ -396,7 +396,7 @@ public class ViewResolverTests {
 		assertTrue("Correct URL", "/example2new.jsp".equals(((InternalResourceView) view2).getUrl()));
 
 		ServletContext sc = new MockServletContext();
-		Map<String, Object> model = new HashMap<>();
+		Map model = new HashMap();
 		TestBean tb = new TestBean();
 		model.put("tb", tb);
 

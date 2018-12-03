@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,26 @@
 
 package org.springframework.context.annotation;
 
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.io.Serializable;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Member;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.aop.TargetSource;
+import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.PropertyValues;
+import org.springframework.beans.factory.BeanCreationException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor;
+import org.springframework.beans.factory.annotation.InjectionMetadata;
+import org.springframework.beans.factory.config.*;
+import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.core.BridgeMethodResolver;
+import org.springframework.core.MethodParameter;
+import org.springframework.core.Ordered;
+import org.springframework.jndi.support.SimpleJndiBeanFactory;
+import org.springframework.lang.Nullable;
+import org.springframework.util.*;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
@@ -44,33 +44,15 @@ import javax.xml.namespace.QName;
 import javax.xml.ws.Service;
 import javax.xml.ws.WebServiceClient;
 import javax.xml.ws.WebServiceRef;
-
-import org.springframework.aop.TargetSource;
-import org.springframework.aop.framework.ProxyFactory;
-import org.springframework.beans.BeanUtils;
-import org.springframework.beans.PropertyValues;
-import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor;
-import org.springframework.beans.factory.annotation.InjectionMetadata;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.beans.factory.config.DependencyDescriptor;
-import org.springframework.beans.factory.config.EmbeddedValueResolver;
-import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessor;
-import org.springframework.beans.factory.support.RootBeanDefinition;
-import org.springframework.core.BridgeMethodResolver;
-import org.springframework.core.MethodParameter;
-import org.springframework.core.Ordered;
-import org.springframework.jndi.support.SimpleJndiBeanFactory;
-import org.springframework.lang.Nullable;
-import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.ReflectionUtils;
-import org.springframework.util.StringUtils;
-import org.springframework.util.StringValueResolver;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.io.Serializable;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * {@link org.springframework.beans.factory.config.BeanPostProcessor} implementation
@@ -143,14 +125,18 @@ import org.springframework.util.StringValueResolver;
 public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBeanPostProcessor
 		implements InstantiationAwareBeanPostProcessor, BeanFactoryAware, Serializable {
 
+	//WebService关于JAX-WS的相关注解
 	@Nullable
 	private static Class<? extends Annotation> webServiceRefClass;
 
+	//EJB相关的注解
 	@Nullable
 	private static Class<? extends Annotation> ejbRefClass;
 
+	//静态初始化块
 	static {
 		try {
+			//获取当前类的类加载器，并加载WebService相关的类
 			@SuppressWarnings("unchecked")
 			Class<? extends Annotation> clazz = (Class<? extends Annotation>)
 					ClassUtils.forName("javax.xml.ws.WebServiceRef", CommonAnnotationBeanPostProcessor.class.getClassLoader());
@@ -160,6 +146,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 			webServiceRefClass = null;
 		}
 		try {
+			//使用类加载器加载EJB相关的类
 			@SuppressWarnings("unchecked")
 			Class<? extends Annotation> clazz = (Class<? extends Annotation>)
 					ClassUtils.forName("javax.ejb.EJB", CommonAnnotationBeanPostProcessor.class.getClassLoader());
@@ -188,7 +175,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	@Nullable
 	private transient StringValueResolver embeddedValueResolver;
 
-	private final transient Map<String, InjectionMetadata> injectionMetadataCache = new ConcurrentHashMap<>(256);
+	private transient final Map<String, InjectionMetadata> injectionMetadataCache = new ConcurrentHashMap<>(256);
 
 
 	/**
@@ -197,10 +184,14 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	 * {@link javax.annotation.PostConstruct} and {@link javax.annotation.PreDestroy},
 	 * respectively.
 	 */
+	//构造方法
 	public CommonAnnotationBeanPostProcessor() {
 		setOrder(Ordered.LOWEST_PRECEDENCE - 3);
+		//设置初始的注解类型为@PostConstruct
 		setInitAnnotationType(PostConstruct.class);
+		//设置消耗的注解为@ PreDestroy
 		setDestroyAnnotationType(PreDestroy.class);
+		//当使用@Resource注解时，忽略JAX-WS的资源类型
 		ignoreResourceType("javax.xml.ws.WebServiceContext");
 	}
 
@@ -300,24 +291,24 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	}
 
 	@Override
-	public void resetBeanDefinition(String beanName) {
-		this.injectionMetadataCache.remove(beanName);
-	}
-
-	@Override
-	public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) {
+	public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) throws BeansException {
 		return null;
 	}
 
 	@Override
-	public boolean postProcessAfterInstantiation(Object bean, String beanName) {
+	public boolean postProcessAfterInstantiation(Object bean, String beanName) throws BeansException {
 		return true;
 	}
 
+	//处理属性值
 	@Override
-	public PropertyValues postProcessProperties(PropertyValues pvs, Object bean, String beanName) {
+	public PropertyValues postProcessPropertyValues(
+			PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) throws BeansException {
+
+		//获取@Resource注解中配置的属性值元数据
 		InjectionMetadata metadata = findResourceMetadata(beanName, bean.getClass(), pvs);
 		try {
+			//注入属性值，与AutowiredAnnotationBeanPostProcessor中处理相同
 			metadata.inject(bean, beanName, pvs);
 		}
 		catch (Throwable ex) {
@@ -326,19 +317,13 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		return pvs;
 	}
 
-	@Deprecated
-	@Override
-	public PropertyValues postProcessPropertyValues(
-			PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) {
 
-		return postProcessProperties(pvs, bean, beanName);
-	}
-
-
+	//获取@Resource注解中配置的属性值元数据
 	private InjectionMetadata findResourceMetadata(String beanName, final Class<?> clazz, @Nullable PropertyValues pvs) {
 		// Fall back to class name as cache key, for backwards compatibility with custom callers.
 		String cacheKey = (StringUtils.hasLength(beanName) ? beanName : clazz.getName());
 		// Quick check on the concurrent map first, with minimal locking.
+		//首先从容器缓存中查找
 		InjectionMetadata metadata = this.injectionMetadataCache.get(cacheKey);
 		if (InjectionMetadata.needsRefresh(metadata, clazz)) {
 			synchronized (this.injectionMetadataCache) {
@@ -356,11 +341,12 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	}
 
 	private InjectionMetadata buildResourceMetadata(final Class<?> clazz) {
-		List<InjectionMetadata.InjectedElement> elements = new ArrayList<>();
+		LinkedList<InjectionMetadata.InjectedElement> elements = new LinkedList<>();
 		Class<?> targetClass = clazz;
 
 		do {
-			final List<InjectionMetadata.InjectedElement> currElements = new ArrayList<>();
+			final LinkedList<InjectionMetadata.InjectedElement> currElements =
+					new LinkedList<>();
 
 			ReflectionUtils.doWithLocalFields(targetClass, field -> {
 				if (webServiceRefClass != null && field.isAnnotationPresent(webServiceRefClass)) {
@@ -379,7 +365,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 					if (Modifier.isStatic(field.getModifiers())) {
 						throw new IllegalStateException("@Resource annotation is not supported on static fields");
 					}
-					if (!this.ignoredResourceTypes.contains(field.getType().getName())) {
+					if (!ignoredResourceTypes.contains(field.getType().getName())) {
 						currElements.add(new ResourceElement(field, field, null));
 					}
 				}
@@ -419,7 +405,7 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 						if (paramTypes.length != 1) {
 							throw new IllegalStateException("@Resource annotation requires a single-arg method: " + method);
 						}
-						if (!this.ignoredResourceTypes.contains(paramTypes[0].getName())) {
+						if (!ignoredResourceTypes.contains(paramTypes[0].getName())) {
 							PropertyDescriptor pd = BeanUtils.findPropertyForMethod(bridgedMethod, clazz);
 							currElements.add(new ResourceElement(method, bridgedMethod, pd));
 						}
@@ -478,21 +464,25 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	 * @param element the descriptor for the annotated field/method
 	 * @param requestingBeanName the name of the requesting bean
 	 * @return the resource object (never {@code null})
-	 * @throws NoSuchBeanDefinitionException if no corresponding target resource found
+	 * @throws BeansException if we failed to obtain the target resource
 	 */
-	protected Object getResource(LookupElement element, @Nullable String requestingBeanName)
-			throws NoSuchBeanDefinitionException {
-
+	//根据给定名称或者类型获取资源对象
+	protected Object getResource(LookupElement element, @Nullable String requestingBeanName) throws BeansException {
+		//如果注解对象元素的mappedName属性不为空
 		if (StringUtils.hasLength(element.mappedName)) {
+			//根据JNDI名称和类型去Spring的JNDI容器中获取Bean
 			return this.jndiFactory.getBean(element.mappedName, element.lookupType);
 		}
+		//如果该后置处理器的alwaysUseJndiLookup属性值为true
 		if (this.alwaysUseJndiLookup) {
+			//从Spring的JNDI容器中查找指定JDNI名称和类型的Bean
 			return this.jndiFactory.getBean(element.name, element.lookupType);
 		}
 		if (this.resourceFactory == null) {
 			throw new NoSuchBeanDefinitionException(element.lookupType,
 					"No resource factory configured - specify the 'resourceFactory' property");
 		}
+		//使用autowiring自动依赖注入装配，通过给定的名称和类型从资源容器获取Bean对象
 		return autowireResource(this.resourceFactory, element, requestingBeanName);
 	}
 
@@ -503,10 +493,11 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 	 * @param element the descriptor for the annotated field/method
 	 * @param requestingBeanName the name of the requesting bean
 	 * @return the resource object (never {@code null})
-	 * @throws NoSuchBeanDefinitionException if no corresponding target resource found
+	 * @throws BeansException if we failed to obtain the target resource
 	 */
+	//自动依赖注入装配资源对象
 	protected Object autowireResource(BeanFactory factory, LookupElement element, @Nullable String requestingBeanName)
-			throws NoSuchBeanDefinitionException {
+			throws BeansException {
 
 		Object resource;
 		Set<String> autowiredBeanNames;
@@ -515,17 +506,20 @@ public class CommonAnnotationBeanPostProcessor extends InitDestroyAnnotationBean
 		if (this.fallbackToDefaultTypeMatch && element.isDefaultName &&
 				factory instanceof AutowireCapableBeanFactory && !factory.containsBean(name)) {
 			autowiredBeanNames = new LinkedHashSet<>();
+			//根据容器中Bean定义解析给定的依赖关系，将依赖以资源对象返回
 			resource = ((AutowireCapableBeanFactory) factory).resolveDependency(
 					element.getDependencyDescriptor(), requestingBeanName, autowiredBeanNames, null);
 			if (resource == null) {
 				throw new NoSuchBeanDefinitionException(element.getLookupType(), "No resolvable resource object");
 			}
 		}
+		//根据给定JDNI名称和类型从Spring的JDNI容器查找资源
 		else {
 			resource = factory.getBean(name, element.lookupType);
 			autowiredBeanNames = Collections.singleton(name);
 		}
 
+		//为指定的Bean注册依赖的Bean
 		if (factory instanceof ConfigurableBeanFactory) {
 			ConfigurableBeanFactory beanFactory = (ConfigurableBeanFactory) factory;
 			for (String autowiredBeanName : autowiredBeanNames) {

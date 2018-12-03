@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,9 @@ import org.junit.rules.ExpectedException;
 
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.InvalidPropertyException;
-import org.springframework.beans.MethodInvocationException;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.NotWritablePropertyException;
 import org.springframework.beans.NullValueInNestedPathException;
-import org.springframework.beans.TypeMismatchException;
 import org.springframework.beans.propertyeditors.CustomCollectionEditor;
 import org.springframework.beans.propertyeditors.CustomNumberEditor;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
@@ -80,11 +78,11 @@ import static org.junit.Assert.*;
 public class DataBinderTests {
 
 	@Rule
-	public final ExpectedException expectedException = ExpectedException.none();
+	public ExpectedException expectedException = ExpectedException.none();
 
 
 	@Test
-	public void testBindingNoErrors() throws BindException {
+	public void testBindingNoErrors() throws Exception {
 		TestBean rod = new TestBean();
 		DataBinder binder = new DataBinder(rod, "person");
 		assertTrue(binder.isIgnoreUnknownFields());
@@ -118,7 +116,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingWithDefaultConversionNoErrors() throws BindException {
+	public void testBindingWithDefaultConversionNoErrors() throws Exception {
 		TestBean rod = new TestBean();
 		DataBinder binder = new DataBinder(rod, "person");
 		assertTrue(binder.isIgnoreUnknownFields());
@@ -134,7 +132,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testNestedBindingWithDefaultConversionNoErrors() throws BindException {
+	public void testNestedBindingWithDefaultConversionNoErrors() throws Exception {
 		TestBean rod = new TestBean(new TestBean());
 		DataBinder binder = new DataBinder(rod, "person");
 		assertTrue(binder.isIgnoreUnknownFields());
@@ -150,7 +148,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingNoErrorsNotIgnoreUnknown() {
+	public void testBindingNoErrorsNotIgnoreUnknown() throws Exception {
 		TestBean rod = new TestBean();
 		DataBinder binder = new DataBinder(rod, "person");
 		binder.setIgnoreUnknownFields(false);
@@ -169,7 +167,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingNoErrorsWithInvalidField() {
+	public void testBindingNoErrorsWithInvalidField() throws Exception {
 		TestBean rod = new TestBean();
 		DataBinder binder = new DataBinder(rod, "person");
 		MutablePropertyValues pvs = new MutablePropertyValues();
@@ -186,7 +184,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingNoErrorsWithIgnoreInvalid() {
+	public void testBindingNoErrorsWithIgnoreInvalid() throws Exception {
 		TestBean rod = new TestBean();
 		DataBinder binder = new DataBinder(rod, "person");
 		binder.setIgnoreInvalidFields(true);
@@ -198,7 +196,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingWithErrors() {
+	public void testBindingWithErrors() throws Exception {
 		TestBean rod = new TestBean();
 		DataBinder binder = new DataBinder(rod, "person");
 		MutablePropertyValues pvs = new MutablePropertyValues();
@@ -238,25 +236,16 @@ public class DataBinderTests {
 
 			assertTrue("Has age errors", br.hasFieldErrors("age"));
 			assertTrue("Correct number of age errors", br.getFieldErrorCount("age") == 1);
+			assertEquals("typeMismatch", binder.getBindingResult().getFieldError("age").getCode());
 			assertEquals("32x", binder.getBindingResult().getFieldValue("age"));
-			FieldError ageError = binder.getBindingResult().getFieldError("age");
-			assertNotNull(ageError);
-			assertEquals("typeMismatch", ageError.getCode());
-			assertEquals("32x", ageError.getRejectedValue());
-			assertTrue(ageError.contains(TypeMismatchException.class));
-			assertTrue(ageError.contains(NumberFormatException.class));
-			assertTrue(ageError.unwrap(NumberFormatException.class).getMessage().contains("32x"));
+			assertEquals("32x", binder.getBindingResult().getFieldError("age").getRejectedValue());
 			assertEquals(0, tb.getAge());
 
 			assertTrue("Has touchy errors", br.hasFieldErrors("touchy"));
 			assertTrue("Correct number of touchy errors", br.getFieldErrorCount("touchy") == 1);
+			assertEquals("methodInvocation", binder.getBindingResult().getFieldError("touchy").getCode());
 			assertEquals("m.y", binder.getBindingResult().getFieldValue("touchy"));
-			FieldError touchyError = binder.getBindingResult().getFieldError("touchy");
-			assertNotNull(touchyError);
-			assertEquals("methodInvocation", touchyError.getCode());
-			assertEquals("m.y", touchyError.getRejectedValue());
-			assertTrue(touchyError.contains(MethodInvocationException.class));
-			assertTrue(touchyError.unwrap(MethodInvocationException.class).getCause().getMessage().contains("a ."));
+			assertEquals("m.y", binder.getBindingResult().getFieldError("touchy").getRejectedValue());
 			assertNull(tb.getTouchy());
 
 			rod = new TestBean();
@@ -271,7 +260,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingWithSystemFieldError() {
+	public void testBindingWithSystemFieldError() throws Exception {
 		TestBean rod = new TestBean();
 		DataBinder binder = new DataBinder(rod, "person");
 		MutablePropertyValues pvs = new MutablePropertyValues();
@@ -288,7 +277,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingWithErrorsAndCustomEditors() {
+	public void testBindingWithErrorsAndCustomEditors() throws Exception {
 		TestBean rod = new TestBean();
 		DataBinder binder = new DataBinder(rod, "person");
 		binder.registerCustomEditor(String.class, "touchy", new PropertyEditorSupport() {
@@ -338,20 +327,16 @@ public class DataBinderTests {
 
 			assertTrue("Has age errors", br.hasFieldErrors("age"));
 			assertTrue("Correct number of age errors", br.getFieldErrorCount("age") == 1);
+			assertEquals("typeMismatch", binder.getBindingResult().getFieldError("age").getCode());
 			assertEquals("32x", binder.getBindingResult().getFieldValue("age"));
-			FieldError ageError = binder.getBindingResult().getFieldError("age");
-			assertNotNull(ageError);
-			assertEquals("typeMismatch", ageError.getCode());
-			assertEquals("32x", ageError.getRejectedValue());
+			assertEquals("32x", binder.getBindingResult().getFieldError("age").getRejectedValue());
 			assertEquals(0, tb.getAge());
 
 			assertTrue("Has touchy errors", br.hasFieldErrors("touchy"));
 			assertTrue("Correct number of touchy errors", br.getFieldErrorCount("touchy") == 1);
+			assertEquals("methodInvocation", binder.getBindingResult().getFieldError("touchy").getCode());
 			assertEquals("m.y", binder.getBindingResult().getFieldValue("touchy"));
-			FieldError touchyError = binder.getBindingResult().getFieldError("touchy");
-			assertNotNull(touchyError);
-			assertEquals("methodInvocation", touchyError.getCode());
-			assertEquals("m.y", touchyError.getRejectedValue());
+			assertEquals("m.y", binder.getBindingResult().getFieldError("touchy").getRejectedValue());
 			assertNull(tb.getTouchy());
 
 			assertTrue("Does not have spouse errors", !br.hasFieldErrors("spouse"));
@@ -698,7 +683,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingWithAllowedFields() throws BindException {
+	public void testBindingWithAllowedFields() throws Exception {
 		TestBean rod = new TestBean();
 		DataBinder binder = new DataBinder(rod);
 		binder.setAllowedFields("name", "myparam");
@@ -713,7 +698,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingWithDisallowedFields() throws BindException {
+	public void testBindingWithDisallowedFields() throws Exception {
 		TestBean rod = new TestBean();
 		DataBinder binder = new DataBinder(rod);
 		binder.setDisallowedFields("age");
@@ -731,7 +716,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingWithAllowedAndDisallowedFields() throws BindException {
+	public void testBindingWithAllowedAndDisallowedFields() throws Exception {
 		TestBean rod = new TestBean();
 		DataBinder binder = new DataBinder(rod);
 		binder.setAllowedFields("name", "myparam");
@@ -750,7 +735,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingWithOverlappingAllowedAndDisallowedFields() throws BindException {
+	public void testBindingWithOverlappingAllowedAndDisallowedFields() throws Exception {
 		TestBean rod = new TestBean();
 		DataBinder binder = new DataBinder(rod);
 		binder.setAllowedFields("name", "age");
@@ -769,7 +754,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingWithAllowedFieldsUsingAsterisks() throws BindException {
+	public void testBindingWithAllowedFieldsUsingAsterisks() throws Exception {
 		TestBean rod = new TestBean();
 		DataBinder binder = new DataBinder(rod, "person");
 		binder.setAllowedFields("nam*", "*ouchy");
@@ -796,7 +781,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingWithAllowedAndDisallowedMapFields() throws BindException {
+	public void testBindingWithAllowedAndDisallowedMapFields() throws Exception {
 		TestBean rod = new TestBean();
 		DataBinder binder = new DataBinder(rod);
 		binder.setAllowedFields("someMap[key1]", "someMap[key2]");
@@ -824,7 +809,7 @@ public class DataBinderTests {
 	 * Tests for required field, both null, non-existing and empty strings.
 	 */
 	@Test
-	public void testBindingWithRequiredFields() {
+	public void testBindingWithRequiredFields() throws Exception {
 		TestBean tb = new TestBean();
 		tb.setSpouse(new TestBean());
 
@@ -855,7 +840,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingWithRequiredMapFields() {
+	public void testBindingWithRequiredMapFields() throws Exception {
 		TestBean tb = new TestBean();
 		tb.setSpouse(new TestBean());
 
@@ -875,7 +860,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testBindingWithNestedObjectCreation() {
+	public void testBindingWithNestedObjectCreation() throws Exception {
 		TestBean tb = new TestBean();
 
 		DataBinder binder = new DataBinder(tb, "person");
@@ -1843,7 +1828,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testRejectWithoutDefaultMessage() {
+	public void testRejectWithoutDefaultMessage() throws Exception {
 		TestBean tb = new TestBean();
 		tb.setName("myName");
 		tb.setAge(99);
@@ -1890,7 +1875,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testTrackDisallowedFields() {
+	public void testTrackDisallowedFields() throws Exception {
 		TestBean testBean = new TestBean();
 		DataBinder binder = new DataBinder(testBean, "testBean");
 		binder.setAllowedFields("name", "age");
@@ -1910,7 +1895,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testAutoGrowWithinDefaultLimit() {
+	public void testAutoGrowWithinDefaultLimit() throws Exception {
 		TestBean testBean = new TestBean();
 		DataBinder binder = new DataBinder(testBean, "testBean");
 
@@ -1922,7 +1907,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testAutoGrowBeyondDefaultLimit() {
+	public void testAutoGrowBeyondDefaultLimit() throws Exception {
 		TestBean testBean = new TestBean();
 		DataBinder binder = new DataBinder(testBean, "testBean");
 
@@ -1939,7 +1924,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testAutoGrowWithinCustomLimit() {
+	public void testAutoGrowWithinCustomLimit() throws Exception {
 		TestBean testBean = new TestBean();
 		DataBinder binder = new DataBinder(testBean, "testBean");
 		binder.setAutoGrowCollectionLimit(10);
@@ -1952,7 +1937,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testAutoGrowBeyondCustomLimit() {
+	public void testAutoGrowBeyondCustomLimit() throws Exception {
 		TestBean testBean = new TestBean();
 		DataBinder binder = new DataBinder(testBean, "testBean");
 		binder.setAutoGrowCollectionLimit(10);
@@ -1986,7 +1971,7 @@ public class DataBinderTests {
 	}
 
 	@Test
-	public void testFieldErrorAccessVariations() {
+	public void testFieldErrorAccessVariations() throws Exception {
 		TestBean testBean = new TestBean();
 		DataBinder binder = new DataBinder(testBean, "testBean");
 		assertNull(binder.getBindingResult().getGlobalError());

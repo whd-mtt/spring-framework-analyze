@@ -53,7 +53,7 @@ public class HeadersWrapperTests {
 
 
 	@Test
-	public void accept() {
+	public void accept() throws Exception {
 		List<MediaType> accept = Collections.singletonList(MediaType.APPLICATION_JSON);
 		when(mockHeaders.accept()).thenReturn(accept);
 
@@ -61,7 +61,7 @@ public class HeadersWrapperTests {
 	}
 
 	@Test
-	public void acceptCharset() {
+	public void acceptCharset() throws Exception {
 		List<Charset> acceptCharset = Collections.singletonList(StandardCharsets.UTF_8);
 		when(mockHeaders.acceptCharset()).thenReturn(acceptCharset);
 
@@ -69,7 +69,7 @@ public class HeadersWrapperTests {
 	}
 
 	@Test
-	public void contentLength() {
+	public void contentLength() throws Exception {
 		OptionalLong contentLength = OptionalLong.of(42L);
 		when(mockHeaders.contentLength()).thenReturn(contentLength);
 
@@ -77,7 +77,7 @@ public class HeadersWrapperTests {
 	}
 
 	@Test
-	public void contentType() {
+	public void contentType() throws Exception {
 		Optional<MediaType> contentType = Optional.of(MediaType.APPLICATION_JSON);
 		when(mockHeaders.contentType()).thenReturn(contentType);
 
@@ -85,7 +85,7 @@ public class HeadersWrapperTests {
 	}
 
 	@Test
-	public void host() {
+	public void host() throws Exception {
 		InetSocketAddress host = InetSocketAddress.createUnresolved("example.com", 42);
 		when(mockHeaders.host()).thenReturn(host);
 
@@ -93,7 +93,7 @@ public class HeadersWrapperTests {
 	}
 
 	@Test
-	public void range() {
+	public void range() throws Exception {
 		List<HttpRange> range = Collections.singletonList(HttpRange.createByteRange(42));
 		when(mockHeaders.range()).thenReturn(range);
 
@@ -101,7 +101,7 @@ public class HeadersWrapperTests {
 	}
 
 	@Test
-	public void header() {
+	public void header() throws Exception {
 		String name = "foo";
 		List<String> value = Collections.singletonList("bar");
 		when(mockHeaders.header(name)).thenReturn(value);
@@ -110,7 +110,7 @@ public class HeadersWrapperTests {
 	}
 
 	@Test
-	public void asHttpHeaders() {
+	public void asHttpHeaders() throws Exception {
 		HttpHeaders httpHeaders = new HttpHeaders();
 		when(mockHeaders.asHttpHeaders()).thenReturn(httpHeaders);
 

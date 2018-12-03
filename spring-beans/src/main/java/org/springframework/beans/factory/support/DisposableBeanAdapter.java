@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 			this.destroyMethod = determineDestroyMethod(destroyMethodName);
 			if (this.destroyMethod == null) {
 				if (beanDefinition.isEnforceDestroyMethod()) {
-					throw new BeanDefinitionValidationException("Could not find a destroy method named '" +
+					throw new BeanDefinitionValidationException("Couldn't find a destroy method named '" +
 							destroyMethodName + "' on bean with name '" + beanName + "'");
 				}
 			}
@@ -242,27 +242,27 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 		}
 
 		if (this.invokeDisposableBean) {
-			if (logger.isTraceEnabled()) {
-				logger.trace("Invoking destroy() on bean with name '" + this.beanName + "'");
+			if (logger.isDebugEnabled()) {
+				logger.debug("Invoking destroy() on bean with name '" + this.beanName + "'");
 			}
 			try {
 				if (System.getSecurityManager() != null) {
 					AccessController.doPrivileged((PrivilegedExceptionAction<Object>) () -> {
-						((DisposableBean) this.bean).destroy();
+						((DisposableBean) bean).destroy();
 						return null;
-					}, this.acc);
+					}, acc);
 				}
 				else {
-					((DisposableBean) this.bean).destroy();
+					((DisposableBean) bean).destroy();
 				}
 			}
 			catch (Throwable ex) {
 				String msg = "Invocation of destroy method failed on bean with name '" + this.beanName + "'";
 				if (logger.isDebugEnabled()) {
-					logger.info(msg, ex);
+					logger.warn(msg, ex);
 				}
 				else {
-					logger.info(msg + ": " + ex);
+					logger.warn(msg + ": " + ex);
 				}
 			}
 		}
@@ -314,8 +314,8 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 		if (paramTypes.length == 1) {
 			args[0] = Boolean.TRUE;
 		}
-		if (logger.isTraceEnabled()) {
-			logger.trace("Invoking destroy method '" + this.destroyMethodName +
+		if (logger.isDebugEnabled()) {
+			logger.debug("Invoking destroy method '" + this.destroyMethodName +
 					"' on bean with name '" + this.beanName + "'");
 		}
 		try {
@@ -326,7 +326,7 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 				});
 				try {
 					AccessController.doPrivileged((PrivilegedExceptionAction<Object>) () ->
-						destroyMethod.invoke(this.bean, args), this.acc);
+						destroyMethod.invoke(bean, args), acc);
 				}
 				catch (PrivilegedActionException pax) {
 					throw (InvocationTargetException) pax.getException();
@@ -334,21 +334,21 @@ class DisposableBeanAdapter implements DisposableBean, Runnable, Serializable {
 			}
 			else {
 				ReflectionUtils.makeAccessible(destroyMethod);
-				destroyMethod.invoke(this.bean, args);
+				destroyMethod.invoke(bean, args);
 			}
 		}
 		catch (InvocationTargetException ex) {
-			String msg = "Destroy method '" + this.destroyMethodName + "' on bean with name '" +
-					this.beanName + "' threw an exception";
+			String msg = "Invocation of destroy method '" + this.destroyMethodName +
+					"' failed on bean with name '" + this.beanName + "'";
 			if (logger.isDebugEnabled()) {
-				logger.info(msg, ex.getTargetException());
+				logger.warn(msg, ex.getTargetException());
 			}
 			else {
-				logger.info(msg + ": " + ex.getTargetException());
+				logger.warn(msg + ": " + ex.getTargetException());
 			}
 		}
 		catch (Throwable ex) {
-			logger.info("Failed to invoke destroy method '" + this.destroyMethodName +
+			logger.error("Couldn't invoke destroy method '" + this.destroyMethodName +
 					"' on bean with name '" + this.beanName + "'", ex);
 		}
 	}

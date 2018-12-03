@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2012 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import java.io.Serializable;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 
-import org.springframework.aop.BeforeAdvice;
 import org.springframework.aop.MethodBeforeAdvice;
 import org.springframework.util.Assert;
 
@@ -31,13 +30,11 @@ import org.springframework.util.Assert;
  * to use this class directly.
  *
  * @author Rod Johnson
- * @see AfterReturningAdviceInterceptor
- * @see ThrowsAdviceInterceptor
  */
 @SuppressWarnings("serial")
-public class MethodBeforeAdviceInterceptor implements MethodInterceptor, BeforeAdvice, Serializable {
+public class MethodBeforeAdviceInterceptor implements MethodInterceptor, Serializable {
 
-	private final MethodBeforeAdvice advice;
+	private MethodBeforeAdvice advice;
 
 
 	/**
@@ -49,10 +46,9 @@ public class MethodBeforeAdviceInterceptor implements MethodInterceptor, BeforeA
 		this.advice = advice;
 	}
 
-
 	@Override
 	public Object invoke(MethodInvocation mi) throws Throwable {
-		this.advice.before(mi.getMethod(), mi.getArguments(), mi.getThis());
+		this.advice.before(mi.getMethod(), mi.getArguments(), mi.getThis() );
 		return mi.proceed();
 	}
 

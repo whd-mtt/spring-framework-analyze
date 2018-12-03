@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,15 @@
 
 package org.springframework.http.server.reactive;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-
 import io.undertow.server.HttpServerExchange;
+
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
-import org.springframework.http.HttpLogging;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.Assert;
 
@@ -40,7 +38,7 @@ import org.springframework.util.Assert;
  */
 public class UndertowHttpHandlerAdapter implements io.undertow.server.HttpHandler {
 
-	private static final Log logger = HttpLogging.forLogName(UndertowHttpHandlerAdapter.class);
+	private static final Log logger = LogFactory.getLog(UndertowHttpHandlerAdapter.class);
 
 
 	private final HttpHandler httpHandler;
@@ -65,25 +63,16 @@ public class UndertowHttpHandlerAdapter implements io.undertow.server.HttpHandle
 
 
 	@Override
-	public void handleRequest(HttpServerExchange exchange) {
-		UndertowServerHttpRequest request = null;
-		try {
-			request = new UndertowServerHttpRequest(exchange, getDataBufferFactory());
-		}
-		catch (URISyntaxException ex) {
-			if (logger.isWarnEnabled()) {
-				logger.debug("Failed to get request URI: " + ex.getMessage());
-			}
-			exchange.setStatusCode(400);
-			return;
-		}
-		ServerHttpResponse response = new UndertowServerHttpResponse(exchange, getDataBufferFactory(), request);
+	public void handleRequest(HttpServerExchange exchange) throws Exception {
 
-		if (request.getMethod() == HttpMethod.HEAD) {
+		ServerHttpRequest request = new UndertowServerHttpRequest(exchange, getDataBufferFactory());
+		ServerHttpResponse response = new UndertowServerHttpResponse(exchange, getDataBufferFactory());
+
+		if (HttpMethod.HEAD.equals(request.getMethod())) {
 			response = new HttpHeadResponseDecorator(response);
 		}
 
-		HandlerResultSubscriber resultSubscriber = new HandlerResultSubscriber(exchange, request);
+		HandlerResultSubscriber resultSubscriber = new HandlerResultSubscriber(exchange);
 		this.httpHandler.handle(request, response).subscribe(resultSubscriber);
 	}
 
@@ -92,12 +81,9 @@ public class UndertowHttpHandlerAdapter implements io.undertow.server.HttpHandle
 
 		private final HttpServerExchange exchange;
 
-		private final String logPrefix;
 
-
-		public HandlerResultSubscriber(HttpServerExchange exchange, UndertowServerHttpRequest request) {
+		public HandlerResultSubscriber(HttpServerExchange exchange) {
 			this.exchange = exchange;
-			this.logPrefix = request.getLogPrefix();
 		}
 
 		@Override
@@ -107,33 +93,22 @@ public class UndertowHttpHandlerAdapter implements io.undertow.server.HttpHandle
 
 		@Override
 		public void onNext(Void aVoid) {
-			// no-op
+			// no op
 		}
 
 		@Override
 		public void onError(Throwable ex) {
-			logger.trace(this.logPrefix + "Failed to complete: " + ex.getMessage());
-			if (this.exchange.isResponseStarted()) {
-				try {
-					logger.debug(this.logPrefix + "Closing connection");
-					this.exchange.getConnection().close();
-				}
-				catch (IOException ex2) {
-					// ignore
-				}
-			}
-			else {
-				logger.debug(this.logPrefix + "Setting HttpServerExchange status to 500 Server Error");
+			logger.error("Could not complete request", ex);
+			if (!this.exchange.isResponseStarted() && this.exchange.getStatusCode() < 500) {
 				this.exchange.setStatusCode(500);
-				this.exchange.endExchange();
 			}
+			this.exchange.endExchange();
 		}
 
 		@Override
 		public void onComplete() {
-			logger.trace(this.logPrefix + "Handling completed");
+			logger.debug("Successfully completed request");
 			this.exchange.endExchange();
 		}
 	}
-
 }

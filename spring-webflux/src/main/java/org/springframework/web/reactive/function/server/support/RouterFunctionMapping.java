@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,29 +18,27 @@ package org.springframework.web.reactive.function.server.support;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import reactor.core.publisher.Mono;
 
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.codec.HttpMessageReader;
 import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.reactive.function.server.HandlerFunction;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.handler.AbstractHandlerMapping;
 import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.util.pattern.PathPattern;
 
 /**
- * {@code HandlerMapping} implementation that supports {@link RouterFunction RouterFunctions}.
+ * {@code HandlerMapping} implementation that supports {@link RouterFunction}s.
  * <p>If no {@link RouterFunction} is provided at
- * {@linkplain #RouterFunctionMapping(RouterFunction) construction time}, this mapping
- * will detect all router functions in the application context, and consult them in
+ * {@linkplain #RouterFunctionMapping(RouterFunction) construction time}, this mapping will detect
+ * all router functions in the application context, and consult them in
  * {@linkplain org.springframework.core.annotation.Order order}.
  *
  * @author Arjen Poutsma
@@ -89,6 +87,7 @@ public class RouterFunctionMapping extends AbstractHandlerMapping implements Ini
 	 * <p>By default this is set to the {@link ServerCodecConfigurer}'s defaults.
 	 */
 	public void setMessageReaders(List<HttpMessageReader<?>> messageReaders) {
+		Assert.notNull(messageReaders, "'messageReaders' must not be null");
 		this.messageReaders = messageReaders;
 	}
 
@@ -108,68 +107,51 @@ public class RouterFunctionMapping extends AbstractHandlerMapping implements Ini
 	 * Initialized the router functions by detecting them in the application context.
 	 */
 	protected void initRouterFunctions() {
+		if (logger.isDebugEnabled()) {
+			logger.debug("Looking for router functions in application context: " +
+					getApplicationContext());
+		}
+
 		List<RouterFunction<?>> routerFunctions = routerFunctions();
-		this.routerFunction = routerFunctions.stream().reduce(RouterFunction::andOther).orElse(null);
-		logRouterFunctions(routerFunctions);
+		if (!CollectionUtils.isEmpty(routerFunctions) && logger.isInfoEnabled()) {
+			routerFunctions.forEach(routerFunction -> {
+				logger.info("Mapped " + routerFunction);
+			});
+		}
+		this.routerFunction = routerFunctions.stream()
+				.reduce(RouterFunction::andOther)
+				.orElse(null);
 	}
 
 	private List<RouterFunction<?>> routerFunctions() {
-		List<RouterFunction<?>> functions = obtainApplicationContext()
-				.getBeanProvider(RouterFunction.class)
-				.orderedStream()
-				.map(router -> (RouterFunction<?>)router)
-				.collect(Collectors.toList());
-		return (!CollectionUtils.isEmpty(functions) ? functions : Collections.emptyList());
-	}
+		SortedRouterFunctionsContainer container = new SortedRouterFunctionsContainer();
+		obtainApplicationContext().getAutowireCapableBeanFactory().autowireBean(container);
 
-	private void logRouterFunctions(List<RouterFunction<?>> routerFunctions) {
-		if (logger.isDebugEnabled()) {
-			int total = routerFunctions.size();
-			String message = total + " RouterFunction(s) in " + formatMappingName();
-			if (logger.isTraceEnabled()) {
-				if (total > 0) {
-					routerFunctions.forEach(routerFunction -> logger.trace("Mapped " + routerFunction));
-				}
-				else {
-					logger.trace(message);
-				}
-			}
-			else if (total > 0) {
-				logger.debug(message);
-			}
-		}
+		return CollectionUtils.isEmpty(container.routerFunctions) ? Collections.emptyList() :
+				container.routerFunctions;
 	}
-
 
 	@Override
 	protected Mono<?> getHandlerInternal(ServerWebExchange exchange) {
 		if (this.routerFunction != null) {
 			ServerRequest request = ServerRequest.create(exchange, this.messageReaders);
-			return this.routerFunction.route(request)
-					.doOnNext(handler -> setAttributes(exchange.getAttributes(), request, handler));
+			exchange.getAttributes().put(RouterFunctions.REQUEST_ATTRIBUTE, request);
+			return this.routerFunction.route(request);
 		}
 		else {
 			return Mono.empty();
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	private void setAttributes(Map<String, Object> attributes, ServerRequest serverRequest,
-			HandlerFunction<?> handlerFunction) {
 
-		attributes.put(RouterFunctions.REQUEST_ATTRIBUTE, serverRequest);
-		attributes.put(BEST_MATCHING_HANDLER_ATTRIBUTE, handlerFunction);
+	private static class SortedRouterFunctionsContainer {
 
-		PathPattern matchingPattern =
-				(PathPattern) attributes.get(RouterFunctions.MATCHING_PATTERN_ATTRIBUTE);
-		if (matchingPattern != null) {
-			attributes.put(BEST_MATCHING_PATTERN_ATTRIBUTE, matchingPattern);
-		}
-		Map<String, String> uriVariables =
-				(Map<String, String>) attributes
-						.get(RouterFunctions.URI_TEMPLATE_VARIABLES_ATTRIBUTE);
-		if (uriVariables != null) {
-			attributes.put(URI_TEMPLATE_VARIABLES_ATTRIBUTE, uriVariables);
+		@Nullable
+		private List<RouterFunction<?>> routerFunctions;
+
+		@Autowired(required = false)
+		public void setRouterFunctions(List<RouterFunction<?>> routerFunctions) {
+			this.routerFunctions = routerFunctions;
 		}
 	}
 

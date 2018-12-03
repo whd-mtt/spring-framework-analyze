@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class JmsListenerEndpointRegistrar implements BeanFactoryAware, Initializ
 
 	private boolean startImmediately;
 
-	private Object mutex = this.endpointDescriptors;
+	private Object mutex = endpointDescriptors;
 
 
 	/**
@@ -118,7 +118,7 @@ public class JmsListenerEndpointRegistrar implements BeanFactoryAware, Initializ
 	}
 
 	/**
-	 * A {@link BeanFactory} only needs to be available in conjunction with
+	 * AppConfig {@link BeanFactory} only needs to be available in conjunction with
 	 * {@link #setContainerFactoryBeanName}.
 	 */
 	@Override

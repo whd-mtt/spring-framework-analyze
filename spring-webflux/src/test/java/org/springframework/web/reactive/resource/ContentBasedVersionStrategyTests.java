@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class ContentBasedVersionStrategyTests {
 	}
 
 	@Test
-	public void extractVersion() {
+	public void extractVersion() throws Exception {
 		String hash = "7fbe76cdac6093784895bb4989203e5a";
 		String path = "font-awesome/css/font-awesome.min-" + hash + ".css";
 
@@ -54,25 +54,26 @@ public class ContentBasedVersionStrategyTests {
 	}
 
 	@Test
-	public void removeVersion() {
+	public void removeVersion() throws Exception {
+		String file = "font-awesome/css/font-awesome.min%s%s.css";
 		String hash = "7fbe76cdac6093784895bb4989203e5a";
-		String path = "font-awesome/css/font-awesome.min%s%s.css";
 
-		assertEquals(String.format(path, "", ""),
-				this.strategy.removeVersion(String.format(path, "-", hash), hash));
+		assertEquals(String.format(file, "", ""),  this.strategy.removeVersion(String.format(file, "-", hash), hash));
+		assertNull(this.strategy.extractVersion("foo/bar.css"));
 	}
 
 	@Test
 	public void getResourceVersion() throws Exception {
 		Resource expected = new ClassPathResource("test/bar.css", getClass());
 		String hash = DigestUtils.md5DigestAsHex(FileCopyUtils.copyToByteArray(expected.getInputStream()));
-
 		assertEquals(hash, this.strategy.getResourceVersion(expected).block());
 	}
 
 	@Test
-	public void addVersionToUrl() {
-		assertEquals("test/bar-123.css", this.strategy.addVersion("test/bar.css", "123"));
+	public void addVersionToUrl() throws Exception {
+		String requestPath = "test/bar.css";
+		String version = "123";
+		assertEquals("test/bar-123.css", this.strategy.addVersion(requestPath, version));
 	}
 
 }

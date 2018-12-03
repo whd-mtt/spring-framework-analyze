@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import org.springframework.context.annotation.Import;
  *       DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
  *       factory.setConnectionFactory(connectionFactory());
  *       factory.setDestinationResolver(destinationResolver());
- *       factory.setSessionTransacted(true);
  *       factory.setConcurrency("5");
  *       return factory;
  *     }
@@ -152,17 +151,17 @@ import org.springframework.context.annotation.Import;
  * configuration:
  *
  * <pre class="code">
- * &lt;beans&gt;
+ * {@code <beans>
  *
- *     &lt;jms:annotation-driven container-factory="myJmsListenerContainerFactory"/&gt;
+ *     <jms:annotation-driven container-factory="myJmsListenerContainerFactory"/>
  *
- *     &lt;bean id="myJmsListenerContainerFactory" class="org.springframework.jms.config.DefaultJmsListenerContainerFactory"&gt;
+ *     <bean id="myJmsListenerContainerFactory" class="org.springframework.jms.config.DefaultJmsListenerContainerFactory">
  *           // factory settings
- *     &lt;/bean&gt;
+ *     </bean>
  *
- *     &lt;bean id="myService" class="com.acme.foo.MyService"/&gt;
+ *     <bean id="myService" class="com.acme.foo.MyService"/>
  *
- * &lt;/beans&gt;
+ * </beans>
  * }</pre>
  *
  * It is also possible to specify a custom {@link org.springframework.jms.config.JmsListenerEndpointRegistry
@@ -204,25 +203,25 @@ import org.springframework.context.annotation.Import;
  * For reference, the example above can be compared to the following Spring XML
  * configuration:
  * <pre class="code">
- * &lt;beans&gt;
+ * {@code <beans>
  *
- *     &lt;jms:annotation-driven registry="myJmsListenerEndpointRegistry"
+ *     <jms:annotation-driven registry="myJmsListenerEndpointRegistry"
  *         handler-method-factory="myJmsHandlerMethodFactory"/&gt;
  *
- *     &lt;bean id="myJmsListenerEndpointRegistry"
- *           class="org.springframework.jms.config.JmsListenerEndpointRegistry"&gt;
+ *     <bean id="myJmsListenerEndpointRegistry"
+ *           class="org.springframework.jms.config.JmsListenerEndpointRegistry">
  *           // registry configuration
- *     &lt;/bean&gt;
+ *     </bean>
  *
- *     &lt;bean id="myJmsHandlerMethodFactory"
- *           class="org.springframework.messaging.handler.support.DefaultJmsHandlerMethodFactory"&gt;
- *         &lt;property name="validator" ref="myValidator"/&gt;
- *     &lt;/bean&gt;
+ *     <bean id="myJmsHandlerMethodFactory"
+ *           class="org.springframework.messaging.handler.support.DefaultJmsHandlerMethodFactory">
+ *         <property name="validator" ref="myValidator"/>
+ *     </bean>
  *
- *     &lt;bean id="myService" class="com.acme.foo.MyService"/&gt;
+ *     <bean id="myService" class="com.acme.foo.MyService"/>
  *
- * &lt;/beans&gt;
- * </pre>
+ * </beans>
+ * }</pre>
  *
  * Implementing {@code JmsListenerConfigurer} also allows for fine-grained
  * control over endpoints registration via the {@code JmsListenerEndpointRegistrar}.

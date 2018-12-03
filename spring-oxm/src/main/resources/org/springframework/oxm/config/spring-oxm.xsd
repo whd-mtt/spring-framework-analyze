@@ -122,7 +122,7 @@
 
 	<xsd:simpleType name="classType">
 		<xsd:annotation>
-			<xsd:documentation source="java:java.lang.Class">A class supported by a marshaller.</xsd:documentation>
+			<xsd:documentation source="java:java.lang.Class">AppConfig class supported by a marshaller.</xsd:documentation>
 			<xsd:appinfo>
 				<tool:annotation kind="direct">
 					<tool:expected-type type="java.lang.Class"/>

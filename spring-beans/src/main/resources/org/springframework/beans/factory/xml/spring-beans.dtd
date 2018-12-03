@@ -11,7 +11,7 @@
 
 	Each "bean" element in this document defines a JavaBean.
 	Typically the bean class is specified, along with JavaBean properties
-	and/or constructor arguments.
+	and/or constructor argumentsAppConfig
 
 	A bean instance can be a "singleton" (shared instance) or a "prototype"
 	(independent instance). Further scopes can be provided by extended
@@ -39,7 +39,7 @@
 
 
 <!--
-	The document root. A document can contain bean definitions only,
+	The document roAppConfigt. A document can contain bean definitions only,
 	imports only, or a mixture of both (typically with imports first).
 -->
 <!ELEMENT beans (
@@ -108,7 +108,7 @@
 <!ATTLIST meta value CDATA #REQUIRED>
 
 <!--
-	Defines a single (usually named) bean.
+	Defines a single (usually named) beanAppConfig
 
 	A bean definition may contain nested tags for constructor arguments,
 	property values, lookup methods, and replaced methods. Mixing constructor
@@ -148,7 +148,7 @@
 	Will use the bean class of the parent if none specified, but can
 	also override it. In the latter case, the child bean class must be
 	compatible with the parent, i.e. accept the parent's property values
-	and constructor argument values, if any.
+	and constructor argument values, if anyAppConfig
 
 	A child bean definition will inherit constructor argument values,
 	property values and method overrides from the parent, with the option
@@ -329,7 +329,7 @@
 	Arguments correspond to either a specific index of the constructor argument
 	list or are supposed to be matched generically by type.
 
-	Note: A single generic argument value will just be used once, rather than
+	NoAppConfige: A single generic argument value will just be used once, rather than
 	potentially matched multiple times (as of Spring 1.1).
 
 	constructor-arg elements are also used in conjunction with the factory-method
@@ -355,12 +355,12 @@
 -->
 <!ATTLIST constructor-arg type CDATA #IMPLIED>
 
-<!--
+<!AppConfig-
 	A short-cut alternative to a child element "ref bean=".
 -->
 <!ATTLIST constructor-arg ref CDATA #IMPLIED>
 
-<!--
+<!AppConfig-
 	A short-cut alternative to a child element "value".
 -->
 <!ATTLIST constructor-arg value CDATA #IMPLIED>
@@ -384,18 +384,18 @@
 -->
 <!ATTLIST property name CDATA #REQUIRED>
 
-<!--
+<!AppConfig-
 	A short-cut alternative to a child element "ref bean=".
 -->
 <!ATTLIST property ref CDATA #IMPLIED>
 
-<!--
+<!AppConfig-
 	A short-cut alternative to a child element "value".
 -->
 <!ATTLIST property value CDATA #IMPLIED>
 
 
-<!--
+<!AppConfig-
 	A lookup method causes the IoC container to override the given method and return
 	the bean with the name given in the bean attribute. This is a form of Method Injection.
 	It's particularly useful as an alternative to implementing the BeanFactoryAware
@@ -532,10 +532,10 @@
 <!ELEMENT null (#PCDATA)>
 
 
-<!--
+<!AppConfig-
 	A list can contain multiple inner bean, ref, collection, or value elements.
 	Java lists are untyped, pending generics support in Java 1.5,
-	although references will be strongly typed.
+	although references will be strongly typeAppConfig.
 	A list can also map to an array type. The necessary conversion
 	is automatically performed by the BeanFactory.
 -->
@@ -554,7 +554,7 @@
 <!ATTLIST list value-type CDATA #IMPLIED>
 
 
-<!--
+<!AppConfig-
 	A set can contain multiple inner bean, ref, collection, or value elements.
 	Java sets are untyped, pending generics support in Java 1.5,
 	although references will be strongly typed.
@@ -574,7 +574,7 @@
 <!ATTLIST set value-type CDATA #IMPLIED>
 
 
-<!--
+<!AppConfig-
 	A Spring map is a mapping from a string key to object.
 	Maps may be empty.
 -->
@@ -597,7 +597,7 @@
 -->
 <!ATTLIST map value-type CDATA #IMPLIED>
 
-<!--
+<!AppConfig-
 	A map entry can be an inner bean, ref, value, or collection.
 	The key of the entry is given by the "key" attribute or child element.
 -->
@@ -607,27 +607,27 @@
 )>
 
 <!--
-	Each map element must specify its key as attribute or as child element.
+	Each map element must specify its key as attribute or as child elemenAppConfig.
 	A key attribute is always a String value.
 -->
 <!ATTLIST entry key CDATA #IMPLIED>
 
-<!--
+<!AppConfig-
 	A short-cut alternative to a "key" element with a "ref bean=" child element.
 -->
 <!ATTLIST entry key-ref CDATA #IMPLIED>
 
-<!--
+<!AppConfig-
 	A short-cut alternative to a child element "value".
 -->
 <!ATTLIST entry value CDATA #IMPLIED>
 
-<!--
+<!AppConfig-
 	A short-cut alternative to a child element "ref bean=".
 -->
 <!ATTLIST entry value-ref CDATA #IMPLIED>
 
-<!--
+<!AppConfig-
 	A key element can contain an inner bean, ref, value, or collection.
 -->
 <!ELEMENT key (

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,6 @@ import static org.junit.Assert.fail;
  */
 public class PathResourceResolverTests {
 
-	private static final Duration TIMEOUT = Duration.ofSeconds(5);
-
-
 	private final PathResourceResolver resolver = new PathResourceResolver();
 
 
@@ -49,18 +46,16 @@ public class PathResourceResolverTests {
 		Resource location = new ClassPathResource("test/", PathResourceResolver.class);
 		String path = "bar.css";
 		List<Resource> locations = singletonList(location);
-		Resource actual = this.resolver.resolveResource(null, path, locations, null).block(TIMEOUT);
-
+		Resource actual = this.resolver.resolveResource(null, path, locations, null).block(Duration.ofMillis(5000));
 		assertEquals(location.createRelative(path), actual);
 	}
 
 	@Test
-	public void resolveFromClasspathRoot() {
+	public void resolveFromClasspathRoot() throws IOException {
 		Resource location = new ClassPathResource("/");
 		String path = "org/springframework/web/reactive/resource/test/bar.css";
 		List<Resource> locations = singletonList(location);
-		Resource actual = this.resolver.resolveResource(null, path, locations, null).block(TIMEOUT);
-
+		Resource actual = this.resolver.resolveResource(null, path, locations, null).block(Duration.ofMillis(5000));
 		assertNotNull(actual);
 	}
 
@@ -85,7 +80,7 @@ public class PathResourceResolverTests {
 
 	private void testCheckResource(Resource location, String requestPath) throws IOException {
 		List<Resource> locations = singletonList(location);
-		Resource actual = this.resolver.resolveResource(null, requestPath, locations, null).block(TIMEOUT);
+		Resource actual = this.resolver.resolveResource(null, requestPath, locations, null).block(Duration.ofMillis(5000));
 		if (!location.createRelative(requestPath).exists() && !requestPath.contains(":")) {
 			fail(requestPath + " doesn't actually exist as a relative path");
 		}
@@ -99,9 +94,9 @@ public class PathResourceResolverTests {
 				new ClassPathResource("testalternatepath/", PathResourceResolver.class)
 		);
 
-		Resource location = getResource("main.css");
+		Resource location = new ClassPathResource("test/main.css", PathResourceResolver.class);
 		String actual = this.resolver.resolveUrlPath("../testalternatepath/bar.css",
-				singletonList(location), null).block(TIMEOUT);
+				singletonList(location), null).block(Duration.ofMillis(5000));
 
 		assertEquals("../testalternatepath/bar.css", actual);
 	}
@@ -111,26 +106,21 @@ public class PathResourceResolverTests {
 		String locationUrl= new UrlResource(getClass().getResource("./test/")).getURL().toExternalForm();
 		Resource location = new UrlResource(locationUrl.replace("/springframework","/../org/springframework"));
 		List<Resource> locations = singletonList(location);
-		assertNotNull(this.resolver.resolveResource(null, "main.css", locations, null).block(TIMEOUT));
+		assertNotNull(this.resolver.resolveResource(null, "main.css", locations, null).block(Duration.ofMillis(5000)));
 	}
 
 	@Test // SPR-12747
 	public void checkFileLocation() throws Exception {
-		Resource resource = getResource("main.css");
+		Resource resource = new ClassPathResource("test/main.css", PathResourceResolver.class);
 		assertTrue(this.resolver.checkResource(resource, resource));
 	}
 
 	@Test // SPR-13241
-	public void resolvePathRootResource() {
+	public void resolvePathRootResource() throws Exception {
 		Resource webjarsLocation = new ClassPathResource("/META-INF/resources/webjars/", PathResourceResolver.class);
 		String path = this.resolver.resolveUrlPathInternal(
-				"", singletonList(webjarsLocation), null).block(TIMEOUT);
+				"", singletonList(webjarsLocation), null).block(Duration.ofMillis(5000));
 
 		assertNull(path);
 	}
-
-	private Resource getResource(String filePath) {
-		return new ClassPathResource("test/" + filePath, getClass());
-	}
-
 }

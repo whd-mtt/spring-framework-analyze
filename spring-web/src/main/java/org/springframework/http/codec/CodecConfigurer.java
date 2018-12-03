@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,30 +23,9 @@ import org.springframework.core.codec.Encoder;
 
 /**
  * Defines a common interface for configuring either client or server HTTP
- * message readers and writers. This is used as follows:
- * <ul>
- * <li>Use {@link ClientCodecConfigurer#create()} or
- * {@link ServerCodecConfigurer#create()} to create an instance.
- * <li>Use {@link #defaultCodecs()} to customize HTTP message readers or writers
- * registered by default.
- * <li>Use {@link #customCodecs()} to add custom HTTP message readers or writers.
- * <li>Use {@link #getReaders()} and {@link #getWriters()} to obtain the list of
- * configured HTTP message readers and writers.
- * </ul>
- *
- * <p>HTTP message readers and writers are divided into 3 categories that are
- * ordered as follows:
- * <ol>
- * <li>Typed readers and writers that support specific types, e.g. byte[], String.
- * <li>Object readers and writers, e.g. JSON, XML.
- * <li>Catch-all readers or writers, e.g. String with any media type.
- * </ol>
- *
- * <p>Typed and object readers are further sub-divided and ordered as follows:
- * <ol>
- * <li>Default HTTP reader and writer registrations.
- * <li>Custom readers and writers.
- * </ol>
+ * message readers and writers. To obtain an instance use either
+ * {@link ClientCodecConfigurer#create()} or
+ * {@link ServerCodecConfigurer#create()}.
  *
  * @author Rossen Stoyanchev
  * @since 5.0
@@ -54,28 +33,22 @@ import org.springframework.core.codec.Encoder;
 public interface CodecConfigurer {
 
 	/**
-	 * Provides a way to customize or replace HTTP message readers and writers
-	 * registered by default.
-	 * @see #registerDefaults(boolean)
+	 * Configure or customize the default HTTP message readers and writers.
 	 */
 	DefaultCodecs defaultCodecs();
 
 	/**
-	 * Register custom HTTP message readers or writers in addition to the ones
-	 * registered by default.
-	 */
-	CustomCodecs customCodecs();
-
-	/**
-	 * Provides a way to completely turn off registration of default HTTP message
-	 * readers and writers, and instead rely only on the ones provided via
-	 * {@link #customCodecs()}.
-	 * <p>By default this is set to {@code "true"} in which case default
-	 * registrations are made; setting this to {@code false} disables default
-	 * registrations.
+	 * Whether to register default HTTP message readers and writers.
+	 * <p>By default this is set to {@code "true"}; setting this to {@code false}
+	 * disables default HTTP message reader and writer registrations.
 	 */
 	void registerDefaults(boolean registerDefaults);
 
+	/**
+	 * Register custom HTTP message readers or writers to use in addition to
+	 * the ones registered by default.
+	 */
+	CustomCodecs customCodecs();
 
 	/**
 	 * Obtain the configured HTTP message readers.
@@ -89,10 +62,9 @@ public interface CodecConfigurer {
 
 
 	/**
-	 * Customize or replace the HTTP message readers and writers registered by
-	 * default. The options are further extended by
-	 * {@link ClientCodecConfigurer.ClientDefaultCodecs ClientDefaultCodecs} and
-	 * {@link ServerCodecConfigurer.ServerDefaultCodecs ServerDefaultCodecs}.
+	 * Assists with customizing the default HTTP message readers and writers.
+	 * @see ClientCodecConfigurer.ClientDefaultCodecs
+	 * @see ServerCodecConfigurer.ServerDefaultCodecs
 	 */
 	interface DefaultCodecs {
 
@@ -109,53 +81,11 @@ public interface CodecConfigurer {
 		 * @see org.springframework.http.codec.json.Jackson2JsonEncoder
 		 */
 		void jackson2JsonEncoder(Encoder<?> encoder);
-
-		/**
-		 * Override the default Protobuf {@code Decoder}.
-		 * @param decoder the decoder instance to use
-		 * @since 5.1
-		 * @see org.springframework.http.codec.protobuf.ProtobufDecoder
-		 */
-		void protobufDecoder(Decoder<?> decoder);
-
-		/**
-		 * Override the default Protobuf {@code Encoder}.
-		 * @param encoder the encoder instance to use
-		 * @since 5.1
-		 * @see org.springframework.http.codec.protobuf.ProtobufEncoder
-		 * @see org.springframework.http.codec.protobuf.ProtobufHttpMessageWriter
-		 */
-		void protobufEncoder(Encoder<?> encoder);
-
-		/**
-		 * Override the default JAXB2 {@code Decoder}.
-		 * @param decoder the decoder instance to use
-		 * @since 5.1.3
-		 * @see org.springframework.http.codec.xml.Jaxb2XmlDecoder
-		 */
-		void jaxb2Decoder(Decoder<?> decoder);
-
-		/**
-		 * Override the default JABX2 {@code Encoder}.
-		 * @param encoder the encoder instance to use
-		 * @since 5.1.3
-		 * @see org.springframework.http.codec.xml.Jaxb2XmlEncoder
-		 */
-		void jaxb2Encoder(Encoder<?> encoder);
-
-		/**
-		 * Whether to log form data at DEBUG level, and headers at TRACE level.
-		 * Both may contain sensitive information.
-		 * <p>By default set to {@code false} so that request details are not shown.
-		 * @param enable whether to enable or not
-		 * @since 5.1
-		 */
-		void enableLoggingRequestDetails(boolean enable);
 	}
 
 
 	/**
-	 * Registry for custom HTTP message readers and writers.
+	 * Registry and container for custom HTTP message readers and writers.
 	 */
 	interface CustomCodecs {
 

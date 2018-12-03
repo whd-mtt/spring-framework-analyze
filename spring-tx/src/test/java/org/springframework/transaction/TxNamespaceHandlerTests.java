@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2015 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,21 +46,20 @@ public class TxNamespaceHandlerTests {
 
 
 	@Before
-	public void setup() throws Exception {
+	public void setUp() throws Exception {
 		this.context = new ClassPathXmlApplicationContext("txNamespaceHandlerTests.xml", getClass());
-		this.getAgeMethod = ITestBean.class.getMethod("getAge");
-		this.setAgeMethod = ITestBean.class.getMethod("setAge", int.class);
+		this.getAgeMethod = ITestBean.class.getMethod("getAge", new Class[0]);
+		this.setAgeMethod = ITestBean.class.getMethod("setAge", new Class[] {int.class});
 	}
 
-
 	@Test
-	public void isProxy() {
+	public void isProxy() throws Exception {
 		ITestBean bean = getTestBean();
 		assertTrue("testBean is not a proxy", AopUtils.isAopProxy(bean));
 	}
 
 	@Test
-	public void invokeTransactional() {
+	public void invokeTransactional() throws Exception {
 		ITestBean testBean = getTestBean();
 		CallCountingTransactionManager ptm = (CallCountingTransactionManager) context.getBean("transactionManager");
 
@@ -98,7 +97,7 @@ public class TxNamespaceHandlerTests {
 	}
 
 	private ITestBean getTestBean() {
-		return (ITestBean) context.getBean("testBean");
+		return (ITestBean)context.getBean("testBean");
 	}
 
 }

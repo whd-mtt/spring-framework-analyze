@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2013 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import static org.mockito.BDDMockito.*;
 public class MarshallingHttpMessageConverterTests {
 
 	@Test
-	public void canRead() {
+	public void canRead() throws Exception {
 		Unmarshaller unmarshaller = mock(Unmarshaller.class);
 
 		given(unmarshaller.supports(Integer.class)).willReturn(false);
@@ -58,7 +58,7 @@ public class MarshallingHttpMessageConverterTests {
 	}
 
 	@Test
-	public void canWrite() {
+	public void canWrite() throws Exception {
 		Marshaller marshaller = mock(Marshaller.class);
 
 		given(marshaller.supports(Integer.class)).willReturn(false);
@@ -87,7 +87,7 @@ public class MarshallingHttpMessageConverterTests {
 		assertEquals("Invalid result", body, result);
 	}
 
-	@Test
+	@Test(expected = TypeMismatchException.class)
 	public void readWithTypeMismatchException() throws Exception {
 		MockHttpInputMessage inputMessage = new MockHttpInputMessage(new byte[0]);
 
@@ -96,13 +96,7 @@ public class MarshallingHttpMessageConverterTests {
 		given(unmarshaller.unmarshal(isA(StreamSource.class))).willReturn(Integer.valueOf(3));
 
 		MarshallingHttpMessageConverter converter = new MarshallingHttpMessageConverter(marshaller, unmarshaller);
-		try {
-			converter.read(String.class, inputMessage);
-			fail("Should have thrown HttpMessageNotReadableException");
-		}
-		catch (HttpMessageNotReadableException ex) {
-			assertTrue(ex.getCause() instanceof TypeMismatchException);
-		}
+		converter.read(String.class, inputMessage);
 	}
 
 	@Test
@@ -136,8 +130,8 @@ public class MarshallingHttpMessageConverterTests {
 		MarshallingHttpMessageConverter converter = new MarshallingHttpMessageConverter(marshaller);
 		converter.write(body, null, outputMessage);
 
-		assertEquals("Invalid content-type", new MediaType("application", "xml"),
-				outputMessage.getHeaders().getContentType());
+		assertEquals("Invalid content-type", new MediaType("application", "xml"), outputMessage.getHeaders()
+				.getContentType());
 	}
 
 	@Test

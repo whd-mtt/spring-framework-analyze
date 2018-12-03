@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import kotlin.reflect.KFunction;
@@ -38,7 +37,6 @@ import kotlin.reflect.jvm.ReflectJvmMapping;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
 
 /**
  * Helper class that encapsulates the specification of a method parameter, i.e. a {@link Method}
@@ -59,8 +57,6 @@ import org.springframework.util.ClassUtils;
  */
 public class MethodParameter {
 
-	private static final Annotation[] EMPTY_ANNOTATION_ARRAY = new Annotation[0];
-
 	private final Executable executable;
 
 	private final int parameterIndex;
@@ -70,7 +66,7 @@ public class MethodParameter {
 
 	private int nestingLevel = 1;
 
-	/** Map from Integer level to Integer type index. */
+	/** Map from Integer level to Integer type index */
 	@Nullable
 	Map<Integer, Integer> typeIndexesPerLevel;
 
@@ -228,9 +224,6 @@ public class MethodParameter {
 	 * @since 5.0
 	 */
 	public Parameter getParameter() {
-		if (this.parameterIndex < 0) {
-			throw new IllegalStateException("Cannot retrieve Parameter descriptor for method return type");
-		}
 		Parameter parameter = this.parameter;
 		if (parameter == null) {
 			parameter = getExecutable().getParameters()[this.parameterIndex];
@@ -343,9 +336,7 @@ public class MethodParameter {
 	 */
 	public boolean isOptional() {
 		return (getParameterType() == Optional.class || hasNullableAnnotation() ||
-				(KotlinDetector.isKotlinReflectPresent() &&
-						KotlinDetector.isKotlinType(getContainingClass()) &&
-						KotlinDelegate.isOptional(this)));
+				(KotlinDetector.isKotlinType(getContainingClass()) && KotlinDelegate.isOptional(this)));
 	}
 
 	/**
@@ -425,18 +416,7 @@ public class MethodParameter {
 				paramType = (method != null ? method.getGenericReturnType() : void.class);
 			}
 			else {
-				Type[] genericParameterTypes = this.executable.getGenericParameterTypes();
-				int index = this.parameterIndex;
-				if (this.executable instanceof Constructor &&
-						ClassUtils.isInnerClass(this.executable.getDeclaringClass()) &&
-						genericParameterTypes.length == this.executable.getParameterCount() - 1) {
-					// Bug in javac: type array excludes enclosing instance parameter
-					// for inner classes with at least one generic constructor parameter,
-					// so access it with the actual parameter index lowered by 1
-					index = this.parameterIndex - 1;
-				}
-				paramType = (index >= 0 && index < genericParameterTypes.length ?
-						genericParameterTypes[index] : getParameterType());
+				paramType = this.executable.getGenericParameterTypes()[this.parameterIndex];
 			}
 			this.genericParameterType = paramType;
 		}
@@ -534,16 +514,12 @@ public class MethodParameter {
 		Annotation[] paramAnns = this.parameterAnnotations;
 		if (paramAnns == null) {
 			Annotation[][] annotationArray = this.executable.getParameterAnnotations();
-			int index = this.parameterIndex;
-			if (this.executable instanceof Constructor &&
-					ClassUtils.isInnerClass(this.executable.getDeclaringClass()) &&
-					annotationArray.length == this.executable.getParameterCount() - 1) {
-				// Bug in javac in JDK <9: annotation array excludes enclosing instance parameter
-				// for inner classes, so access it with the actual parameter index lowered by 1
-				index = this.parameterIndex - 1;
+			if (this.parameterIndex >= 0 && this.parameterIndex < annotationArray.length) {
+				paramAnns = adaptAnnotationArray(annotationArray[this.parameterIndex]);
 			}
-			paramAnns = (index >= 0 && index < annotationArray.length ?
-					adaptAnnotationArray(annotationArray[index]) : EMPTY_ANNOTATION_ARRAY);
+			else {
+				paramAnns = new Annotation[0];
+			}
 			this.parameterAnnotations = paramAnns;
 		}
 		return paramAnns;
@@ -603,9 +579,6 @@ public class MethodParameter {
 	 */
 	@Nullable
 	public String getParameterName() {
-		if (this.parameterIndex < 0) {
-			return null;
-		}
 		ParameterNameDiscoverer discoverer = this.parameterNameDiscoverer;
 		if (discoverer != null) {
 			String[] parameterNames = null;
@@ -744,8 +717,7 @@ public class MethodParameter {
 
 	private static int validateIndex(Executable executable, int parameterIndex) {
 		int count = executable.getParameterCount();
-		Assert.isTrue(parameterIndex >= -1 && parameterIndex < count,
-				() -> "Parameter index needs to be between -1 and " + (count - 1));
+		Assert.isTrue(parameterIndex < count, () -> "Parameter index needs to be between -1 and " + (count - 1));
 		return parameterIndex;
 	}
 
@@ -769,21 +741,17 @@ public class MethodParameter {
 			}
 			else {
 				KFunction<?> function = null;
-				Predicate<KParameter> predicate = null;
 				if (method != null) {
 					function = ReflectJvmMapping.getKotlinFunction(method);
-					predicate = p -> KParameter.Kind.VALUE.equals(p.getKind());
 				}
 				else if (ctor != null) {
 					function = ReflectJvmMapping.getKotlinFunction(ctor);
-					predicate = p -> KParameter.Kind.VALUE.equals(p.getKind()) ||
-							KParameter.Kind.INSTANCE.equals(p.getKind());
 				}
 				if (function != null) {
 					List<KParameter> parameters = function.getParameters();
 					KParameter parameter = parameters
 							.stream()
-							.filter(predicate)
+							.filter(p -> KParameter.Kind.VALUE.equals(p.getKind()))
 							.collect(Collectors.toList())
 							.get(index);
 					return (parameter.getType().isMarkedNullable() || parameter.isOptional());
@@ -791,6 +759,7 @@ public class MethodParameter {
 			}
 			return false;
 		}
+		
 	}
 
 }

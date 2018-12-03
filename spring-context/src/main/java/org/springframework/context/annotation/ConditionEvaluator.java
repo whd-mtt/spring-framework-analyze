@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,8 +105,10 @@ class ConditionEvaluator {
 			if (condition instanceof ConfigurationCondition) {
 				requiredPhase = ((ConfigurationCondition) condition).getConfigurationPhase();
 			}
-			if ((requiredPhase == null || requiredPhase == phase) && !condition.matches(this.context, metadata)) {
-				return true;
+			if (requiredPhase == null || requiredPhase == phase) {
+				if (!condition.matches(this.context, metadata)) {
+					return true;
+				}
 			}
 		}
 
@@ -120,7 +122,7 @@ class ConditionEvaluator {
 		return (List<String[]>) (values != null ? values : Collections.emptyList());
 	}
 
-	private Condition getCondition(String conditionClassName, @Nullable ClassLoader classloader) {
+	private Condition getCondition(String conditionClassName, ClassLoader classloader) {
 		Class<?> conditionClass = ClassUtils.resolveClassName(conditionClassName, classloader);
 		return (Condition) BeanUtils.instantiateClass(conditionClass);
 	}
@@ -202,8 +204,8 @@ class ConditionEvaluator {
 		}
 
 		@Override
-		@Nullable
 		public ConfigurableListableBeanFactory getBeanFactory() {
+			Assert.state(this.beanFactory != null, "No ConfigurableListableBeanFactory available");
 			return this.beanFactory;
 		}
 
@@ -218,8 +220,8 @@ class ConditionEvaluator {
 		}
 
 		@Override
-		@Nullable
 		public ClassLoader getClassLoader() {
+			Assert.state(this.classLoader != null, "No ClassLoader available");
 			return this.classLoader;
 		}
 	}
