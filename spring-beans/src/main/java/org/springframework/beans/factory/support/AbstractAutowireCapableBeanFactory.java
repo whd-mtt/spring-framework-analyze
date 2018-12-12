@@ -556,6 +556,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
 		}
 		if (instanceWrapper == null) {
+			/***
+			 * 创建bean实例
+			 */
 			instanceWrapper = createBeanInstance(beanName, mbd, args);
 		}
 		final Object bean = instanceWrapper.getWrappedInstance();
@@ -582,7 +585,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		// Eagerly cache singletons to be able to resolve circular references
 		// even when triggered by lifecycle interfaces like BeanFactoryAware.
-		//向容器中缓存单例模式的Bean对象，以防循环引用
+		//向容器中缓存单例模式的Bean对c象，以防循环引用
 		boolean earlySingletonExposure = (mbd.isSingleton() && this.allowCircularReferences &&
 				isSingletonCurrentlyInCreation(beanName));
 		if (earlySingletonExposure) {
@@ -599,7 +602,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		//这个exposedObject在初始化完成之后返回作为依赖注入完成后的Bean
 		Object exposedObject = bean;
 		try {
-			//将Bean实例对象封装，并且Bean定义中配置的属性值赋值给实例对象
+			/***
+			 * 将Bean实例对象封装，并且Bean定义中配置的属性值赋值给实例对象
+			 * 真正实现依赖注入的地方
+			 */
 			populateBean(beanName, mbd, instanceWrapper);
 			//初始化Bean对象
 			exposedObject = initializeBean(beanName, exposedObject, mbd);
@@ -1151,7 +1157,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				return autowireConstructor(beanName, mbd, null, null);
 			}
 			else {
-				//使用默认的无参构造方法实例化
+				/**
+				 * 使用默认的无参构造方法实例化
+				 */
 				return instantiateBean(beanName, mbd);
 			}
 		}
@@ -1264,7 +1272,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 						getAccessControlContext());
 			}
 			else {
-				//将实例化的对象封装起来
+				/***
+				 * 将实例化的对象封装起来
+				 */
 				beanInstance = getInstantiationStrategy().instantiate(mbd, beanName, parent);
 			}
 			BeanWrapper bw = new BeanWrapperImpl(beanInstance);
@@ -1405,7 +1415,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		if (pvs != null) {
-			//对属性进行注入
+			/***
+			 * 对属性进行注入
+			 */
 			applyPropertyValues(beanName, mbd, bw, pvs);
 		}
 	}
@@ -1656,7 +1668,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			if (mpvs.isConverted()) {
 				// Shortcut: use the pre-converted values as-is.
 				try {
-					//为实例化对象设置属性值
+					/**
+					 * 为实例化对象设置属性值
+					 */
 					bw.setPropertyValues(mpvs);
 					return;
 				}
@@ -1695,7 +1709,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				String propertyName = pv.getName();
 				//原始的属性值，即转换之前的属性值
 				Object originalValue = pv.getValue();
-				//转换属性值，例如将引用转换为IOC容器中实例化对象引用
+				/***
+				 * 转换属性值，例如将引用转换为IOC容器中实例化对象引用
+				 *
+				 * BeanDefinition相当于是保存在内存中的配置文件，保存了所有跟类目属相关信息，依赖注入
+				 * 就是把BeanDefinition中的信息读取出来，利用反射机制或者代理机制注入对象
+				 * 新创建的对象不会放到我们印象中的IOC容器中，他会存入到另外一个cache中
+				 */
 				Object resolvedValue = valueResolver.resolveValueIfNecessary(pv, originalValue);
 				//转换之后的属性值
 				Object convertedValue = resolvedValue;

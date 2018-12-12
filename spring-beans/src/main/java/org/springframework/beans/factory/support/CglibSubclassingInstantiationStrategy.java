@@ -108,7 +108,9 @@ public class CglibSubclassingInstantiationStrategy extends SimpleInstantiationSt
 		 */
 		//使用CGLIB进行Bean对象实例化
 		public Object instantiate(@Nullable Constructor<?> ctor, @Nullable Object... args) {
-			//创建代理子类
+			/***
+			 * 创建代理子类
+			 */
 			Class<?> subclass = createEnhancedSubclass(this.beanDefinition);
 			Object instance;
 			if (ctor == null) {

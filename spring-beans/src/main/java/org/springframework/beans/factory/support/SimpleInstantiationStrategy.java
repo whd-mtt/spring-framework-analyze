@@ -57,11 +57,22 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 	}
 
 
-	//使用初始化策略实例化Bean对象
+	/**
+	 *
+	 * @param bd the bean definition
+	 * @param beanName the name of the bean when it's created in this context.
+	 * The name can be {@code null} if we're autowiring a bean which doesn't
+	 * belong to the factory.
+	 * @param owner the owning BeanFactory
+	 * @return 使用初始化策略实例化Bean对象，这里使用了策略模式
+	 */
 	@Override
 	public Object instantiate(RootBeanDefinition bd, @Nullable String beanName, BeanFactory owner) {
 		// Don't override the class with CGLIB if no overrides.
-		//如果Bean定义中没有方法覆盖，则就不需要CGLIB父类类的方法
+		/***
+		 * 如果Bean定义中没有方法覆盖，则就不需要CGLIB父类类的方法
+		 * 因为CGLIB代理模式会生成子类代理对象，如果不能覆盖父类方法，那么代理对象就无法覆盖调用方法，代理就会失效
+		 */
 		if (!bd.hasMethodOverrides()) {
 			Constructor<?> constructorToUse;
 			synchronized (bd.constructorArgumentLock) {
@@ -90,7 +101,9 @@ public class SimpleInstantiationStrategy implements InstantiationStrategy {
 					}
 				}
 			}
-			//使用BeanUtils实例化，通过反射机制调用”构造方法.newInstance(arg)”来进行实例化
+			/**
+			 * 使用BeanUtils实例化，通过反射机制调用”构造方法.newInstance(arg)”来进行实例化
+			 */
 			return BeanUtils.instantiateClass(constructorToUse);
 		}
 		else {
